@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Outpost Pocket Kit</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Outpost">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+/* Layout idea: a field instrument. One column, thumb-reach tab bar, mono labels for readouts, signal orange for the one thing to act on.
+   System fonts only, on purpose: this page must open with no network at all. */
+:root{
+  --ground:#eceee8; --panel:#f8f9f5; --sunk:#e1e4dc; --line:#c9cec3;
+  --ink:#1b211d; --muted:#5c665e; --signal:#b4500a; --signal-ink:#ffffff;
+  --good:#1f7a45; --warn:#a36a00; --crit:#b3261e;
+  --display: ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --body: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --r:14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#101412; --panel:#181d1a; --sunk:#0b0e0c; --line:#2b332e;
+    --ink:#e7ece6; --muted:#93a096; --signal:#ff9838; --signal-ink:#1a0f02;
+    --good:#6fd08c; --warn:#f0c04a; --crit:#ff7a6b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101412; --panel:#181d1a; --sunk:#0b0e0c; --line:#2b332e;
+  --ink:#e7ece6; --muted:#93a096; --signal:#ff9838; --signal-ink:#1a0f02;
+  --good:#6fd08c; --warn:#f0c04a; --crit:#ff7a6b;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.5 var(--body);-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+a{color:var(--signal)}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+.app{max-width:640px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 92px)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0 14px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:34px;height:34px;flex:none}
+.brand b{font:700 17px/1 var(--display);letter-spacing:.18em;display:block}
+.brand span{font:12px/1.2 var(--display);color:var(--muted);display:block;margin-top:4px}
+.pill{font:600 11px/1 var(--display);letter-spacing:.08em;padding:7px 10px;border-radius:99px;border:1px solid var(--line);display:flex;align-items:center;gap:6px;white-space:nowrap;background:var(--panel)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--good)}
+.pill.off i{background:var(--warn)}
+.view{display:none;flex-direction:column;gap:14px}
+.view.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.eyebrow{font:600 11px/1.2 var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h2{font:700 20px/1.25 var(--body)}
+h3{font:650 16px/1.3 var(--body)}
+.sub{color:var(--muted);font-size:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1 1 0;min-width:0}
+.btn{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:10px 14px;font-weight:600;font-size:15px;min-height:44px}
+.btn.primary{background:var(--signal);border-color:var(--signal);color:var(--signal-ink)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--crit)}
+.btn.small{min-height:36px;padding:6px 10px;font-size:13px}
+input[type=text],input[type=number],input[type=password],input[type=search],select,textarea{width:100%;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;min-height:44px}
+textarea{min-height:110px;resize:vertical;font-family:var(--display);font-size:15px;line-height:1.45}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);font-weight:600}
+.out{background:var(--sunk);border:1px dashed var(--line);border-radius:10px;padding:12px;font:15px/1.45 var(--display);white-space:pre-wrap;overflow-wrap:anywhere;min-height:48px}
+.out.err{color:var(--crit);border-color:var(--crit)}
+/* readiness */
+.ready{flex-direction:row;align-items:center;gap:16px}
+.ring{width:112px;height:112px;flex:none;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring .bg{stroke:var(--sunk)}
+.ring .fg{stroke:var(--signal);stroke-linecap:round;transition:stroke-dashoffset .5s}
+.ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 26px/1 var(--display);font-variant-numeric:tabular-nums}
+.ring .num small{font:600 10px/1 var(--display);letter-spacing:.12em;color:var(--muted);margin-top:5px}
+.bars{display:flex;flex-direction:column;gap:9px;flex:1;min-width:0}
+.bar{display:flex;flex-direction:column;gap:4px;background:none;border:0;padding:0;text-align:left}
+.bar span{display:flex;justify-content:space-between;font:600 12px/1.2 var(--display);gap:8px}
+.bar span em{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums}
+.track{height:6px;border-radius:9px;background:var(--sunk);overflow:hidden}
+.track b{display:block;height:100%;background:var(--ink);border-radius:9px;transition:width .4s}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px;min-height:84px}
+.tile b{font-size:15px}
+.tile span{font-size:13px;color:var(--muted);line-height:1.35}
+.tile.sos{background:var(--signal);border-color:var(--signal);color:var(--signal-ink)}
+.tile.sos span{color:inherit;opacity:.85}
+.map{display:grid;grid-template-columns:1fr auto 1fr;gap:6px 10px;font-size:14px;align-items:center}
+.map .h{font:600 11px/1.2 var(--display);letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.map .a{color:var(--muted)}
+.map .n{color:var(--muted)}
+/* stack */
+.appcard header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tag{font:600 11px/1 var(--display);letter-spacing:.08em;padding:6px 8px;border-radius:6px;background:var(--sunk);border:1px solid var(--line);white-space:nowrap}
+.tag.done{color:var(--good);border-color:var(--good)}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.steps li{border-top:1px solid var(--line)}
+.steps label{display:flex;gap:12px;padding:11px 0;align-items:flex-start;font-size:15px;line-height:1.4}
+.steps input{appearance:none;-webkit-appearance:none;width:24px;height:24px;flex:none;border:2px solid var(--muted);border-radius:7px;margin:0;display:grid;place-content:center;background:var(--sunk)}
+.steps input:checked{background:var(--good);border-color:var(--good)}
+.steps input:checked::after{content:"";width:6px;height:11px;border:solid var(--panel);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.steps input:checked + span{color:var(--muted);text-decoration:line-through}
+.tip{font-size:14px;color:var(--muted);border-left:3px solid var(--signal);padding-left:10px}
+.plan{display:flex;flex-direction:column}
+.plan .pr{display:grid;grid-template-columns:28px 1fr 84px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.plan .pr input[type=checkbox]{width:22px;height:22px;accent-color:var(--signal);margin:0}
+.plan .pr input[type=number]{min-height:38px;padding:6px 8px;text-align:right;font-family:var(--display);font-size:16px}
+.meter{height:14px;border-radius:9px;background:var(--sunk);overflow:hidden;border:1px solid var(--line)}
+.meter b{display:block;height:100%;background:var(--good);transition:width .3s}
+.meter.warn b{background:var(--warn)} .meter.crit b{background:var(--crit)}
+.big{font:700 22px/1.1 var(--display);font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{text-align:left;padding:8px 6px;border-top:1px solid var(--line);vertical-align:top}
+th{font:600 11px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-top:0}
+td.num{font:700 15px/1.3 var(--display);white-space:nowrap}
+.scroll{overflow-x:auto}
+/* chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:9px 14px;font-weight:600;font-size:14px;min-height:40px}
+.chip.on{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+/* notes */
+.note{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;width:100%}
+.note b{font-size:16px}
+.note span{font-size:14px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.note time{font:11px/1 var(--display);color:var(--muted);margin-top:4px}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;border:1px dashed var(--line);border-radius:var(--r);font-size:14px}
+#noteBody{min-height:46vh;font-family:var(--body);font-size:16px}
+/* field */
+details.ref{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+details.ref summary{list-style:none;padding:14px 16px;display:flex;gap:12px;align-items:center;cursor:pointer}
+details.ref summary::-webkit-details-marker{display:none}
+details.ref summary .k{font:700 10px/1 var(--display);letter-spacing:.1em;padding:5px 6px;border-radius:5px;border:1px solid var(--line);color:var(--muted);flex:none;width:52px;text-align:center}
+details.ref summary .k.aid{color:var(--crit);border-color:var(--crit)}
+details.ref summary b{flex:1;font-size:16px;line-height:1.3}
+details.ref summary::after{content:"+";font:400 22px/1 var(--display);color:var(--muted)}
+details.ref[open] summary::after{content:"−"}
+details.ref .bd{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px}
+details.ref ol,details.ref ul{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:7px;font-size:15px;line-height:1.45}
+.never{font-size:14px;border-left:3px solid var(--crit);padding-left:10px}
+.never b{color:var(--crit)}
+.kitgroup{display:flex;flex-direction:column}
+/* tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:6px 8px calc(env(safe-area-inset-bottom) + 6px);z-index:5}
+.tabs div{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tabs button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--muted);font:600 11px/1 var(--display);letter-spacing:.04em;min-height:52px;border-radius:10px}
+.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs button.on{color:var(--signal)}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);transform:translateX(-50%);background:var(--ink);color:var(--ground);padding:10px 16px;border-radius:99px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:88vw;text-align:center}
+.toast.on{opacity:1}
+/* beacon: fixed colors on purpose, it is a light source */
+.beacon{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#000;color:#777;text-align:center;padding:24px;border:0;width:100%}
+.beacon.show{display:flex}
+.beacon.lit{background:#fff;color:#999}
+.beacon b{font:700 34px/1.1 var(--display);letter-spacing:.2em}
+.beacon span{font:14px/1.4 var(--display);overflow-wrap:anywhere}
+.foot{font-size:12px;color:var(--muted);text-align:center;padding:8px 0 0;line-height:1.5}
+@media (max-width:360px){.ready{flex-direction:column;align-items:stretch}.ring{align-self:center}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--signal)"/><path d="M8 29 L20 9 L32 29 Z" fill="none" stroke="var(--signal-ink)" stroke-width="3" stroke-linejoin="round"/><path d="M20 29 V20" stroke="var(--signal-ink)" stroke-width="3" stroke-linecap="round"/></svg>
+      <div><b>OUTPOST</b><span>offline pocket kit</span></div>
+    </div>
+    <div class="pill" id="net"><i></i><span>ONLINE</span></div>
+  </div>
+
+  <section class="view" id="v-home"></section>
+  <section class="view" id="v-stack"></section>
+  <section class="view" id="v-tools"></section>
+  <section class="view" id="v-notes"></section>
+  <section class="view" id="v-field"></section>
+
+  <p class="foot">Inspired by Project N.O.M.A.D. Independent, not affiliated with it.<br>Reference cards are reminders, not a substitute for training or professional care.</p>
+</div>
+
+<nav class="tabs" aria-label="Sections"><div>
+  <button data-go="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button data-go="stack"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>Stack</button>
+  <button data-go="tools"><svg viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Tools</button>
+  <button data-go="notes"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7"/></svg>Notes</button>
+  <button data-go="field"><svg viewBox="0 0 24 24"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>Field</button>
+</div></nav>
+
+<button class="beacon" id="beacon" aria-label="Stop beacon"><b id="beaconMsg">SOS</b><span id="beaconCode"></span><span>TAP ANYWHERE TO STOP</span></button>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store={mem:{},
+  get(k,d){ if(k in this.mem) return this.mem[k]; try{const v=localStorage.getItem("outpost."+k); if(v!=null){this.mem[k]=JSON.parse(v); return this.mem[k];}}catch(e){} return d; },
+  set(k,v){ this.mem[k]=v; try{localStorage.setItem("outpost."+k,JSON.stringify(v)); return true;}catch(e){return false;} }
+};
+let toastT; function toast(m){const t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),1900);}
+async function copy(text){ try{ await navigator.clipboard.writeText(text); toast("Copied"); }catch(e){ toast("Copy blocked here. Select the text and copy it."); } }
+const te=new TextEncoder(), td=new TextDecoder("utf-8",{fatal:true});
+const b64=bytes=>{let s=""; for(let i=0;i<bytes.length;i+=0x8000) s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000)); return btoa(s);};
+const unb64=str=>{const s=atob(str.replace(/\s+/g,"").replace(/-/g,"+").replace(/_/g,"/")); const a=new Uint8Array(s.length); for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i); return a;};
+
+/* ---------- data: the app stack ---------- */
+const STACK=[
+ {id:"kiwix",name:"Kiwix",role:"Library",by:"Free, from Wikimedia CH",url:"https://apps.apple.com/app/id997079563",
+  what:"Stores Wikipedia and other reference sites on the phone. NOMAD uses Kiwix for its library too, so this is the same content.",
+  steps:["Install Kiwix from the App Store","On Wi-Fi, open the library inside Kiwix and pick your language","Download WikiMed (medical encyclopedia) first. It is small and the most useful in an emergency","Download a Wikipedia edition that fits your storage. Start with a mini or no-pictures edition","Add Wikivoyage, and Khan Academy or iFixit packs if you have room","Turn on Airplane Mode and open an article to prove it works"],
+  tip:"Big packs take a while. Keep the phone plugged in, on Wi-Fi, with Kiwix open until they finish."},
+ {id:"maps",name:"Organic Maps",role:"Maps",by:"Free, open source, no ads",url:"https://apps.apple.com/app/id1567437057",
+  what:"Offline maps with search and turn-by-turn routing from OpenStreetMap data. GPS works without a SIM or signal.",
+  steps:["Install Organic Maps from the App Store","Download the map for your own region","Download neighbouring regions and anywhere you travel to often","Bookmark home, the nearest hospital, a water source and a family meeting point","In Airplane Mode, search for a place and build a route to it"],
+  tip:"GPS still works in Airplane Mode. The first fix can take a minute or two under open sky."},
+ {id:"ai",name:"PocketPal AI",role:"AI",by:"Free, open source",url:"https://apps.apple.com/app/id6502579498",
+  what:"Runs small language models fully on the phone. Slower and less capable than cloud AI, but it answers with no connection.",
+  steps:["Install PocketPal AI from the App Store","Download one model that fits your iPhone (see the table below)","Load the model and ask it a test question","In Airplane Mode, ask again to prove it runs offline"],
+  tip:"Small models make things up with confidence. For anything medical, check the answer in WikiMed."}
+];
+const MODELS=[
+ ["4 GB RAM","iPhone 11, 12, 13, SE","A 1 to 2B model, such as Gemma 3 1B or Qwen 2.5 1.5B","about 1 GB"],
+ ["6 GB RAM","12 Pro, 13 Pro, 14, 14 Pro, 15","A 3B model, such as Llama 3.2 3B (Q4)","about 2 GB"],
+ ["8 GB or more","15 Pro, 16 and newer","A 4B model, such as Phi-4 mini or Gemma 3 4B (Q4)","about 2.5 to 3 GB"]
+];
+const PLAN=[
+ ["wikimed","WikiMed medical encyclopedia",2,true],
+ ["wmini","Wikipedia English, mini edition",12,true],
+ ["wnopic","Wikipedia English, no pictures",50,false],
+ ["wfull","Wikipedia English, with pictures",110,false],
+ ["voyage","Wikivoyage travel guide",1,false],
+ ["other","Other packs (Khan Academy, iFixit)",5,false],
+ ["map","Maps for your region",0.5,true],
+ ["aismall","AI model, small",1,true],
+ ["aimed","AI model, medium",2.5,false]
+];
+const KIT=[
+ ["Water and food",["Water, about 4 litres per person per day, 3 days","Food that needs no cooking, 3 days","Water purification tablets or a filter","Manual can opener"]],
+ ["Light and power",["Flashlight or headlamp","Spare batteries","Charged power bank and cable","Lighter or matches in a dry bag"]],
+ ["Health",["First aid kit","Personal medication, one week","Soap, sanitiser and hygiene items","Dust masks"]],
+ ["Papers and money",["Copies of ID and key documents in a waterproof bag","Cash in small notes","Written list of phone numbers"]],
+ ["Tools and shelter",["Multi-tool or knife","Whistle","Emergency blanket","Warm layer and rain cover","Duct tape and cord"]],
+ ["Comms",["Battery or hand-crank radio","Paper map of your area","Pen and notepad"]]
+];
+
+/* ---------- data: field reference ---------- */
+const REF=[
+ {c:"aid",t:"Not breathing: CPR for an adult",s:["Check for danger, then tap the shoulders and shout. No response: shout for help and call the emergency number, on speaker.","Tilt the head back, lift the chin, and check for normal breathing for no more than 10 seconds.","Not breathing normally: put the heel of your hand on the centre of the chest, other hand on top, arms straight.","Push hard and fast: 5 to 6 cm deep, 100 to 120 pushes a minute, letting the chest rise fully each time.","If trained, give 2 rescue breaths after every 30 pushes. If not, keep pushing without stopping.","Use a defibrillator (AED) the moment one arrives and follow its voice prompts.","Keep going until help takes over or the person starts breathing."],n:"Do not stop to re-check for a pulse. Swap with another rescuer every 2 minutes if you can."},
+ {c:"aid",t:"Severe bleeding",s:["Press firmly and directly on the wound with a clean cloth or your hand. Use a glove or plastic bag as a barrier if you have one.","Keep pressing. If blood soaks through, add more cloth on top. Do not lift the first layer.","Lay the person down and keep them warm.","Limb bleeding that is life-threatening and will not stop: put a tourniquet 5 to 7 cm above the wound, not over a joint. Tighten until the bleeding stops and write down the time.","Get emergency help. Do not loosen a tourniquet once it is on."],n:"Do not remove an object stuck in a wound. Pad around it and press on either side."},
+ {c:"aid",t:"Choking (adult or child over 1)",s:["If they can cough or speak, tell them to keep coughing.","If they cannot: lean them forward and give up to 5 sharp back blows between the shoulder blades with the heel of your hand.","Still blocked: give up to 5 abdominal thrusts. Stand behind, fist just above the navel, pull sharply in and up.","Alternate 5 back blows and 5 thrusts. Call the emergency number.","If they go unresponsive, lower them to the ground and start CPR."],n:"Babies under 1 need a different method: back blows and chest thrusts, face down along your forearm. No abdominal thrusts."},
+ {c:"aid",t:"Unresponsive but breathing: recovery position",s:["Kneel beside them. Place the arm nearest you out at a right angle.","Bring the far hand across and hold the back of it against their near cheek.","Pull the far knee up, then roll them toward you onto their side.","Tilt the head back slightly so the airway stays open and fluid can drain.","Call for help and keep checking their breathing."],n:"If you suspect a spinal injury, move them only if the airway is at risk."},
+ {c:"aid",t:"Burns",s:["Cool the burn under cool running water for 20 minutes. Start as soon as possible.","Remove rings, watches and clothing near the burn, unless stuck to the skin.","Cover loosely with cling film or a clean, non-fluffy cloth.","Get medical help for burns bigger than the person's hand, burns on the face, hands or groin, deep burns, chemical or electrical burns, and any burn on a child."],n:"No ice, butter, oil or toothpaste. Do not burst blisters."},
+ {c:"aid",t:"Shock (pale, cold, clammy, fast pulse)",s:["Lay the person down. Raise the legs if injuries allow.","Treat the cause you can see, such as bleeding.","Keep them warm with a blanket or coat.","Call the emergency number. Watch their breathing and response."],n:"Give nothing to eat or drink."},
+ {c:"aid",t:"Broken bones and sprains",s:["Keep the injured part still in the position you found it.","Pad and splint it, covering the joints above and below the injury.","Check fingers or toes beyond the injury for colour, warmth and feeling.","A wrapped cold pack helps swelling. 15 to 20 minutes at a time.","Cover an open wound with a clean dressing before splinting."],n:"Do not try to straighten a bone or push it back in."},
+ {c:"aid",t:"Heat exhaustion and heat stroke",s:["Heat exhaustion (heavy sweat, headache, weakness, nausea): move to shade, lie down, loosen clothing, sip water or rehydration drink, cool with wet cloths and fanning.","Heat stroke (confusion, collapse, very hot skin, 40 °C or more) is an emergency. Call for help.","Cool them fast: cold water immersion if possible, otherwise soak the skin and fan hard, with cold packs at the neck, armpits and groin.","Keep cooling until help arrives."],n:"Do not give drinks to someone who is confused or drowsy."},
+ {c:"aid",t:"Hypothermia",s:["Get out of wind and wet. Insulate them from the ground.","Replace wet clothing with dry layers. Cover the head.","Warm the chest, neck and groin first, with blankets or skin contact.","If fully alert, give warm sweet drinks.","Handle them gently. Severe cases (drowsy, slurred speech, shivering has stopped) need emergency help."],n:"No alcohol. Do not rub the arms and legs, and do not use very hot water."},
+ {c:"aid",t:"Dehydration and rehydration drink",s:["Signs: dark urine, dry mouth, dizziness, headache, tiredness.","Mix 1 litre of safe water with 6 level teaspoons of sugar and half a level teaspoon of salt.","Take small sips often, especially after vomiting or diarrhoea.","Rest in shade and avoid effort in the heat of the day."],n:"Get medical help for confusion, no urine in 8 hours, or if fluids will not stay down."},
+ {c:"aid",t:"Severe allergic reaction",s:["Signs: swelling of the face or throat, trouble breathing, widespread rash, faintness.","If they carry an adrenaline auto-injector, use it in the outer thigh straight away.","Call the emergency number and say anaphylaxis.","Lay them flat with legs raised. If breathing is hard, let them sit up.","A second injector can be used after 5 minutes if there is no improvement."],n:"Do not let them stand or walk, even if they feel better."},
+ {c:"aid",t:"Snake bite",s:["Move away from the snake. Keep the person calm and as still as possible.","Remove rings and tight items near the bite.","Keep the bitten limb still, at about heart level.","Get to a hospital as fast as you safely can. Note the time and what the snake looked like."],n:"Do not cut, suck, ice or tourniquet the bite. Do not try to catch the snake."},
+ {c:"water",t:"Make water safe to drink",s:["Cloudy water: let it settle, then pour through a clean cloth first.","Boil: bring to a rolling boil for 1 minute. Above about 2,000 m, boil for 3 minutes. Let it cool covered.","Bleach, if you cannot boil: plain unscented household bleach (5 to 9%). 2 drops per litre of clear water, 4 if cloudy. Stir and wait 30 minutes. It should smell faintly of chlorine.","Purification tablets: follow the packet.","Store treated water in clean, closed containers."],n:"Boiling and bleach kill germs. They do not remove fuel, chemicals or salt."},
+ {c:"water",t:"How much water, and where to find it",s:["Plan on about 4 litres per person per day for drinking and basic hygiene, for at least 3 days. More in heat.","Safe emergency sources at home: the water heater tank, melted ice cubes, liquid from canned food.","Collect rainwater in clean containers, then treat it.","Drink what you need today. Rationing water too hard makes you less able to find more."],n:"Do not drink from radiators, waterbeds or pools."},
+ {c:"water",t:"Food when the power is out",s:["Keep fridge and freezer doors shut.","A closed fridge keeps food safe for about 4 hours.","A full freezer holds for about 48 hours, a half-full one about 24.","Eat fridge food first, then freezer food, then shelf-stable food.","Throw out meat, dairy and leftovers that sat above 4 °C for more than 4 hours."],n:"Never taste food to test it. When in doubt, throw it out."},
+ {c:"shelter",t:"The rule of threes",s:["About 3 minutes without air.","About 3 hours without shelter in harsh cold or heat.","About 3 days without water.","About 3 weeks without food.","Use this order to decide what to fix first."]},
+ {c:"shelter",t:"Shelter basics",s:["Get out of wind, rain and direct sun before anything else.","Insulate yourself from the ground. It takes heat faster than air.","Small spaces are warmer. Build only as big as you need.","In heat, rest in shade through midday and move early or late.","Stay with a broken-down vehicle. It is shelter and easier to spot."],n:"Never run a generator, grill or charcoal fire indoors or in a tent. Carbon monoxide kills without warning."},
+ {c:"shelter",t:"Start a fire",s:["Clear a bare patch of ground away from anything that burns.","Gather three piles before you light: tinder (dry grass, paper, lint), kindling (pencil-thin sticks), fuel (wrist-thick wood).","Light the tinder, add kindling slowly, and leave gaps for air.","Add fuel once the kindling burns steadily.","Put it out fully: drown, stir, and feel for heat."]},
+ {c:"signal",t:"Signal for rescue",s:["Three of anything means distress: three whistle blasts, three flashes, three fires.","SOS in Morse is three short, three long, three short. The beacon in Tools flashes it for you.","Aim mirror or screen flashes at aircraft and distant people.","Ground signals for aircraft: a large V means you need help, a large X means you need medical help. Make them at least 3 m long in a colour that contrasts with the ground.","A text message gets through on weaker signal than a call.","Some newer iPhones can text emergency services by satellite in supported regions. Check if yours can before you rely on it."]},
+ {c:"signal",t:"Find direction without a compass",s:["The sun rises roughly in the east and sets roughly in the west.","Shadow stick: push a stick upright in flat ground and mark the shadow tip. Wait 15 to 20 minutes and mark it again. The first mark is west, the second is east.","Analog watch, northern hemisphere: point the hour hand at the sun. South lies halfway between the hour hand and 12.","Night, northern hemisphere: the two stars at the end of the Big Dipper's bowl point to the North Star.","Night, southern hemisphere: extend the long axis of the Southern Cross about 4.5 times its length. The point below that is roughly south."]},
+ {c:"signal",t:"If you are lost: STOP",s:["Stop. Sit down and stay calm.","Think. When did you last know where you were?","Observe. Check landmarks, weather, daylight, water and what you carry.","Plan. If someone knows your route, staying put is usually the best choice.","Make yourself visible and audible, and save your phone battery."]},
+ {c:"power",t:"Make your phone battery last",s:["Turn on Low Power Mode and lower the screen brightness.","Use Airplane Mode and check for signal briefly at set times.","Close navigation and camera when you are not using them.","Keep the phone warm in cold weather and shaded in heat.","Download maps and reference packs before you leave coverage."]},
+ {c:"power",t:"Power cut checklist",s:["Use flashlights, not candles.","Unplug sensitive electronics until power is stable.","Keep fridge and freezer closed.","Fill containers with water if your supply depends on pumps.","Check on neighbours who are elderly or unwell."],n:"Never use a generator, camp stove or grill indoors."},
+ {c:"power",t:"Family contact plan",s:["Agree on two meeting points: one near home, one outside your neighbourhood.","Choose one contact who lives in another city for everyone to report to.","Keep phone numbers on paper as well as in your phone.","Agree on check-in times so phones can stay off in between."]}
+];
+const CATS=[["all","All"],["aid","First aid"],["water","Water and food"],["shelter","Shelter and fire"],["signal","Signal and navigate"],["power","Power and comms"],["numbers","Numbers"],["kit","Go-bag"]];
+const CATK={aid:"AID",water:"WATER",shelter:"SHLTR",signal:"SIGNL",power:"POWER"};
+const NUMBERS=[["112","EU, and works from most mobile phones in many countries"],["911","United States, Canada"],["999","United Kingdom"],["000","Australia"],["123","Egypt, ambulance"],["122","Egypt, police"],["180","Egypt, fire"]];
+
+/* ---------- state ---------- */
+const S={view:"home",tool:"codec",cat:"all",q:"",noteId:null,noteQ:"",
+  checks:store.get("checks",{}), kit:store.get("kit",{}), plan:store.get("plan",null), free:store.get("free",""),
+  notes:store.get("notes",null)};
+if(!S.plan){S.plan={}; PLAN.forEach(p=>S.plan[p[0]]={on:p[3],gb:p[2]});}
+if(!S.notes){S.notes=[{id:"n1",title:"Welcome (example note)",body:"Notes stay on this phone only.\n\nGood things to keep here:\n- Phone numbers you would need without your contacts\n- Meeting points for your family\n- Medication names and doses\n\nDelete this note whenever you like.",ts:Date.now()}];}
+const installed=()=>{try{return !!(window.navigator.standalone||matchMedia("(display-mode: standalone)").matches||(navigator.serviceWorker&&navigator.serviceWorker.controller));}catch(e){return false;}};
+
+/* ---------- progress ---------- */
+function stackProg(id){const a=STACK.find(x=>x.id===id); const done=a.steps.filter((_,i)=>S.checks[id+"."+i]).length; return [done,a.steps.length];}
+function progress(){
+  let sd=0,st=0; STACK.forEach(a=>{const [d,t]=stackProg(a.id); sd+=d; st+=t;});
+  let kd=0,kt=0; KIT.forEach((g,gi)=>g[1].forEach((_,i)=>{kt++; if(S.kit[gi+"."+i])kd++;}));
+  const inst=installed()?1:0;
+  return {sd,st,kd,kt,inst,pct:Math.round(100*(0.5*sd/st+0.35*kd/kt+0.15*inst))};
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  const p=progress(), C=2*Math.PI*46;
+  const word=p.pct>=90?"Ready":p.pct>=50?"Getting there":p.pct>0?"Started":"Not started";
+  $("#v-home").innerHTML=`
+  <div class="card ready">
+    <div class="ring"><svg viewBox="0 0 112 112"><circle class="bg" cx="56" cy="56" r="46"/><circle class="fg" cx="56" cy="56" r="46" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p.pct/100)}"/></svg>
+      <div class="num">${p.pct}%<small>READY</small></div></div>
+    <div class="bars">
+      <div><div class="eyebrow">Readiness</div><h3>${word}</h3></div>
+      <button class="bar" data-go="stack"><span>Offline apps <em>${p.sd}/${p.st}</em></span><div class="track"><b style="width:${100*p.sd/p.st}%"></b></div></button>
+      <button class="bar" data-go="field" data-cat="kit"><span>Go-bag <em>${p.kd}/${p.kt}</em></span><div class="track"><b style="width:${100*p.kd/p.kt}%"></b></div></button>
+      <div class="bar"><span>This kit offline <em>${p.inst?"yes":"not yet"}</em></span><div class="track"><b style="width:${p.inst*100}%"></b></div></div>
+    </div>
+  </div>
+  <div class="tiles">
+    <button class="tile sos" data-go="tools" data-tool="sos"><b>SOS beacon</b><span>Flash and beep SOS in Morse</span></button>
+    <button class="tile" data-go="field" data-cat="numbers"><b>Emergency numbers</b><span>112, 911, 123 and more</span></button>
+    <button class="tile" data-go="field" data-cat="aid"><b>First aid</b><span>CPR, bleeding, burns, choking</span></button>
+    <button class="tile" data-go="field" data-cat="water"><b>Safe water</b><span>Boil times and bleach doses</span></button>
+    <button class="tile" data-go="tools" data-tool="vault"><b>Text vault</b><span>Lock a message with a passphrase</span></button>
+    <button class="tile" data-go="notes"><b>Notes</b><span>${S.notes.length} saved on this phone</span></button>
+  </div>
+  <div class="card">
+    <div class="eyebrow">What replaces what</div>
+    <div class="map">
+      <div class="h">NOMAD server</div><div></div><div class="h">On your iPhone</div>
+      <div class="n">Offline library</div><div class="a">→</div><div><b>Kiwix</b></div>
+      <div class="n">Offline maps</div><div class="a">→</div><div><b>Organic Maps</b></div>
+      <div class="n">Local AI</div><div class="a">→</div><div><b>PocketPal AI</b></div>
+      <div class="n">Khan Academy courses</div><div class="a">→</div><div><b>Kiwix packs</b></div>
+      <div class="n">Data tools</div><div class="a">→</div><div><b>Tools tab</b></div>
+      <div class="n">Notes</div><div class="a">→</div><div><b>Notes tab</b></div>
+    </div>
+    <button class="btn primary" data-go="stack">Set up the three apps</button>
+  </div>
+  <div class="card">
+    <div class="eyebrow">Use this kit with no signal</div>
+    ${p.inst?`<h3>Installed. It opens with no connection.</h3><p class="sub">Checklists and notes are stored on this phone.</p>`:
+    `<h3>This copy still needs a connection to open</h3>
+     <p class="sub">To get a real home-screen app that opens in Airplane Mode, host the kit's files once. GitHub Pages does it free.</p>
+     <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:15px">
+       <li>On github.com, create a new public repository, for example <b>outpost</b>.</li>
+       <li>Unzip the kit and upload all five files to it (Add file, Upload files).</li>
+       <li>In the repository, open Settings, then Pages. Deploy from the <b>main</b> branch and save.</li>
+       <li>After a minute, open <b>yourname.github.io/outpost</b> in Safari and let it load fully.</li>
+       <li>Tap Share, then Add to Home Screen.</li>
+       <li>Turn on Airplane Mode and open it from the home screen to test.</li>
+     </ol>`}
+    ${store.set("probe",1)?"":`<p class="tip">This browser is blocking storage, so checklists and notes will reset when you close the page.</p>`}
+  </div>`;
+}
+
+/* ---------- STACK ---------- */
+function renderStack(){
+  $("#v-stack").innerHTML=`
+  <div><div class="eyebrow">The iPhone stack</div><h2>Three free apps cover the heavy parts</h2><p class="sub">Tick each step as you go. Do the downloads on Wi-Fi, then test everything in Airplane Mode.</p></div>
+  ${STACK.map(a=>{const [d,t]=stackProg(a.id); return `
+  <div class="card appcard" id="app-${a.id}">
+    <header><div><div class="eyebrow">${a.role}</div><h2>${a.name}</h2><p class="sub">${a.by}</p></div><span class="tag ${d===t?"done":""}" data-tag="${a.id}">${d===t?"DONE":d+" / "+t}</span></header>
+    <p>${a.what}</p>
+    <a class="btn" style="text-align:center;text-decoration:none;color:inherit;display:flex;align-items:center;justify-content:center" href="${a.url}" target="_blank" rel="noopener">Open in the App Store</a>
+    <ul class="steps">${a.steps.map((s,i)=>`<li><label><input type="checkbox" id="c-${a.id}-${i}" data-check="${a.id}.${i}" ${S.checks[a.id+"."+i]?"checked":""}><span>${s}</span></label></li>`).join("")}</ul>
+    <p class="tip">${a.tip}</p>
+    ${a.id==="ai"?`<div class="scroll"><table><tr><th>Phone memory</th><th>Models</th><th>Try</th><th>Size</th></tr>${MODELS.map(m=>`<tr><td class="num">${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td><td>${m[3]}</td></tr>`).join("")}</table></div>`:""}
+  </div>`;}).join("")}
+  <div class="card">
+    <div class="eyebrow">Storage planner</div><h2>Will it fit?</h2>
+    <p class="sub">Sizes are rough and change with every release. Edit any number to match what the app shows before you download.</p>
+    <label class="f">Free space on your iPhone, in GB (Settings, General, iPhone Storage)<input type="number" id="free" inputmode="decimal" min="0" step="1" placeholder="e.g. 40" value="${esc(S.free)}"></label>
+    <div class="plan">${PLAN.map(p=>`<div class="pr"><input type="checkbox" id="p-${p[0]}" data-plan="${p[0]}" ${S.plan[p[0]].on?"checked":""}><label for="p-${p[0]}">${p[1]}</label><input type="number" id="g-${p[0]}" data-gb="${p[0]}" inputmode="decimal" min="0" step="0.5" value="${S.plan[p[0]].gb}" aria-label="${p[1]} size in GB"></div>`).join("")}</div>
+    <div class="row" style="justify-content:space-between"><span class="sub">Selected</span><span class="big" id="planTotal"></span></div>
+    <div class="meter" id="planMeter"><b></b></div>
+    <p class="sub" id="planMsg"></p>
+  </div>`;
+  updatePlan();
+}
+function updatePlan(){
+  let tot=0; PLAN.forEach(p=>{const s=S.plan[p[0]]; if(s.on) tot+=(+s.gb||0);});
+  $("#planTotal").textContent=(Math.round(tot*10)/10)+" GB";
+  const free=parseFloat(S.free), m=$("#planMeter"), msg=$("#planMsg");
+  m.className="meter";
+  if(!(free>0)){ m.firstElementChild.style.width="0%"; msg.textContent="Enter your free space to see if this fits."; return; }
+  const r=tot/free; m.firstElementChild.style.width=Math.min(100,r*100)+"%";
+  if(r>1){m.classList.add("crit"); msg.textContent="Too big by "+(Math.round((tot-free)*10)/10)+" GB. Untick something or pick a smaller Wikipedia edition.";}
+  else if(r>0.8){m.classList.add("warn"); msg.textContent="It fits, but leaves under 20% free. iPhones slow down when nearly full.";}
+  else msg.textContent="Fits, with "+(Math.round((free-tot)*10)/10)+" GB to spare.";
+}
+
+/* ---------- TOOLS ---------- */
+const TOOLS=[["codec","Encode"],["hash","Hash"],["vault","Vault"],["convert","Convert"],["pass","Password"],["coord","Coordinates"],["sos","SOS beacon"]];
+const MORSE={A:".-",B:"-...",C:"-.-.",D:"-..",E:".",F:"..-.",G:"--.",H:"....",I:"..",J:".---",K:"-.-",L:".-..",M:"--",N:"-.",O:"---",P:".--.",Q:"--.-",R:".-.",S:"...",T:"-",U:"..-",V:"...-",W:".--",X:"-..-",Y:"-.--",Z:"--..",0:"-----",1:".----",2:"..---",3:"...--",4:"....-",5:".....",6:"-....",7:"--...",8:"---..",9:"----.",".":".-.-.-",",":"--..--","?":"..--..","/":"-..-.","-":"-....-","@":".--.-."};
+const UNMORSE=Object.fromEntries(Object.entries(MORSE).map(([k,v])=>[v,k]));
+const toMorse=t=>t.toUpperCase().trim().split(/\s+/).map(w=>[...w].map(c=>MORSE[c]||"").filter(Boolean).join(" ")).filter(Boolean).join(" / ");
+const CODEC={
+  "Base64 encode":t=>b64(te.encode(t)),
+  "Base64 decode":t=>td.decode(unb64(t)),
+  "URL encode":t=>encodeURIComponent(t),
+  "URL decode":t=>decodeURIComponent(t),
+  "Hex encode":t=>[...te.encode(t)].map(b=>b.toString(16).padStart(2,"0")).join(" "),
+  "Hex decode":t=>{const h=t.replace(/0x/gi,"").replace(/[^0-9a-f]/gi,""); if(!h||h.length%2) throw new Error("Hex needs an even number of digits."); return td.decode(new Uint8Array(h.match(/../g).map(x=>parseInt(x,16))));},
+  "Binary encode":t=>[...te.encode(t)].map(b=>b.toString(2).padStart(8,"0")).join(" "),
+  "Binary decode":t=>{const b=t.replace(/[^01]/g,""); if(!b||b.length%8) throw new Error("Binary needs groups of 8 bits."); return td.decode(new Uint8Array(b.match(/.{8}/g).map(x=>parseInt(x,2))));},
+  "Morse encode":t=>toMorse(t),
+  "Morse decode":t=>t.trim().replace(/[–—_]/g,"-").replace(/[·•]/g,".").split(/\s*\/\s*|\s{3,}/).map(w=>w.trim().split(/\s+/).map(c=>UNMORSE[c]||"?").join("")).join(" "),
+  "ROT13":t=>t.replace(/[a-z]/gi,c=>String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+13)?c:c-26)),
+  "Reverse":t=>[...t].reverse().join("")
+};
+const UNITS={
+  Length:{m:1,km:1000,cm:0.01,mm:0.001,mile:1609.344,yard:0.9144,foot:0.3048,inch:0.0254,"nautical mile":1852},
+  Weight:{kg:1,g:0.001,lb:0.45359237,oz:0.028349523125},
+  Volume:{litre:1,ml:0.001,"US gallon":3.785411784,"UK gallon":4.54609,"US cup":0.2365882365,"US fl oz":0.0295735295625,tablespoon:0.01478676478,teaspoon:0.00492892159},
+  Speed:{"km/h":1,"m/s":3.6,mph:1.609344,knot:1.852},
+  Temperature:{"°C":0,"°F":0,K:0}
+};
+function convert(cat,v,a,b){
+  if(cat==="Temperature"){const c=a==="°C"?v:a==="°F"?(v-32)*5/9:v-273.15; return b==="°C"?c:b==="°F"?c*9/5+32:c+273.15;}
+  return v*UNITS[cat][a]/UNITS[cat][b];
+}
+const fmt=n=>{if(!isFinite(n))return "–"; const a=Math.abs(n); return (a!==0&&(a<0.0001||a>=1e9))?n.toExponential(4):String(+n.toPrecision(7));};
+
+function renderTools(){
+  const t=S.tool;
+  const panels={
+  codec:`<div class="card"><div class="eyebrow">Encode and decode</div>
+    <label class="f">Operation<select id="codecOp">${Object.keys(CODEC).map(k=>`<option>${k}</option>`).join("")}</select></label>
+    <label class="f">Input<textarea id="codecIn" placeholder="Type or paste text">Meet at the bridge at 0600</textarea></label>
+    <div class="out" id="codecOut"></div>
+    <div class="row"><button class="btn primary grow" data-act="copyOut" data-from="codecOut">Copy result</button><button class="btn" data-act="codecSwap">Use result as input</button></div></div>`,
+  hash:`<div class="card"><div class="eyebrow">Hash</div><p class="sub">A fingerprint of text. The same input always gives the same hash, so you can check that a message was not changed.</p>
+    <label class="f">Algorithm<select id="hashAlg"><option>SHA-256</option><option>SHA-384</option><option>SHA-512</option><option>SHA-1</option></select></label>
+    <label class="f">Text<textarea id="hashIn">hello</textarea></label>
+    <div class="out" id="hashOut"></div>
+    <button class="btn primary" data-act="copyOut" data-from="hashOut">Copy hash</button></div>`,
+  vault:`<div class="card"><div class="eyebrow">Text vault</div><p class="sub">Locks text with AES-256 and a passphrase. Nothing leaves the phone. Store the locked text anywhere, even on paper.</p>
+    <label class="f">Passphrase<input type="password" id="vaultPass" autocomplete="off" placeholder="Long and memorable"></label>
+    <label class="f">Text to lock, or locked text to open<textarea id="vaultIn" placeholder="Type a message, or paste text that starts with OP1."></textarea></label>
+    <div class="row"><button class="btn primary grow" data-act="lock">Lock</button><button class="btn grow" data-act="unlock">Unlock</button></div>
+    <div class="out" id="vaultOut">The result appears here.</div>
+    <button class="btn" data-act="copyOut" data-from="vaultOut">Copy result</button>
+    <p class="tip">There is no reset. If you forget the passphrase, the text is gone.</p></div>`,
+  convert:`<div class="card"><div class="eyebrow">Unit converter</div>
+    <label class="f">Kind<select id="cvCat">${Object.keys(UNITS).map(k=>`<option>${k}</option>`).join("")}</select></label>
+    <div class="row"><label class="f grow">Value<input type="number" id="cvVal" inputmode="decimal" value="1"></label></div>
+    <div class="row"><label class="f grow">From<select id="cvFrom"></select></label><label class="f grow">To<select id="cvTo"></select></label></div>
+    <div class="out big" id="cvOut"></div>
+    <button class="btn" data-act="cvSwap">Swap units</button></div>`,
+  pass:`<div class="card"><div class="eyebrow">Password generator</div><p class="sub">Made on this phone with its secure random source.</p>
+    <label class="f">Length: <span id="pwLenV">20</span><input type="range" id="pwLen" min="8" max="48" value="20" style="width:100%;accent-color:var(--signal);min-height:36px"></label>
+    <div class="row"><label class="row" style="gap:8px"><input type="checkbox" id="pwSym" checked style="width:22px;height:22px;accent-color:var(--signal)">Symbols</label>
+    <label class="row" style="gap:8px"><input type="checkbox" id="pwAmb" checked style="width:22px;height:22px;accent-color:var(--signal)">Skip look-alikes (0 O 1 l I)</label></div>
+    <div class="out big" id="pwOut" style="font-size:18px"></div>
+    <div class="row"><button class="btn primary grow" data-act="pwNew">New password</button><button class="btn" data-act="copyOut" data-from="pwOut">Copy</button></div></div>`,
+  coord:`<div class="card"><div class="eyebrow">Coordinates</div><p class="sub">Switch between decimal degrees and degrees, minutes, seconds. Useful for reading a position to rescuers.</p>
+    <label class="f">Position<input type="text" id="coIn" value="30.0444, 31.2357" autocomplete="off" autocapitalize="characters"></label>
+    <div class="out" id="coOut"></div>
+    <button class="btn" data-act="copyOut" data-from="coOut">Copy</button>
+    <p class="sub">Accepts <b>30.0444, 31.2357</b> or <b>30 2 40 N 31 14 8.5 E</b>.</p></div>`,
+  sos:`<div class="card"><div class="eyebrow">SOS beacon</div><h2>Turn the screen into a signal lamp</h2>
+    <p class="sub">The whole screen flashes your message in Morse. Set brightness to full and point the screen at whoever you are signalling.</p>
+    <label class="f">Message<input type="text" id="sosMsg" value="SOS" maxlength="40" autocapitalize="characters" autocomplete="off"></label>
+    <div class="out" id="sosCode"></div>
+    <label class="row" style="gap:8px"><input type="checkbox" id="sosSound" checked style="width:22px;height:22px;accent-color:var(--signal)">Beep as well (needs the ring switch on)</label>
+    <button class="btn primary" data-act="beacon">Start beacon</button>
+    <p class="tip">Flashes are slow, about two a second at most. Still, avoid it near anyone sensitive to flashing light.</p></div>`
+  };
+  $("#v-tools").innerHTML=`<div><div class="eyebrow">Data tools</div><h2>Works with no connection</h2></div>
+    <div class="chips">${TOOLS.map(x=>`<button class="chip ${x[0]===t?"on":""}" data-tool="${x[0]}">${x[1]}</button>`).join("")}</div>${panels[t]}`;
+  ({codec:runCodec,hash:runHash,convert:()=>{fillUnits();runConvert();},pass:runPass,coord:runCoord,sos:runSosPreview,vault:()=>{}})[t]();
+}
+function runCodec(){const o=$("#codecOut"); try{o.textContent=CODEC[$("#codecOp").value]($("#codecIn").value); o.classList.remove("err");}catch(e){o.textContent="Could not decode that. "+(e.message&&/needs/.test(e.message)?e.message:"Check the input matches the operation."); o.classList.add("err");}}
+async function runHash(){const o=$("#hashOut"); try{const d=await crypto.subtle.digest($("#hashAlg").value,te.encode($("#hashIn").value)); o.textContent=[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,"0")).join(""); o.classList.remove("err");}catch(e){o.textContent="Hashing is not available in this browser context."; o.classList.add("err");}}
+async function vaultKey(pass,salt){const km=await crypto.subtle.importKey("raw",te.encode(pass),"PBKDF2",false,["deriveKey"]); return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:250000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
+async function vault(lock){
+  const o=$("#vaultOut"), pass=$("#vaultPass").value, txt=$("#vaultIn").value.trim(); o.classList.remove("err");
+  if(!pass||!txt){o.textContent="Enter both a passphrase and some text."; o.classList.add("err"); return;}
+  o.textContent="Working…";
+  try{
+    if(lock){const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12)); const key=await vaultKey(pass,salt);
+      const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,te.encode(txt))); const all=new Uint8Array(28+ct.length); all.set(salt); all.set(iv,16); all.set(ct,28); o.textContent="OP1."+b64(all);}
+    else{ if(!txt.startsWith("OP1.")) throw new Error("fmt"); const all=unb64(txt.slice(4)); const key=await vaultKey(pass,all.slice(0,16));
+      o.textContent=td.decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:all.slice(16,28)},key,all.slice(28)));}
+  }catch(e){o.textContent=lock?"Locking is not available in this browser context.":(e.message==="fmt"?"That is not locked text. It should start with OP1.":"Wrong passphrase, or the locked text is damaged."); o.classList.add("err");}
+}
+function fillUnits(){const u=Object.keys(UNITS[$("#cvCat").value]); $("#cvFrom").innerHTML=u.map(x=>`<option>${x}</option>`).join(""); $("#cvTo").innerHTML=u.map(x=>`<option>${x}</option>`).join(""); $("#cvTo").selectedIndex=Math.min(1,u.length-1);}
+function runConvert(){const v=parseFloat($("#cvVal").value), a=$("#cvFrom").value, b=$("#cvTo").value; $("#cvOut").textContent=isNaN(v)?"Enter a number":fmt(v)+" "+a+" = "+fmt(convert($("#cvCat").value,v,a,b))+" "+b;}
+function runPass(){
+  const n=+$("#pwLen").value; $("#pwLenV").textContent=n;
+  let cs="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; if($("#pwSym").checked) cs+="!@#$%^&*-_=+?"; if($("#pwAmb").checked) cs=cs.replace(/[0O1lI]/g,"");
+  const lim=Math.floor(4294967296/cs.length)*cs.length, buf=new Uint32Array(1); let out="";
+  while(out.length<n){crypto.getRandomValues(buf); if(buf[0]<lim) out+=cs[buf[0]%cs.length];}
+  $("#pwOut").textContent=out;
+}
+function dms(v,pos,neg){const h=v<0?neg:pos; v=Math.abs(v); let d=Math.floor(v), m=Math.floor((v-d)*60), s=Math.round(((v-d)*60-m)*600)/10; if(s>=60){s=0;m++;} if(m>=60){m=0;d++;} return d+"° "+m+"′ "+s.toFixed(1)+"″ "+h;}
+function runCoord(){
+  const o=$("#coOut"), t=$("#coIn").value.trim().toUpperCase(); o.classList.remove("err");
+  try{
+    if(/[NSEW]/.test(t)){
+      const parts=[...t.matchAll(/([^NSEW]*)([NSEW])/g)].map(m=>{const n=(m[1].match(/\d+(?:\.\d+)?/g)||[]).map(Number); if(!n.length) throw 0; const v=n[0]+(n[1]||0)/60+(n[2]||0)/3600; return [m[2],(m[2]==="S"||m[2]==="W")?-v:v];});
+      const lat=parts.find(p=>p[0]==="N"||p[0]==="S"), lon=parts.find(p=>p[0]==="E"||p[0]==="W"); if(!lat||!lon) throw 0;
+      check(lat[1],lon[1]); o.textContent=lat[1].toFixed(5)+", "+lon[1].toFixed(5);
+    }else{
+      const n=(t.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number); if(n.length!==2) throw 0; check(n[0],n[1]);
+      o.textContent=dms(n[0],"N","S")+"\n"+dms(n[1],"E","W");
+    }
+  }catch(e){o.textContent="Could not read that. Use latitude then longitude, like 30.0444, 31.2357"; o.classList.add("err");}
+  function check(a,b){if(Math.abs(a)>90||Math.abs(b)>180) throw 0;}
+}
+function runSosPreview(){$("#sosCode").textContent=toMorse($("#sosMsg").value)||"Type letters or numbers";}
+
+/* beacon */
+let bT=null,bCtx=null,bGain=null;
+function startBeacon(){
+  const msg=$("#sosMsg").value.trim().toUpperCase(), U=240, seq=[];
+  msg.split(/\s+/).forEach(w=>{[...w].forEach(ch=>{const m=MORSE[ch]; if(!m)return; [...m].forEach(s=>{seq.push([1,s==="."?U:3*U]); seq.push([0,U]);}); seq[seq.length-1][1]=3*U;}); if(seq.length) seq[seq.length-1][1]=7*U;});
+  if(!seq.length){toast("Type letters or numbers first"); return;}
+  const el=$("#beacon"); $("#beaconMsg").textContent=msg; $("#beaconCode").textContent=toMorse(msg);
+  if($("#sosSound").checked){ try{ const AC=window.AudioContext||window.webkitAudioContext; bCtx=new AC(); const osc=bCtx.createOscillator(); bGain=bCtx.createGain(); osc.frequency.value=800; bGain.gain.value=0; osc.connect(bGain); bGain.connect(bCtx.destination); osc.start(); }catch(e){bCtx=null;bGain=null;} }
+  el.classList.add("show"); let i=0;
+  (function step(){const [on,ms]=seq[i]; el.classList.toggle("lit",!!on); if(bGain) try{bGain.gain.setValueAtTime(on?0.25:0,bCtx.currentTime);}catch(e){} i=(i+1)%seq.length; bT=setTimeout(step,ms);})();
+}
+function stopBeacon(){clearTimeout(bT); bT=null; const el=$("#beacon"); el.classList.remove("show","lit"); if(bCtx){try{bCtx.close();}catch(e){} bCtx=null;bGain=null;}}
+
+/* ---------- NOTES ---------- */
+const saveNotes=()=>store.set("notes",S.notes);
+const ago=ts=>{const d=new Date(ts); return d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});};
+function renderNotes(){
+  const v=$("#v-notes");
+  if(S.noteId){
+    const n=S.notes.find(x=>x.id===S.noteId); if(!n){S.noteId=null; return renderNotes();}
+    v.innerHTML=`<div class="row"><button class="btn small" data-act="noteBack">‹ All notes</button><span class="sub grow" id="noteSaved" style="text-align:right">Saved</span></div>
+      <input type="text" id="noteTitle" placeholder="Title" value="${esc(n.title)}" style="font-weight:700;font-size:18px">
+      <textarea id="noteBody" placeholder="Write here">${esc(n.body)}</textarea>
+      <div class="row"><button class="btn grow" data-act="noteCopy">Copy note</button><button class="btn danger" data-act="noteDel">Delete</button></div>`;
+    return;
+  }
+  const q=S.noteQ.toLowerCase(), list=S.notes.filter(n=>!q||(n.title+" "+n.body).toLowerCase().includes(q)).sort((a,b)=>b.ts-a.ts);
+  v.innerHTML=`<div class="row"><div class="grow"><div class="eyebrow">Notes</div><h2>Kept on this phone</h2></div><button class="btn primary" data-act="noteNew">New note</button></div>
+    <input type="search" id="noteQ" placeholder="Search notes" value="${esc(S.noteQ)}">
+    <div id="noteList" style="display:flex;flex-direction:column;gap:10px">${noteListHtml(list)}</div>
+    <details class="ref"><summary><span class="k">SAVE</span><b>Back up or move your notes</b></summary><div class="bd">
+      <p class="sub">Notes live only in this browser. Copy a backup now and then and paste it somewhere safe.</p>
+      <button class="btn" data-act="noteBackup">Copy backup of all notes</button>
+      <label class="f">Restore: paste a backup here<textarea id="noteRestore" style="min-height:70px" placeholder="Paste backup text"></textarea></label>
+      <button class="btn" data-act="noteRestoreGo">Restore from pasted backup</button></div></details>`;
+}
+function noteListHtml(list){return list.length?list.map(n=>`<button class="note" data-note="${esc(n.id)}"><b>${esc(n.title||"Untitled")}</b><span>${esc(n.body.slice(0,160))}</span><time>${ago(n.ts)}</time></button>`).join(""):`<div class="empty">${S.notes.length?"No notes match that search.":"No notes yet. Tap New note to write one."}</div>`;}
+let noteT, delArm=false;
+function noteInput(){const n=S.notes.find(x=>x.id===S.noteId); if(!n)return; n.title=$("#noteTitle").value; n.body=$("#noteBody").value; n.ts=Date.now(); $("#noteSaved").textContent="Saving…"; clearTimeout(noteT); noteT=setTimeout(()=>{$("#noteSaved")&&($("#noteSaved").textContent=saveNotes()?"Saved":"Not saved: storage is blocked");},350);}
+
+/* ---------- FIELD ---------- */
+function renderField(){
+  $("#v-field").innerHTML=`<div><div class="eyebrow">Field reference</div><h2>Short cards for bad moments</h2></div>
+    <input type="search" id="refQ" placeholder="Search: burn, water, lost…" value="${esc(S.q)}">
+    <div class="chips">${CATS.map(c=>`<button class="chip ${c[0]===S.cat?"on":""}" data-cat="${c[0]}">${c[1]}</button>`).join("")}</div>
+    <div id="refList" style="display:flex;flex-direction:column;gap:10px"></div>`;
+  renderRefList();
+}
+function numbersHtml(){return `<div class="card"><div class="eyebrow">Emergency numbers</div><div class="scroll"><table>${NUMBERS.map(n=>`<tr><td class="num">${n[0]}</td><td>${n[1]}</td></tr>`).join("")}</table></div><p class="sub">Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.</p></div>`;}
+function kitHtml(){let d=0,t=0; KIT.forEach((g,gi)=>g[1].forEach((_,i)=>{t++; if(S.kit[gi+"."+i])d++;}));
+  return `<div class="card"><header class="row" style="justify-content:space-between"><div><div class="eyebrow">Go-bag</div><h3>Pack once, check twice a year</h3></div><span class="tag ${d===t?"done":""}" id="kitTag">${d} / ${t}</span></header>
+  ${KIT.map((g,gi)=>`<div class="kitgroup"><div class="eyebrow" style="padding:8px 0 6px">${g[0]}</div><ul class="steps">${g[1].map((s,i)=>`<li><label><input type="checkbox" id="k-${gi}-${i}" data-kit="${gi}.${i}" ${S.kit[gi+"."+i]?"checked":""}><span>${s}</span></label></li>`).join("")}</ul></div>`).join("")}</div>`;}
+function renderRefList(){
+  const q=S.q.trim().toLowerCase(), c=S.cat; let h="";
+  if(c==="numbers") h=numbersHtml();
+  else if(c==="kit") h=kitHtml();
+  else{
+    const list=REF.filter(r=>(c==="all"||r.c===c)&&(!q||(r.t+" "+r.s.join(" ")+" "+(r.n||"")).toLowerCase().includes(q)));
+    h=list.map(r=>`<details class="ref"${q&&list.length<=2?" open":""}><summary><span class="k ${r.c==="aid"?"aid":""}">${CATK[r.c]}</span><b>${r.t}</b></summary><div class="bd"><ol>${r.s.map(s=>`<li>${s}</li>`).join("")}</ol>${r.n?`<p class="never"><b>Careful.</b> ${r.n}</p>`:""}</div></details>`).join("");
+    if(c==="all"&&!q) h=numbersHtml()+h;
+    if(!list.length) h=`<div class="empty">Nothing matches “${esc(S.q)}”. Try one word, like burn or water.</div>`;
+  }
+  $("#refList").innerHTML=h;
+}
+
+/* ---------- router & events ---------- */
+const VIEWS={home:renderHome,stack:renderStack,tools:renderTools,notes:renderNotes,field:renderField};
+function show(v,keepScroll){ if(!VIEWS[v]) v="home"; S.view=v; $$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v)); $$(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.go===v)); VIEWS[v](); if(!keepScroll) window.scrollTo(0,0); }
+function go(v){ if(location.hash.slice(1)===v) show(v); else { try{location.hash=v;}catch(e){} show(v); } }
+window.addEventListener("hashchange",()=>{const v=location.hash.slice(1); if(v!==S.view&&VIEWS[v]) show(v);});
+
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-go],[data-tool],[data-cat],[data-act],[data-note],#beacon"); if(!el) return;
+  if(el.id==="beacon") return stopBeacon();
+  if(el.dataset.go){ if(el.dataset.tool) S.tool=el.dataset.tool; if(el.dataset.cat){S.cat=el.dataset.cat; S.q="";} if(el.dataset.go==="notes") S.noteId=null; return go(el.dataset.go); }
+  if(el.dataset.tool){ S.tool=el.dataset.tool; return show("tools",true); }
+  if(el.dataset.cat){ S.cat=el.dataset.cat; $$("#v-field .chip").forEach(c=>c.classList.toggle("on",c.dataset.cat===S.cat)); return renderRefList(); }
+  if(el.dataset.note){ S.noteId=el.dataset.note; delArm=false; return show("notes"); }
+  const a=el.dataset.act;
+  if(a==="copyOut") return copy($("#"+el.dataset.from).textContent);
+  if(a==="codecSwap"){ $("#codecIn").value=$("#codecOut").textContent; return runCodec(); }
+  if(a==="lock") return vault(true);
+  if(a==="unlock") return vault(false);
+  if(a==="cvSwap"){ const f=$("#cvFrom"),t=$("#cvTo"),x=f.value; f.value=t.value; t.value=x; return runConvert(); }
+  if(a==="pwNew") return runPass();
+  if(a==="beacon") return startBeacon();
+  if(a==="noteNew"){ const n={id:"n"+Date.now(),title:"",body:"",ts:Date.now()}; S.notes.push(n); saveNotes(); S.noteId=n.id; delArm=false; show("notes"); return $("#noteTitle").focus(); }
+  if(a==="noteBack"){ const n=S.notes.find(x=>x.id===S.noteId); if(n&&!n.title.trim()&&!n.body.trim()){S.notes=S.notes.filter(x=>x!==n);} saveNotes(); S.noteId=null; return show("notes"); }
+  if(a==="noteCopy"){ const n=S.notes.find(x=>x.id===S.noteId); return copy((n.title?n.title+"\n\n":"")+n.body); }
+  if(a==="noteDel"){ if(!delArm){delArm=true; el.textContent="Tap again to delete"; return;} S.notes=S.notes.filter(x=>x.id!==S.noteId); saveNotes(); S.noteId=null; delArm=false; toast("Note deleted"); return show("notes"); }
+  if(a==="noteBackup") return copy(JSON.stringify({outpost:1,notes:S.notes}));
+  if(a==="noteRestoreGo"){ try{ const d=JSON.parse($("#noteRestore").value); if(!d||!Array.isArray(d.notes)) throw 0; let add=0; d.notes.forEach(n=>{ if(n&&typeof n.body==="string"&&!S.notes.some(x=>x.id===n.id)){ S.notes.push({id:String(n.id||"n"+Math.random()),title:String(n.title||""),body:n.body,ts:+n.ts||Date.now()}); add++; } }); saveNotes(); toast(add+" note"+(add===1?"":"s")+" restored"); show("notes",true); }catch(x){ toast("That is not a valid backup"); } return; }
+});
+document.addEventListener("input",e=>{
+  const t=e.target, id=t.id;
+  if(id==="codecIn") return runCodec();
+  if(id==="hashIn") return runHash();
+  if(id==="cvVal") return runConvert();
+  if(id==="pwLen") return runPass();
+  if(id==="coIn") return runCoord();
+  if(id==="sosMsg") return runSosPreview();
+  if(id==="noteTitle"||id==="noteBody") return noteInput();
+  if(id==="noteQ"){ S.noteQ=t.value; const q=S.noteQ.toLowerCase(); return $("#noteList").innerHTML=noteListHtml(S.notes.filter(n=>!q||(n.title+" "+n.body).toLowerCase().includes(q)).sort((a,b)=>b.ts-a.ts)); }
+  if(id==="refQ"){ S.q=t.value; if(S.q&&(S.cat==="numbers"||S.cat==="kit")){S.cat="all"; $$("#v-field .chip").forEach(c=>c.classList.toggle("on",c.dataset.cat==="all"));} return renderRefList(); }
+  if(id==="free"){ S.free=t.value; store.set("free",S.free); return updatePlan(); }
+  if(t.dataset.gb){ S.plan[t.dataset.gb].gb=parseFloat(t.value)||0; store.set("plan",S.plan); return updatePlan(); }
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.check){ S.checks[t.dataset.check]=t.checked; store.set("checks",S.checks); const id=t.dataset.check.split(".")[0], [d,n]=stackProg(id), tag=$(`[data-tag="${id}"]`); tag.textContent=d===n?"DONE":d+" / "+n; tag.classList.toggle("done",d===n); return; }
+  if(t.dataset.kit){ S.kit[t.dataset.kit]=t.checked; store.set("kit",S.kit); const p=progress(), tag=$("#kitTag"); tag.textContent=p.kd+" / "+p.kt; tag.classList.toggle("done",p.kd===p.kt); return; }
+  if(t.dataset.plan){ S.plan[t.dataset.plan].on=t.checked; store.set("plan",S.plan); return updatePlan(); }
+  if(t.id==="codecOp") return runCodec();
+  if(t.id==="hashAlg") return runHash();
+  if(t.id==="cvCat"){ fillUnits(); return runConvert(); }
+  if(t.id==="cvFrom"||t.id==="cvTo") return runConvert();
+  if(t.id==="pwSym"||t.id==="pwAmb") return runPass();
+});
+function net(){const on=navigator.onLine!==false, p=$("#net"); p.classList.toggle("off",!on); p.lastElementChild.textContent=on?"ONLINE":"NO SIGNAL";}
+window.addEventListener("online",net); window.addEventListener("offline",net); net();
+
+/* offline install: only works when the files are hosted on their own site */
+try{ if("serviceWorker" in navigator && location.protocol==="https:" && window.top===window.self){ navigator.serviceWorker.register("sw.js").then(()=>{ if(S.view==="home") renderHome(); }).catch(()=>{}); } }catch(e){}
+
+show(VIEWS[location.hash.slice(1)]?location.hash.slice(1):"home");
+</script>
+</body>
+</html>
