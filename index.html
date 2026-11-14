@@ -275,6 +275,7 @@ body[data-view="quran"] .foot{display:none}
 .fsbtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .gwrap.fs{position:fixed;inset:0;z-index:40;background:var(--ground);padding:calc(env(safe-area-inset-top) + 8px) 12px calc(env(safe-area-inset-bottom) + 12px);justify-content:center;align-items:center;overflow:auto}
 .gwrap.fs>*{width:100%;max-width:min(560px,100%)}
+.gwrap.fs{padding-top:calc(env(safe-area-inset-top) + 64px)}
 .gwrap.fs .gtop{position:absolute;top:calc(env(safe-area-inset-top) + 8px);inset-inline-end:12px;width:auto;min-height:0}
 .gwrap.fs .gback{display:none}
 .gwrap.fs .fsbtn{background:color-mix(in srgb,var(--panel) 85%,transparent);backdrop-filter:blur(6px)}
@@ -339,6 +340,48 @@ body.gamefs{overflow:hidden}
 html[lang="ar"] .tabs button{font-size:10px}
 .tabs button{min-width:0}
 .tabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* chess v2: green board, picture pieces, clocks, review buttons, online */
+.sq.lt{background:#ebecd0}.sq.dk{background:#739552}
+.sq.last.lt{background:#f5f682}.sq.last.dk{background:#b9ca43}
+.sq.sel.lt{background:#f5f682}.sq.sel.dk{background:#b9ca43}
+.sq.sel{box-shadow:none}
+.sq.chk{background:radial-gradient(circle,#ff3b30 0%,#e8352b 38%,rgba(232,53,43,0) 72%),var(--sqc,#739552)}
+.sq.lt.chk{--sqc:#ebecd0}
+.sq.dot::after{content:"";width:30%;height:30%;border-radius:50%;background:rgba(0,0,0,.14)}
+.sq.cap::after{content:"";position:absolute;inset:0;border-radius:50%;border:calc(var(--bs)/8*.09) solid rgba(0,0,0,.14)}
+.sq.lt .cr,.sq.lt .cf{color:#739552}.sq.dk .cr,.sq.dk .cf{color:#ebecd0}
+.cr,.cf{font:700 calc(var(--bs)/34)/1 -apple-system,BlinkMacSystemFont,sans-serif}
+.board{border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.3)}
+.board.review{outline:3px solid var(--signal);outline-offset:2px}
+.pc{display:block;width:100%;height:100%;background:center/88% no-repeat;pointer-events:none;position:relative;z-index:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.cp{display:inline-block;width:17px;height:17px;background:center/contain no-repeat;margin-inline-end:-6px;vertical-align:middle}
+.caps{letter-spacing:0;display:flex;align-items:center;gap:0;font-size:12px}
+.caps em{margin-inline-start:9px}
+.promo button{background:#ebecd0;padding:6px}
+.promo .pc{width:100%;height:100%}
+.pcbig{display:inline-block;width:56px;height:56px;background:center/contain no-repeat}
+.pcimg{display:block;width:52px;height:52px;background:center/contain no-repeat;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.navrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.navrow .btn{display:grid;place-items:center;min-height:44px;padding:6px}
+.navrow svg{width:22px;height:22px;fill:currentColor;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.clock{flex:none;font:700 20px/1 var(--display);font-variant-numeric:tabular-nums;padding:8px 10px;border-radius:8px;background:var(--sunk);border:1px solid var(--line);color:var(--muted);min-width:76px;text-align:center;direction:ltr}
+.clock.run{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.clock.low.run{background:#c62828;border-color:#c62828;color:#fff}
+.onlinecard{display:flex;align-items:center;gap:14px;text-align:start;border:0;border-radius:18px;padding:16px;background:linear-gradient(135deg,#2f7d32,#5aa83c);color:#fff}
+.oicon{flex:none;width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.18);display:grid;place-items:center}
+.oicon svg{width:30px;height:30px;fill:none;stroke:#fff;stroke-width:1.8}
+.otxt{display:flex;flex-direction:column;gap:3px}.otxt b{font-size:18px}.otxt small{font-size:13px;opacity:.9}
+.namechip{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font-size:14px}
+h3.sect{margin-top:6px}
+.queue{align-items:center;text-align:center;padding:26px 18px}
+.queue .big{font-size:28px}
+.radar{position:relative;width:120px;height:120px;display:grid;place-items:center}
+.radar>i{position:absolute;inset:0;border-radius:50%;border:2px solid var(--signal);opacity:0;animation:ping 2.4s ease-out infinite}
+.radar>i:nth-child(2){animation-delay:.8s}.radar>i:nth-child(3){animation-delay:1.6s}
+.radar b{width:64px;height:64px;border-radius:50%;background:#ebecd0;display:grid;place-items:center}
+.radar b .pc{width:48px;height:48px}
+@keyframes ping{0%{transform:scale(.45);opacity:.9}100%{transform:scale(1.1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.radar>i{animation:none;opacity:.4}}
 /* settings bar: language and theme switches */
 .prefs{display:flex;gap:8px;margin:-4px 0 14px}
 .sw{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:46px;font-weight:600;font-size:14px;text-align:start}
@@ -712,7 +755,20 @@ const AR={
 "Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.":"الأرقام تختلف حسب الدولة. تأكد من رقم بلدك واكتبه في الملاحظات. قل مكانك أولًا، ثم ما حدث.",
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
-"Games":"الألعاب","Play with no connection":"العب بدون اتصال","Chess":"الشطرنج","Play a bot from 400 to 2000 Elo":"العب ضد روبوت من 400 إلى 2000 إيلو",
+"Games":"الألعاب",
+"Bots from 400 to 2000 Elo, or play online":"روبوتات من 400 إلى 2000 إيلو، أو العب أونلاين","Online name":"اسمك أونلاين","not set":"غير محدد","Change":"تغيير","Set name":"اختر اسمًا",
+"Play online":"العب أونلاين","15 minutes each · against another Outpost player · needs internet":"15 دقيقة لكل لاعب · ضد لاعب آخر يستخدم Outpost · يحتاج إنترنت","Play the computer":"العب ضد الكمبيوتر",
+"Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.":"قطع الشطرنج: Papercut من تصميم Nikolay Anzarov، برخصة CC BY 4.0.","‹ Leave":"› مغادرة","Online":"أونلاين",
+"First move":"أول نقلة","Previous move":"النقلة السابقة","Next move":"النقلة التالية","Latest move":"آخر نقلة","You won on time!":"فزت بالوقت!","You ran out of time":"انتهى وقتك",
+"Find a new opponent":"ابحث عن خصم جديد","Back to chess":"العودة للشطرنج","Choose a name for online games":"اختر اسمًا للعب أونلاين","Change your online name":"غيّر اسمك أونلاين",
+"Your opponent will see this name.":"سيرى خصمك هذا الاسم.","Your name":"اسمك","Save and play":"احفظ والعب","Save":"حفظ","Enter a name first":"اكتب اسمًا أولًا","You are offline":"أنت غير متصل",
+"Online games need an internet connection. The computer opponents work offline.":"اللعب أونلاين يحتاج اتصالًا بالإنترنت. اللعب ضد الكمبيوتر يعمل بدون إنترنت.","OK":"حسنًا","Could not connect":"تعذّر الاتصال","Try again":"حاول مرة أخرى",
+"The online service could not load. Check your internet connection.":"تعذّر تحميل خدمة اللعب أونلاين. تحقق من اتصالك بالإنترنت.","Online play is not supported in this browser.":"اللعب أونلاين غير مدعوم في هذا المتصفح.",
+"The online service is not reachable right now. Try again in a minute.":"خدمة اللعب أونلاين غير متاحة الآن. حاول بعد دقيقة.","Connecting…":"جارٍ الاتصال…","Looking for another player…":"جارٍ البحث عن لاعب آخر…",
+"Waiting for an opponent…":"في انتظار خصم…","Opponent found, connecting…":"وُجد خصم، جارٍ الاتصال…","Opponent":"الخصم","‹ Leave queue":"› مغادرة الانتظار","Finding an opponent":"البحث عن خصم",
+"You'll play the next person who taps Play online in Outpost. 15 minutes each, no extra time.":"ستلعب ضد أول شخص يضغط «العب أونلاين» في Outpost. 15 دقيقة لكل لاعب بدون وقت إضافي.",
+"Playing as":"تلعب باسم","Leave queue":"مغادرة الانتظار","Leave this game?":"مغادرة المباراة؟","Leaving counts as resigning.":"المغادرة تُحتسب استسلامًا.","Leave and resign":"غادر واستسلم","Stay":"البقاء",
+"Play with no connection":"العب بدون اتصال","Chess":"الشطرنج","Play a bot from 400 to 2000 Elo":"العب ضد روبوت من 400 إلى 2000 إيلو",
 "Game in progress":"مباراة جارية","Block Puzzle":"لغز المكعبات","Fit the blocks, clear rows and columns":"رتّب القطع وامسح الصفوف والأعمدة","Best":"الأفضل",
 "Tip: tap the corner button in a game for full screen.":"نصيحة: اضغط زر الزاوية داخل اللعبة لملء الشاشة.","Full screen":"ملء الشاشة","Exit full screen":"الخروج من ملء الشاشة",
 "Beginner":"مبتدئ","Novice":"مبتدئ متقدم","Casual player":"لاعب هاوٍ","Intermediate":"متوسط","Club player":"لاعب نادٍ","Strong club player":"لاعب نادٍ قوي",
@@ -1456,15 +1512,19 @@ function renderGames(){
   const v=$("#v-games");
   if(S.game==="chess") return renderChess(v);
   if(S.game==="chessMenu") return renderChessMenu(v);
+  if(S.game==="mpQueue") return renderQueue(v);
   if(S.game==="blocks") return renderBlocks(v);
   const best=store.get("blocksBest",0), cs=store.get("chess",null);
-  v.innerHTML=`<div><div class="eyebrow">${tr("Games")}</div><h2>${tr("Play with no connection")}</h2></div>
+  v.innerHTML=`<div><div class="eyebrow">${tr("Games")}</div><h2>${tr("Games")}</h2></div>
     <div class="gcards">
-      <button class="gcard chesscard" data-act="openChess"><span class="gicon">♞︎</span><span class="gtxt"><b>${tr("Chess")}</b><span>${tr("Play a bot from 400 to 2000 Elo")}</span>${cs&&!cs.over?`<em>${tr("Game in progress")}</em>`:""}</span></button>
+      <button class="gcard chesscard" data-act="openChess"><span class="gicon"><i class="pcimg" style="background-image:url(pieces/wN.svg)"></i></span><span class="gtxt"><b>${tr("Chess")}</b><span>${tr("Bots from 400 to 2000 Elo, or play online")}</span>${cs&&!cs.over?`<em>${tr("Game in progress")}</em>`:""}</span></button>
       <button class="gcard blockcard" data-act="openBlocks"><span class="gicon"><i></i><i></i><i></i><i></i></span><span class="gtxt"><b>${tr("Block Puzzle")}</b><span>${tr("Fit the blocks, clear rows and columns")}</span>${best?`<em>${tr("Best")}: ${best}</em>`:""}</span></button>
     </div>
+    ${nameChip()}
     <p class="sub">${tr("Tip: tap the corner button in a game for full screen.")}</p>`;
 }
+const myName=()=>store.get("mpName","");
+const nameChip=()=>`<div class="namechip"><span>${tr("Online name")}: <b>${myName()?esc(myName()):tr("not set")}</b></span><button class="btn small" data-act="mpName">${tr(myName()?"Change":"Set name")}</button></div>`;
 
 /* ===== CHESS ===== */
 const LEVELS=[
@@ -1482,14 +1542,19 @@ const NAMES=[["Omar","عمر"],["Lina","لينا"],["Youssef","يوسف"],["Sara
 const AVC=["#e07a5f","#3d8bd4","#81b29a","#c77dff","#f2a541","#4ecdc4","#ef476f","#8d99ae","#b5838d"];
 function botNames(){ let n=store.get("botNames",null); if(!Array.isArray(n)||n.length!==LEVELS.length){ const pool=NAMES.map((_,i)=>i); n=[]; while(n.length<LEVELS.length){ n.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); } store.set("botNames",n); } return n; }
 const botName=i=>NAMES[botNames()[i]][GL()?1:0];
-const GLYPH={1:"♟",2:"♞",3:"♝",4:"♜",5:"♛",6:"♚"};
-let CE=null, CW=null, CH=null, chessReq=0;
+const pcFile=p=>(p>0?"w":"b")+"PNBRQK"[Math.abs(p)-1];
+const pcImg=(p,cls)=>`<i class="${cls||"pc"}" style="background-image:url(pieces/${pcFile(p)}.svg)"></i>`;
+const MP_TIME=15*60*1000;
+let CE=null, CW=null, CH=null, chessReq=0, CLK=null;
 function engine(){ if(!CE) CE=ChessEngine(null); return CE; }
 function worker(){ if(CW===null){ try{ CW=new Worker(URL.createObjectURL(new Blob(["("+ChessEngine.toString()+")(self);"],{type:"text/javascript"}))); CW.onmessage=e=>onBotMove(e.data); CW.onerror=()=>{CW=false;}; }catch(e){ CW=false; } } return CW; }
-function chessReplay(moves){ const E=engine(); E.reset(); const keys=[posKey()]; for(const s of moves){ const m=E.legal().find(x=>E.moveStr(x)===s); if(!m) break; E.make(m); keys.push(posKey()); } return keys; }
+function chessReplay(moves,E){ E=E||engine(); E.reset(); const keys=[E.fen().split(" ").slice(0,4).join(" ")]; for(const s of moves){ const m=E.legal().find(x=>E.moveStr(x)===s); if(!m) break; E.make(m); keys.push(E.fen().split(" ").slice(0,4).join(" ")); } return keys; }
 const posKey=()=>engine().fen().split(" ").slice(0,4).join(" ");
-function saveChess(){ store.set("chess",{lvl:CH.lvl,color:CH.color,moves:CH.moves,over:CH.over||null}); }
+const strSq=s=>(s.charCodeAt(1)-49)*16+(s.charCodeAt(0)-97);
+function saveChess(){ if(CH&&CH.mode==="bot") store.set("chess",{lvl:CH.lvl,color:CH.color,moves:CH.moves,over:CH.over||null}); }
+const oppName=()=>CH.mode==="mp"?CH.opp:botName(CH.lvl);
 function openChess(){
+  if(CH&&CH.mode==="mp"&&!CH.over){ S.game="chess"; return show("games"); }
   const cs=store.get("chess",null);
   if(cs&&!cs.over&&cs.moves&&LEVELS[cs.lvl]){
     modal(`<h3>${tr("Continue your game?")}</h3><p class="sub">${GL()?`كنت تلعب ضد ${esc(botName(cs.lvl))} (${LEVELS[cs.lvl].elo})، بعد ${AD(Math.ceil(cs.moves.length/2))} نقلة.`:`You were playing ${esc(botName(cs.lvl))} (${LEVELS[cs.lvl].elo}), ${Math.ceil(cs.moves.length/2)} moves in.`}</p>
@@ -1501,29 +1566,41 @@ function openChess(){
 function renderChessMenu(v){
   const col=S.chessColor||"w";
   v.innerHTML=`<div class="row"><button class="btn small" data-act="gHome">${tr("‹ Games")}</button></div>
-    <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Choose your opponent")}</h2><p class="sub">${tr("Ratings are approximate. The bot plays fully offline.")}</p></div>
+    <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Choose your opponent")}</h2></div>
+    <button class="onlinecard" data-act="mpPlay"><span class="oicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></span><span class="otxt"><b>${tr("Play online")}</b><small>${tr("15 minutes each · against another Outpost player · needs internet")}</small></span></button>
+    ${nameChip()}
+    <h3 class="sect">${tr("Play the computer")}</h3>
+    <p class="sub">${tr("Ratings are approximate. The bot plays fully offline.")}</p>
     <div class="seg seg3"><button data-act="chessColor" data-c="w" class="${col==="w"?"on":""}">${tr("White")}</button><button data-act="chessColor" data-c="r" class="${col==="r"?"on":""}">${tr("Random")}</button><button data-act="chessColor" data-c="b" class="${col==="b"?"on":""}">${tr("Black")}</button></div>
-    <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>`;
+    <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
+    <p class="foot">${tr("Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.")}</p>`;
 }
+function newCH(o){ return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null},o); }
 function startChess(lvl,colorPref){
   chessReq++; const color=colorPref==="b"?-1:colorPref==="r"?(Math.random()<.5?1:-1):1;
-  CH={lvl,color,moves:[],keys:[],over:null,sel:-1,flip:color<0,thinking:false};
-  CH.keys=chessReplay([]); saveChess(); S.game="chess"; show("games");
+  CH=newCH({lvl,color,flip:color<0}); CH.keys=chessReplay([]); saveChess(); S.game="chess"; show("games");
   maybeBot();
 }
-function resumeChess(){ const cs=store.get("chess",null); chessReq++; CH={lvl:cs.lvl,color:cs.color,moves:cs.moves.slice(),keys:[],over:null,sel:-1,flip:cs.color<0,thinking:false}; CH.keys=chessReplay(CH.moves); CH.moves=CH.moves.slice(0,CH.keys.length-1); S.game="chess"; show("games"); if(!chessEnd()) maybeBot(); }
+function resumeChess(){ const cs=store.get("chess",null); chessReq++; CH=newCH({lvl:cs.lvl,color:cs.color,moves:cs.moves.slice(),flip:cs.color<0}); CH.keys=chessReplay(CH.moves); CH.moves=CH.moves.slice(0,CH.keys.length-1); if(CH.moves.length){ const s=CH.moves[CH.moves.length-1]; CH.last=[strSq(s),strSq(s.slice(2))]; } S.game="chess"; show("games"); if(!chessEnd()) maybeBot(); }
+const NAV='<svg viewBox="0 0 24 24">';
 function renderChess(v){
   if(!CH){ S.game=null; return renderGames(); }
-  const L=LEVELS[CH.lvl];
+  const mp=CH.mode==="mp", on=oppName();
   v.innerHTML=`<div class="gwrap" id="gameRoot">
-    <div class="gtop"><button class="btn small gback" data-act="chessMenu">${tr("‹ Opponents")}</button>${fsButton()}</div>
-    <div class="pbar"><span class="ava" style="background:${AVC[CH.lvl]}">${esc(botName(CH.lvl)).slice(0,1)}</span><span class="pinfo"><b>${esc(botName(CH.lvl))} <em>${L.elo}</em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span></div>
+    <div class="gtop"><button class="btn small gback" data-act="chessMenu">${tr(mp?"‹ Leave":"‹ Opponents")}</button>${fsButton()}</div>
+    <div class="pbar"><span class="ava" style="background:${mp?"#5b7bd5":AVC[CH.lvl]}">${esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${tr("Online")}</em>`:`<em>${LEVELS[CH.lvl].elo}</em>`}</b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
-    <div class="pbar"><span class="ava you">${GL()?"أنت".slice(0,1):"Y"}</span><span class="pinfo"><b>${tr("You")}</b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span></div>
-    <div class="gctl"><button class="btn" data-act="chessUndo">${tr("Undo")}</button><button class="btn" data-act="chessFlip">${tr("Flip board")}</button><button class="btn danger" data-act="chessResign">${tr("Resign")}</button></div>
+    <div class="pbar"><span class="ava you">${esc(mp&&myName()?myName():tr("You")).slice(0,1)}</span><span class="pinfo"><b>${mp&&myName()?esc(myName()):tr("You")}</b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mp?`<span class="clock" id="clkYou"></span>`:""}</div>
+    <div class="navrow" dir="ltr">
+      <button class="btn" data-act="nav" data-n="first" aria-label="${tr("First move")}">${NAV}<path d="M6 5v14M18 6l-8 6 8 6z"/></svg></button>
+      <button class="btn" data-act="nav" data-n="prev" aria-label="${tr("Previous move")}">${NAV}<path d="M16 6l-8 6 8 6z"/></svg></button>
+      <button class="btn" data-act="nav" data-n="next" aria-label="${tr("Next move")}">${NAV}<path d="M8 6l8 6-8 6z"/></svg></button>
+      <button class="btn" data-act="nav" data-n="last" aria-label="${tr("Latest move")}">${NAV}<path d="M18 5v14M6 6l8 6-8 6z"/></svg></button>
+    </div>
+    <div class="gctl"><button class="btn" data-act="chessFlip">${tr("Flip board")}</button><button class="btn danger" data-act="chessResign">${tr("Resign")}</button></div>
   </div>`;
   if(S.gfs) $("#gameRoot").classList.add("fs");
-  drawBoard(); sizeBoard();
+  drawBoard(); sizeBoard(); if(mp) tickClock();
 }
 function sizeBoard(){
   const root=$("#gameRoot"), bd=$("#board"); if(!root||!bd) return;
@@ -1532,55 +1609,61 @@ function sizeBoard(){
   else w=Math.min(w,window.innerHeight-(root.getBoundingClientRect().top+window.scrollY)-other-$(".tabs").offsetHeight-12);
   bd.style.setProperty("--bs",Math.max(240,Math.floor(w/8)*8)+"px");
 }
+/* position shown on the board: the live game, or an earlier move while reviewing */
+function shownEngine(){ if(CH.view===null) return engine(); const V=ChessEngine(null); chessReplay(CH.moves.slice(0,CH.view),V); return V; }
 function drawBoard(){
   if(!$("#board")) return;
-  const E=engine(), bd=E.board(), turn=E.turn(), legal=CH.over?[]:E.legal();
+  const live=CH.view===null, E=shownEngine(), bd=E.board(), turn=E.turn(), legal=(CH.over||!live)?[]:E.legal();
   const targets=CH.sel>=0?legal.filter(m=>(m&127)===CH.sel):[];
-  const last=CH.last||[], kSq=E.inCheck()?[...Array(128).keys()].find(s=>!(s&0x88)&&bd[s]===6*turn):-1;
+  let last=CH.last||[]; if(!live){ const s=CH.moves[CH.view-1]; last=s?[strSq(s),strSq(s.slice(2))]:[]; }
+  const kSq=E.inCheck()?[...Array(128).keys()].find(s=>!(s&0x88)&&bd[s]===6*turn):-1;
   let h="";
   for(let i=0;i<8;i++) for(let j=0;j<8;j++){
     const r=CH.flip?i:7-i, f=CH.flip?7-j:j, sq=r*16+f, p=bd[sq], t=targets.find(m=>((m>>7)&127)===sq);
     const cls=["sq",(r+f)%2?"lt":"dk"]; if(sq===CH.sel) cls.push("sel"); if(last.includes(sq)) cls.push("last"); if(sq===kSq) cls.push("chk"); if(t!==undefined) cls.push(p?"cap":"dot");
-    h+=`<div class="${cls.join(" ")}" data-sq="${sq}">${j===0?`<i class="cr">${r+1}</i>`:""}${i===7?`<i class="cf">${"abcdefgh"[f]}</i>`:""}${p?`<span class="pc ${p>0?"w":"b"}">${GLYPH[Math.abs(p)]}︎</span>`:""}</div>`;
+    h+=`<div class="${cls.join(" ")}" data-sq="${sq}">${j===0?`<i class="cr">${r+1}</i>`:""}${i===7?`<i class="cf">${"abcdefgh"[f]}</i>`:""}${p?pcImg(p):""}</div>`;
   }
-  $("#board").innerHTML=h;
-  // captured material
+  const B=$("#board"); B.innerHTML=h; B.classList.toggle("review",!live);
   const cnt={}; for(let s=0;s<128;s++){ if(s&0x88){s+=7;continue;} if(bd[s]) cnt[bd[s]]=(cnt[bd[s]]||0)+1; }
   const start={1:8,2:2,3:2,4:2,5:1}, VALS={1:1,2:3,3:3,4:5,5:9};
-  const lost=c=>[5,4,3,2,1].flatMap(t=>Array(Math.max(0,start[t]-(cnt[t*c]||0))).fill(t));
-  const byYou=lost(-CH.color), byBot=lost(CH.color), sum=a=>a.reduce((x,t)=>x+VALS[t],0), diff=sum(byYou)-sum(byBot);
-  $("#capsYou").innerHTML=byYou.map(t=>GLYPH[t]+"︎").join("")+(diff>0?` <em>+${diff}</em>`:"");
-  $("#capsBot").innerHTML=byBot.map(t=>GLYPH[t]+"︎").join("")+(diff<0?` <em>+${-diff}</em>`:"");
-  const yourTurn=turn===CH.color;
-  $("#botStatus").textContent=CH.over?"":CH.thinking?tr("Thinking…"):(!yourTurn&&E.inCheck()?tr("Check!"):"");
-  $("#youStatus").textContent=CH.over?"":yourTurn?(E.inCheck()?tr("Check! Your move"):tr("Your move")):"";
+  const lost=c=>[5,4,3,2,1].flatMap(t=>Array(Math.max(0,start[t]-(cnt[t*c]||0))).fill(t*c));
+  const byYou=lost(-CH.color), byBot=lost(CH.color), sum=a=>a.reduce((x,t)=>x+VALS[Math.abs(t)],0), diff=sum(byYou)-sum(byBot);
+  $("#capsYou").innerHTML=byYou.map(p=>pcImg(p,"cp")).join("")+(diff>0?` <em>+${diff}</em>`:"");
+  $("#capsBot").innerHTML=byBot.map(p=>pcImg(p,"cp")).join("")+(diff<0?` <em>+${-diff}</em>`:"");
+  const yourTurn=engine().turn()===CH.color, inChk=engine().inCheck();
+  $("#botStatus").textContent=CH.over?"":CH.thinking?tr("Thinking…"):(!yourTurn&&inChk?tr("Check!"):"");
+  $("#youStatus").textContent=!live?(GL()?`مراجعة: النقلة ${AD(CH.view)} من ${AD(CH.moves.length)}`:`Reviewing move ${CH.view} of ${CH.moves.length}`):CH.over?"":yourTurn?(inChk?tr("Check! Your move"):tr("Your move")):"";
+  const n=CH.moves.length, at=live?n:CH.view;
+  $$(".navrow .btn").forEach(b=>{ const k=b.dataset.n; b.disabled=(k==="first"||k==="prev")?at===0:at===n; });
 }
+function navTo(k){ const n=CH.moves.length; CH.view=(k===null||k>=n)?null:Math.max(0,k); CH.sel=-1; drawBoard(); }
 function chessTap(sq){
-  if(!CH||CH.over||CH.thinking) return; const E=engine(); if(E.turn()!==CH.color) return;
+  if(!CH) return; if(CH.view!==null) return navTo(null);   // tapping the board while reviewing jumps back to the game
+  if(CH.over||CH.thinking) return; const E=engine(); if(E.turn()!==CH.color) return;
   const p=E.board()[sq];
   if(CH.sel>=0){
     const ms=E.legal().filter(m=>(m&127)===CH.sel&&((m>>7)&127)===sq);
     if(ms.length===1) return playMove(ms[0]);
-    if(ms.length>1){ // promotion choice
-      modal(`<h3>${tr("Promote to")}</h3><div class="promo">${[5,4,3,2].map(t=>`<button data-act="promo" data-m="${ms.find(m=>((m>>14)&7)===t)}"><span class="pc ${CH.color>0?"w":"b"}">${GLYPH[t]}︎</span></button>`).join("")}</div>`);
+    if(ms.length>1){
+      modal(`<h3>${tr("Promote to")}</h3><div class="promo">${[5,4,3,2].map(t=>`<button data-act="promo" data-m="${ms.find(m=>((m>>14)&7)===t)}">${pcImg(t*CH.color)}</button>`).join("")}</div>`);
       return;
     }
   }
   CH.sel=(p&&(p>0)===(CH.color>0)&&sq!==CH.sel)?sq:-1; drawBoard();
 }
-function playMove(m){
-  const E=engine(); const f=m&127,t=(m>>7)&127; if(!E.make(m)) return;
-  CH.moves.push(E.moveStr(m)); CH.keys.push(posKey()); CH.last=[f,t]; CH.sel=-1;
+function playMove(m,remote){
+  const E=engine(), f=m&127, t=(m>>7)&127, mover=E.turn(); if(!E.make(m)) return false;
+  const s=E.moveStr(m); CH.moves.push(s); CH.keys.push(posKey()); CH.last=[f,t]; CH.sel=-1; CH.view=null;
+  if(CH.mode==="mp"){ const k=mover>0?"w":"b"; if(!remote){ CH.clock[k]-=Date.now()-CH.tStart; mpSend({t:"move",m:s,left:CH.clock[k]}); } CH.tStart=Date.now(); }
   try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){}
-  saveChess(); drawBoard(); if(!chessEnd()) maybeBot();
+  saveChess(); drawBoard(); if(!chessEnd()&&CH.mode==="bot") maybeBot(); return true;
 }
 function maybeBot(){
-  const E=engine(); if(!CH||CH.over||E.turn()===CH.color) return;
+  const E=engine(); if(!CH||CH.mode!=="bot"||CH.over||E.turn()===CH.color) return;
   CH.thinking=true; drawBoard(); const id=++chessReq, t0=Date.now(), L=LEVELS[CH.lvl];
   const opts=Object.assign({},L.o); if(CH.moves.length<8&&!opts.noise) opts.noise=12;
-  const w=worker(), done=m=>setTimeout(()=>onBotMove({id,move:m}),Math.max(0,450-(Date.now()-t0)));
-  if(w) w.postMessage({id,fen:E.fen(),opts}); else setTimeout(()=>{ const T=ChessEngine(null); T.setFen(E.fen()); done(T.think(opts)); },60);
-  if(w) CH.pending={id,t0};
+  const w=worker(); CH.pending={id,t0};
+  if(w) w.postMessage({id,fen:E.fen(),opts}); else setTimeout(()=>{ const T=ChessEngine(null); T.setFen(E.fen()); onBotMove({id,move:T.think(opts)}); },60);
 }
 function onBotMove(d){
   if(!CH||d.id!==chessReq) return;
@@ -1597,21 +1680,131 @@ function chessEnd(){
   finishChess(res); return true;
 }
 function finishChess(res){
-  CH.over=res; CH.thinking=false; chessReq++; saveChess(); drawBoard();
-  const name=esc(botName(CH.lvl));
-  const head={win:tr("You won!"),lose:GL()?`فاز ${name}`:`${name} wins`,resign:tr("You resigned")}[res]||tr("Draw");
-  const why={win:tr("Checkmate."),lose:tr("Checkmate."),resign:"",stalemate:tr("Stalemate: no legal moves, but not in check."),fifty:tr("50 moves without a capture or pawn move."),repetition:tr("The same position happened three times."),material:tr("Not enough pieces left to checkmate.")}[res];
-  setTimeout(()=>modal(`<div class="result ${res==="win"?"good":res==="lose"||res==="resign"?"bad":""}">${res==="win"?"🏆":res==="lose"||res==="resign"?"♚︎":"½"}</div><h3>${head}</h3>${why?`<p class="sub">${why}</p>`:""}
-    <div class="row"><button class="btn primary grow" data-act="chessRematch">${tr("Rematch")}</button><button class="btn grow" data-act="chessMenu">${tr("Other opponent")}</button></div>
+  if(!CH||CH.over) return;
+  CH.over=res; CH.thinking=false; chessReq++; saveChess(); drawBoard(); tickClock();
+  const name=esc(oppName()), mp=CH.mode==="mp";
+  const WIN=["win","oppResign","timeWin","left"], LOSE=["lose","resign","timeLose"];
+  const head={win:tr("You won!"),lose:GL()?`فاز ${name}`:`${name} wins`,resign:tr("You resigned"),oppResign:GL()?`استسلم ${name}، فزت!`:`${name} resigned. You won!`,
+    timeWin:tr("You won on time!"),timeLose:tr("You ran out of time"),left:GL()?`غادر ${name} المباراة، فزت!`:`${name} left the game. You won!`}[res]||tr("Draw");
+  const why={win:tr("Checkmate."),lose:tr("Checkmate."),stalemate:tr("Stalemate: no legal moves, but not in check."),fifty:tr("50 moves without a capture or pawn move."),repetition:tr("The same position happened three times."),material:tr("Not enough pieces left to checkmate.")}[res]||"";
+  if(mp){ const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },2500); }
+  setTimeout(()=>modal(`<div class="result">${WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${head}</h3>${why?`<p class="sub">${why}</p>`:""}
+    <div class="row">${mp?`<button class="btn primary grow" data-act="mpPlay">${tr("Find a new opponent")}</button>`:`<button class="btn primary grow" data-act="chessRematch">${tr("Rematch")}</button>`}<button class="btn grow" data-act="chessMenu">${tr(mp?"Back to chess":"Other opponent")}</button></div>
     <button class="btn ghost" data-act="modalClose">${tr("Look at the board")}</button>`),350);
 }
-function chessUndo(){
-  if(!CH||!CH.moves.length) return; chessReq++; CH.thinking=false;
-  let n=0; const E=engine();
-  do{ CH.moves.pop(); n++; CH.keys=chessReplay(CH.moves); }while(CH.moves.length&&E.turn()!==CH.color);
-  if(E.turn()!==CH.color){ /* user is black and undid the bot's first move */ }
-  CH.over=null; CH.sel=-1; CH.last=null; saveChess(); drawBoard(); maybeBot();
+
+/* ===== ONLINE (PeerJS: free public broker, then a direct WebRTC link between the two phones) ===== */
+const LOBBY="outpost-pocketkit-chess-lobby-v1";
+let MP=null;
+function loadPeer(){ return window.Peer?Promise.resolve():new Promise((ok,no)=>{ const s=document.createElement("script"); s.src="peerjs.min.js"; s.onload=()=>window.Peer?ok():no(); s.onerror=no; document.head.appendChild(s); }); }
+function askName(thenPlay){
+  modal(`<h3>${tr(thenPlay?"Choose a name for online games":"Change your online name")}</h3><p class="sub">${tr("Your opponent will see this name.")}</p>
+    <input type="text" id="mpNameIn" maxlength="20" autocomplete="nickname" value="${esc(myName())}" placeholder="${tr("Your name")}">
+    <div class="row"><button class="btn primary grow" data-act="mpNameSave" data-q="${thenPlay?1:0}">${tr(thenPlay?"Save and play":"Save")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`);
+  setTimeout(()=>{ const i=$("#mpNameIn"); i&&i.focus(); },50);
 }
+function saveName(thenPlay){
+  const v=($("#mpNameIn").value||"").replace(/\s+/g," ").trim().slice(0,20);
+  if(!v){ toast(tr("Enter a name first")); return; }
+  store.set("mpName",v); closeModal();
+  if(thenPlay) mpPlay(); else show("games",true);
+}
+function mpPlay(){
+  closeModal();
+  if(navigator.onLine===false) return modal(`<h3>${tr("You are offline")}</h3><p class="sub">${tr("Online games need an internet connection. The computer opponents work offline.")}</p><button class="btn primary" data-act="modalClose">${tr("OK")}</button>`);
+  if(!myName()) return askName(true);
+  if(CH&&CH.mode==="mp"&&!CH.over) return;
+  S.game="mpQueue"; show("games"); mpQueue();
+}
+function mpStatus(st){ if(MP) MP.status=st; const el=$("#qStatus"); if(el) el.textContent=tr(st); }
+function mpStop(){ const m=MP; MP=null; if(!m) return; clearTimeout(m.retry); clearInterval(m.tick);
+  try{ m.lob&&m.lob.destroy(); }catch(e){} try{ m.conn&&m.conn.close(); }catch(e){} try{ m.me&&m.me.destroy(); }catch(e){} }
+function mpFail(msg){ mpStop(); if(S.game==="mpQueue"){ S.game="chessMenu"; show("games"); } modal(`<h3>${tr("Could not connect")}</h3><p class="sub">${tr(msg)}</p><div class="row"><button class="btn primary grow" data-act="mpPlay">${tr("Try again")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); }
+async function mpQueue(){
+  mpStop(); const my={t0:Date.now(),status:"Connecting…"}; MP=my;
+  my.tick=setInterval(()=>{ const el=$("#qTime"); if(el){ const s=Math.floor((Date.now()-my.t0)/1000); el.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); } },500);
+  try{ await loadPeer(); }catch(e){ if(MP===my) mpFail("The online service could not load. Check your internet connection."); return; }
+  if(MP!==my) return;
+  try{ my.me=new Peer(undefined,{debug:0}); }catch(e){ return mpFail("Online play is not supported in this browser."); }
+  my.me.on("open",()=>{ if(MP===my){ mpStatus("Looking for another player…"); tryLobby(my); } });
+  my.me.on("connection",c=>onIncoming(my,c));
+  my.me.on("error",e=>{ if(MP!==my||e.type==="peer-unavailable") return; if(!my.conn) mpFail("The online service is not reachable right now. Try again in a minute."); });
+  my.me.on("disconnected",()=>{ if(MP===my&&!my.conn){ try{ my.me.reconnect(); }catch(e){} } });
+}
+function retryLater(my,ms){ if(MP!==my||my.conn) return; if(my.lob){ try{ my.lob.destroy(); }catch(e){} my.lob=null; } clearTimeout(my.retry); my.retry=setTimeout(()=>tryLobby(my),(ms||2000)+Math.random()*1500); }
+function tryLobby(my){ // whoever holds the lobby name is the waiting player
+  if(MP!==my||my.conn) return;
+  const lob=new Peer(LOBBY,{debug:0}); my.lob=lob;
+  lob.on("open",()=>{ if(MP===my) mpStatus("Waiting for an opponent…"); });
+  lob.on("connection",c=>{ c.on("open",()=>{ if(MP===my&&!my.conn) c.send({t:"host",id:my.me.id}); setTimeout(()=>{ try{c.close();}catch(e){} },1500); }); });
+  lob.on("error",e=>{ if(MP!==my) return;
+    if(e.type==="unavailable-id"){ try{ lob.destroy(); }catch(x){} if(my.lob===lob) my.lob=null; joinWaiting(my); }
+    else if(e.type!=="peer-unavailable") retryLater(my); });
+}
+function joinWaiting(my){ // someone is waiting: ask the lobby for their address
+  if(MP!==my||my.conn) return; mpStatus("Opponent found, connecting…");
+  const c=my.me.connect(LOBBY,{reliable:true}); let done=false;
+  const to=setTimeout(()=>{ if(!done){ done=true; try{c.close();}catch(e){} mpStatus("Looking for another player…"); retryLater(my); } },8000);
+  c.on("data",d=>{ if(d&&d.t==="host"&&!done&&d.id!==my.me.id){ done=true; clearTimeout(to); try{c.close();}catch(e){} connectHost(my,d.id); } });
+}
+function connectHost(my,id){
+  if(MP!==my||my.conn) return;
+  const c=my.me.connect(id,{reliable:true}); let done=false;
+  const to=setTimeout(()=>{ if(!done){ done=true; try{c.close();}catch(e){} mpStatus("Looking for another player…"); retryLater(my); } },10000);
+  c.on("open",()=>c.send({t:"hello",name:myName(),v:1}));
+  c.on("data",d=>{ if(!d||done) return;
+    if(d.t==="busy"){ done=true; clearTimeout(to); try{c.close();}catch(e){} retryLater(my,300); }
+    else if(d.t==="start"){ done=true; clearTimeout(to); my.conn=c; bindConn(my,c); startMp(d.you==="w"?1:-1,d.name); } });
+}
+function onIncoming(my,c){
+  c.on("data",d=>{ if(!d||d.t!=="hello"||c._seen) return; c._seen=1;
+    if(MP!==my||my.conn){ c.send({t:"busy"}); setTimeout(()=>{ try{c.close();}catch(e){} },300); return; }
+    my.conn=c; if(my.lob){ try{ my.lob.destroy(); }catch(e){} my.lob=null; }
+    const mine=Math.random()<.5?1:-1; c.send({t:"start",you:mine>0?"b":"w",name:myName()});
+    bindConn(my,c); startMp(mine,d.name); });
+}
+function bindConn(my,c){
+  clearTimeout(my.retry); clearInterval(my.tick);
+  c.on("data",d=>mpOnData(my,d));
+  c.on("close",()=>{ if(MP===my&&CH&&CH.mode==="mp"&&!CH.over) finishChess("left"); });
+}
+const mpSend=o=>{ try{ MP&&MP.conn&&MP.conn.send(o); }catch(e){} };
+function startMp(color,opp){
+  chessReq++; CH=newCH({mode:"mp",color,flip:color<0,opp:String(opp||"").replace(/\s+/g," ").trim().slice(0,20)||tr("Opponent"),clock:{w:MP_TIME,b:MP_TIME},tStart:Date.now()});
+  CH.keys=chessReplay([]); closeModal(); S.game="chess"; show("games");
+  toast(GL()?`بدأت المباراة ضد ${CH.opp}`:`Playing ${CH.opp}`); try{ navigator.vibrate&&navigator.vibrate([30,60,30]); }catch(e){}
+  clearInterval(CLK); CLK=setInterval(tickClock,200);
+}
+function mpOnData(my,d){
+  if(MP!==my||!CH||CH.mode!=="mp"||CH.over||!d) return;
+  if(d.t==="move"){ const E=engine(); if(E.turn()===CH.color) return; const m=E.legal().find(x=>E.moveStr(x)===d.m); if(m===undefined) return;
+    CH.clock[CH.color>0?"b":"w"]=Math.max(0,+d.left||0); playMove(m,true); }
+  else if(d.t==="resign") finishChess("oppResign");
+  else if(d.t==="flag") finishChess("timeWin");
+  else if(d.t==="timeout") finishChess("timeLose");
+  else if(d.t==="bye") finishChess("left");
+}
+const fmtClock=ms=>{ ms=Math.max(0,ms); const s=Math.ceil(ms/1000); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); };
+function tickClock(){
+  if(!CH||CH.mode!=="mp"){ clearInterval(CLK); return; }
+  const side=engine().turn()>0?"w":"b", now=Date.now(), left=k=>CH.clock[k]-(!CH.over&&k===side?now-CH.tStart:0);
+  const me=CH.color>0?"w":"b", op=me==="w"?"b":"w";
+  const cy=$("#clkYou"), co=$("#clkOpp");
+  if(cy){ cy.textContent=fmtClock(left(me)); cy.classList.toggle("run",!CH.over&&side===me); cy.classList.toggle("low",left(me)<30000); }
+  if(co){ co.textContent=fmtClock(left(op)); co.classList.toggle("run",!CH.over&&side===op); co.classList.toggle("low",left(op)<30000); }
+  if(CH.over){ clearInterval(CLK); return; }
+  if(side===me&&left(me)<=0){ CH.clock[me]=0; mpSend({t:"flag"}); finishChess("timeLose"); }
+  else if(side===op&&left(op)<-5000){ mpSend({t:"timeout"}); finishChess("timeWin"); }
+}
+function renderQueue(v){
+  v.innerHTML=`<div class="row"><button class="btn small" data-act="mpLeave">${tr("‹ Leave queue")}</button></div>
+    <div class="card queue"><div class="radar"><i></i><i></i><i></i><b>${pcImg(5)}</b></div>
+      <h2>${tr("Finding an opponent")}</h2><p class="sub" id="qStatus">${tr(MP?MP.status:"Connecting…")}</p><div class="big" id="qTime">0:00</div>
+      <p class="sub">${tr("You'll play the next person who taps Play online in Outpost. 15 minutes each, no extra time.")}</p>
+      <p>${tr("Playing as")} <b>${esc(myName())}</b></p>
+      <button class="btn" data-act="mpLeave">${tr("Leave queue")}</button></div>`;
+}
+window.addEventListener("pagehide",()=>{ if(CH&&CH.mode==="mp"&&!CH.over) mpSend({t:"bye"}); });
 
 /* ===== BLOCK PUZZLE ===== */
 const SHAPES=[ // [cells as "rc" pairs, weight]
@@ -1725,11 +1918,17 @@ document.addEventListener("click",e=>{
   if(ga==="chessStart"){ closeModal(); return startChess(+gel.dataset.l,S.chessColor); }
   if(ga==="chessResume"){ closeModal(); return resumeChess(); }
   if(ga==="chessNew"){ closeModal(); S.game="chessMenu"; return show("games"); }
-  if(ga==="chessMenu"){ closeModal(); chessReq++; if(CH) CH.thinking=false; S.game="chessMenu"; return show("games"); }
-  if(ga==="chessUndo") return chessUndo();
+  if(ga==="chessMenu"){ if(CH&&CH.mode==="mp"&&!CH.over&&S.game==="chess") return modal(`<h3>${tr("Leave this game?")}</h3><p class="sub">${tr("Leaving counts as resigning.")}</p><div class="row"><button class="btn danger grow" data-act="mpQuit">${tr("Leave and resign")}</button><button class="btn grow" data-act="modalClose">${tr("Stay")}</button></div>`);
+    closeModal(); chessReq++; if(CH) CH.thinking=false; if(CH&&CH.mode==="mp"){ mpStop(); CH=null; } S.game="chessMenu"; return show("games"); }
+  if(ga==="nav"){ const n=CH.moves.length, at=CH.view===null?n:CH.view, k=gel.dataset.n; return navTo(k==="first"?0:k==="prev"?at-1:k==="next"?at+1:null); }
+  if(ga==="mpPlay") return mpPlay();
+  if(ga==="mpName") return askName(false);
+  if(ga==="mpNameSave") return saveName(gel.dataset.q==="1");
+  if(ga==="mpLeave"){ mpStop(); S.game="chessMenu"; return show("games"); }
+  if(ga==="mpQuit"){ closeModal(); mpSend({t:"resign"}); return finishChess("resign"); }
   if(ga==="chessFlip"){ CH.flip=!CH.flip; return drawBoard(); }
   if(ga==="chessResign"){ if(!CH||CH.over) return; return modal(`<h3>${tr("Resign this game?")}</h3><div class="row"><button class="btn danger grow" data-act="chessResignYes">${tr("Yes, resign")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); }
-  if(ga==="chessResignYes"){ closeModal(); return finishChess("resign"); }
+  if(ga==="chessResignYes"){ closeModal(); if(CH&&CH.mode==="mp") mpSend({t:"resign"}); return finishChess("resign"); }
   if(ga==="chessRematch"){ closeModal(); return startChess(CH.lvl,CH.color>0?"w":"b"); }
   if(ga==="promo"){ closeModal(); return playMove(+gel.dataset.m); }
   if(ga==="blocksNew"){ if(BL&&!BL.over&&BL.score>0&&!$("#modal").innerHTML) return modal(`<h3>${tr("Start a new game?")}</h3><p class="sub">${tr("Your current score will be lost.")}</p><div class="row"><button class="btn primary grow" data-act="blocksNewYes">${tr("Start over")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); return newBlocks(true); }
@@ -1800,7 +1999,7 @@ document.addEventListener("change",e=>{
 });
 function net(){const on=navigator.onLine!==false, p=$("#net"); p.classList.toggle("off",!on); p.lastElementChild.textContent=tr(on?"ONLINE":"NO SIGNAL");}
 window.addEventListener("resize",()=>{ if(S.view==="games"){ sizeBoard(); sizeBlocks(); } if(S.view==="quran"&&QD){ qFit(); const el=$("#qTrack").children[S.qPage]; el&&el.scrollIntoView({inline:"start",block:"nearest"}); } });
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); if(e.key==="Enter"&&e.target.id==="mpNameIn"){ const b=$("[data-act=mpNameSave]"); b&&saveName(b.dataset.q==="1"); } });
 window.addEventListener("online",net); window.addEventListener("offline",net); applyStatic(); net();
 
 /* offline install: only works when the files are hosted on their own site */
