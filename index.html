@@ -10,6 +10,13 @@
 <meta name="apple-mobile-web-app-title" content="Outpost">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
+<script>
+/* Apply saved theme and language before the page paints. Dark is the default. */
+(function(){var h=document.documentElement,t="dark",l="en";
+  try{t=JSON.parse(localStorage.getItem("outpost.theme"))||"dark";l=JSON.parse(localStorage.getItem("outpost.lang"))||"en";}catch(e){}
+  h.setAttribute("data-theme",t==="light"?"light":"dark");
+  if(l==="ar"){h.lang="ar";h.dir="rtl";}})();
+</script>
 <style>
 /* Layout idea: a field instrument. One column, thumb-reach tab bar, mono labels for readouts, signal orange for the one thing to act on.
    System fonts only, on purpose: this page must open with no network at all. */
@@ -84,13 +91,13 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--mu
 .ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 26px/1 var(--display);font-variant-numeric:tabular-nums}
 .ring .num small{font:600 10px/1 var(--display);letter-spacing:.12em;color:var(--muted);margin-top:5px}
 .bars{display:flex;flex-direction:column;gap:9px;flex:1;min-width:0}
-.bar{display:flex;flex-direction:column;gap:4px;background:none;border:0;padding:0;text-align:left}
+.bar{display:flex;flex-direction:column;gap:4px;background:none;border:0;padding:0;text-align:start}
 .bar span{display:flex;justify-content:space-between;font:600 12px/1.2 var(--display);gap:8px}
 .bar span em{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums}
 .track{height:6px;border-radius:9px;background:var(--sunk);overflow:hidden}
 .track b{display:block;height:100%;background:var(--ink);border-radius:9px;transition:width .4s}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px;min-height:84px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;text-align:start;display:flex;flex-direction:column;gap:4px;min-height:84px}
 .tile b{font-size:15px}
 .tile span{font-size:13px;color:var(--muted);line-height:1.35}
 .tile.sos{background:var(--signal);border-color:var(--signal);color:var(--signal-ink)}
@@ -110,17 +117,17 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--mu
 .steps input:checked{background:var(--good);border-color:var(--good)}
 .steps input:checked::after{content:"";width:6px;height:11px;border:solid var(--panel);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
 .steps input:checked + span{color:var(--muted);text-decoration:line-through}
-.tip{font-size:14px;color:var(--muted);border-left:3px solid var(--signal);padding-left:10px}
+.tip{font-size:14px;color:var(--muted);border-inline-start:3px solid var(--signal);padding-inline-start:10px}
 .plan{display:flex;flex-direction:column}
 .plan .pr{display:grid;grid-template-columns:28px 1fr 84px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
 .plan .pr input[type=checkbox]{width:22px;height:22px;accent-color:var(--signal);margin:0}
-.plan .pr input[type=number]{min-height:38px;padding:6px 8px;text-align:right;font-family:var(--display);font-size:16px}
+.plan .pr input[type=number]{min-height:38px;padding:6px 8px;text-align:end;font-family:var(--display);font-size:16px}
 .meter{height:14px;border-radius:9px;background:var(--sunk);overflow:hidden;border:1px solid var(--line)}
 .meter b{display:block;height:100%;background:var(--good);transition:width .3s}
 .meter.warn b{background:var(--warn)} .meter.crit b{background:var(--crit)}
 .big{font:700 22px/1.1 var(--display);font-variant-numeric:tabular-nums}
 table{border-collapse:collapse;width:100%;font-size:14px}
-td,th{text-align:left;padding:8px 6px;border-top:1px solid var(--line);vertical-align:top}
+td,th{text-align:start;padding:8px 6px;border-top:1px solid var(--line);vertical-align:top}
 th{font:600 11px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-top:0}
 td.num{font:700 15px/1.3 var(--display);white-space:nowrap}
 .scroll{overflow-x:auto}
@@ -130,7 +137,7 @@ td.num{font:700 15px/1.3 var(--display);white-space:nowrap}
 .chip{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:9px 14px;font-weight:600;font-size:14px;min-height:40px}
 .chip.on{background:var(--ink);color:var(--ground);border-color:var(--ink)}
 /* notes */
-.note{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;width:100%}
+.note{display:flex;flex-direction:column;gap:4px;text-align:start;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;width:100%}
 .note b{font-size:16px}
 .note span{font-size:14px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .note time{font:11px/1 var(--display);color:var(--muted);margin-top:4px}
@@ -146,8 +153,8 @@ details.ref summary b{flex:1;font-size:16px;line-height:1.3}
 details.ref summary::after{content:"+";font:400 22px/1 var(--display);color:var(--muted)}
 details.ref[open] summary::after{content:"−"}
 details.ref .bd{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px}
-details.ref ol,details.ref ul{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:7px;font-size:15px;line-height:1.45}
-.never{font-size:14px;border-left:3px solid var(--crit);padding-left:10px}
+details.ref ol,details.ref ul{margin:0;padding-inline-start:22px;display:flex;flex-direction:column;gap:7px;font-size:15px;line-height:1.45}
+.never{font-size:14px;border-inline-start:3px solid var(--crit);padding-inline-start:10px}
 .never b{color:var(--crit)}
 .kitgroup{display:flex;flex-direction:column}
 /* tab bar */
@@ -165,6 +172,22 @@ details.ref ol,details.ref ul{margin:0;padding-left:22px;display:flex;flex-direc
 .beacon b{font:700 34px/1.1 var(--display);letter-spacing:.2em}
 .beacon span{font:14px/1.4 var(--display);overflow-wrap:anywhere}
 .foot{font-size:12px;color:var(--muted);text-align:center;padding:8px 0 0;line-height:1.5}
+/* settings bar: language and theme switches */
+.prefs{display:flex;gap:8px;margin:-4px 0 14px}
+.sw{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:46px;font-weight:600;font-size:14px;text-align:start}
+.sw .knob{width:42px;height:26px;border-radius:99px;background:var(--sunk);border:1px solid var(--line);position:relative;flex:none;transition:background .2s,border-color .2s}
+.sw .knob::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
+.sw[aria-checked="true"] .knob{background:var(--signal);border-color:var(--signal)}
+.sw[aria-checked="true"] .knob::after{background:var(--signal-ink);transform:translateX(16px)}
+[dir="rtl"] .sw[aria-checked="true"] .knob::after{transform:translateX(-16px)}
+.sw .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* text fields follow the direction of what is typed in them */
+textarea,input[type=text],input[type=search],input[type=password],.out{unicode-bidi:plaintext;text-align:start}
+/* Arabic: system Arabic font, no letter spacing (it breaks joined letters), no uppercase */
+html[lang="ar"]{--display:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif}
+html[lang="ar"] body *{letter-spacing:0!important}
+html[lang="ar"] .out,html[lang="ar"] textarea{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace,-apple-system}
+html[lang="ar"] .tabs button{font-size:12px}
 @media (max-width:360px){.ready{flex-direction:column;align-items:stretch}.ring{align-self:center}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -174,9 +197,13 @@ details.ref ol,details.ref ul{margin:0;padding-left:22px;display:flex;flex-direc
   <div class="top">
     <div class="brand">
       <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--signal)"/><path d="M8 29 L20 9 L32 29 Z" fill="none" stroke="var(--signal-ink)" stroke-width="3" stroke-linejoin="round"/><path d="M20 29 V20" stroke="var(--signal-ink)" stroke-width="3" stroke-linecap="round"/></svg>
-      <div><b>OUTPOST</b><span>offline pocket kit</span></div>
+      <div><b>OUTPOST</b><span data-en="offline pocket kit">offline pocket kit</span></div>
     </div>
     <div class="pill" id="net"><i></i><span>ONLINE</span></div>
+  </div>
+  <div class="prefs">
+    <button class="sw" id="swLang" data-act="lang" role="switch" aria-checked="false"><span class="knob"></span><span class="lbl">عربي · Arabic</span></button>
+    <button class="sw" id="swTheme" data-act="theme" role="switch" aria-checked="false"><span class="knob"></span><span class="lbl" data-en="Light mode">Light mode</span></button>
   </div>
 
   <section class="view" id="v-home"></section>
@@ -185,18 +212,18 @@ details.ref ol,details.ref ul{margin:0;padding-left:22px;display:flex;flex-direc
   <section class="view" id="v-notes"></section>
   <section class="view" id="v-field"></section>
 
-  <p class="foot">Inspired by Project N.O.M.A.D. Independent, not affiliated with it.<br>Reference cards are reminders, not a substitute for training or professional care.</p>
+  <p class="foot"><span data-en="Inspired by Project N.O.M.A.D. Independent, not affiliated with it.">Inspired by Project N.O.M.A.D. Independent, not affiliated with it.</span><br><span data-en="Reference cards are reminders, not a substitute for training or professional care.">Reference cards are reminders, not a substitute for training or professional care.</span></p>
 </div>
 
-<nav class="tabs" aria-label="Sections"><div>
-  <button data-go="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
-  <button data-go="stack"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>Stack</button>
-  <button data-go="tools"><svg viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Tools</button>
-  <button data-go="notes"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7"/></svg>Notes</button>
-  <button data-go="field"><svg viewBox="0 0 24 24"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>Field</button>
+<nav class="tabs" aria-label="Sections" data-en-label="Sections"><div>
+  <button data-go="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span data-en="Home">Home</span></button>
+  <button data-go="stack"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg><span data-en="Stack">Stack</span></button>
+  <button data-go="tools"><svg viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg><span data-en="Tools">Tools</span></button>
+  <button data-go="notes"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7"/></svg><span data-en="Notes">Notes</span></button>
+  <button data-go="field"><svg viewBox="0 0 24 24"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg><span data-en="Field">Field</span></button>
 </div></nav>
 
-<button class="beacon" id="beacon" aria-label="Stop beacon"><b id="beaconMsg">SOS</b><span id="beaconCode"></span><span>TAP ANYWHERE TO STOP</span></button>
+<button class="beacon" id="beacon" aria-label="Stop beacon" data-en-label="Stop beacon"><b id="beaconMsg">SOS</b><span id="beaconCode" dir="ltr"></span><span data-en="TAP ANYWHERE TO STOP">TAP ANYWHERE TO STOP</span></button>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -209,10 +236,318 @@ const store={mem:{},
   set(k,v){ this.mem[k]=v; try{localStorage.setItem("outpost."+k,JSON.stringify(v)); return true;}catch(e){return false;} }
 };
 let toastT; function toast(m){const t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),1900);}
-async function copy(text){ try{ await navigator.clipboard.writeText(text); toast("Copied"); }catch(e){ toast("Copy blocked here. Select the text and copy it."); } }
+async function copy(text){ try{ await navigator.clipboard.writeText(text); toast(tr("Copied")); }catch(e){ toast(tr("Copy blocked here. Select the text and copy it.")); } }
 const te=new TextEncoder(), td=new TextDecoder("utf-8",{fatal:true});
 const b64=bytes=>{let s=""; for(let i=0;i<bytes.length;i+=0x8000) s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000)); return btoa(s);};
 const unb64=str=>{const s=atob(str.replace(/\s+/g,"").replace(/-/g,"+").replace(/_/g,"/")); const a=new Uint8Array(s.length); for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i); return a;};
+
+/* ---------- language: Arabic dictionary, keyed by the English text ---------- */
+const AR={
+/* frame */
+"offline pocket kit":"حقيبة طوارئ بلا إنترنت","Light mode":"الوضع الفاتح","ONLINE":"متصل","NO SIGNAL":"لا إشارة",
+"Sections":"الأقسام","Home":"الرئيسية","Stack":"التطبيقات","Tools":"الأدوات","Notes":"الملاحظات","Field":"الميدان",
+"Inspired by Project N.O.M.A.D. Independent, not affiliated with it.":"مستوحى من مشروع N.O.M.A.D. مستقل وغير تابع له.",
+"Reference cards are reminders, not a substitute for training or professional care.":"بطاقات المرجع للتذكير فقط، ولا تغني عن التدريب أو الرعاية الطبية المتخصصة.",
+"Stop beacon":"إيقاف المنارة","TAP ANYWHERE TO STOP":"اضغط في أي مكان للإيقاف",
+"Copied":"تم النسخ","Copy blocked here. Select the text and copy it.":"النسخ غير مسموح هنا. حدّد النص وانسخه يدويًا.",
+"→":"←",
+/* stack data */
+"Library":"المكتبة","Free, from Wikimedia CH":"مجاني، من Wikimedia CH",
+"Stores Wikipedia and other reference sites on the phone. NOMAD uses Kiwix for its library too, so this is the same content.":"يخزّن ويكيبيديا ومواقع مرجعية أخرى على الهاتف. يستخدم NOMAD برنامج Kiwix لمكتبته أيضًا، فالمحتوى نفسه.",
+"Install Kiwix from the App Store":"ثبّت Kiwix من App Store",
+"On Wi-Fi, open the library inside Kiwix and pick your language":"على شبكة Wi-Fi، افتح المكتبة داخل Kiwix واختر لغتك",
+"Download WikiMed (medical encyclopedia) first. It is small and the most useful in an emergency":"نزّل WikiMed (الموسوعة الطبية) أولًا. حجمها صغير وهي الأكثر فائدة في الطوارئ",
+"Download a Wikipedia edition that fits your storage. Start with a mini or no-pictures edition":"نزّل نسخة من ويكيبيديا تناسب مساحة التخزين لديك. ابدأ بالنسخة المصغّرة أو النسخة بدون صور",
+"Add Wikivoyage, and Khan Academy or iFixit packs if you have room":"أضف Wikivoyage وحزم Khan Academy أو iFixit إن توفرت مساحة",
+"Turn on Airplane Mode and open an article to prove it works":"شغّل وضع الطيران وافتح مقالًا لتتأكد أنه يعمل",
+"Big packs take a while. Keep the phone plugged in, on Wi-Fi, with Kiwix open until they finish.":"الحزم الكبيرة تستغرق وقتًا. أبقِ الهاتف على الشاحن وعلى Wi-Fi مع فتح Kiwix حتى ينتهي التنزيل.",
+"Maps":"الخرائط","Free, open source, no ads":"مجاني، مفتوح المصدر، بلا إعلانات",
+"Offline maps with search and turn-by-turn routing from OpenStreetMap data. GPS works without a SIM or signal.":"خرائط تعمل بلا إنترنت مع بحث وإرشاد خطوة بخطوة من بيانات OpenStreetMap. يعمل GPS بدون شريحة أو إشارة.",
+"Install Organic Maps from the App Store":"ثبّت Organic Maps من App Store",
+"Download the map for your own region":"نزّل خريطة منطقتك",
+"Download neighbouring regions and anywhere you travel to often":"نزّل المناطق المجاورة وأي مكان تسافر إليه كثيرًا",
+"Bookmark home, the nearest hospital, a water source and a family meeting point":"احفظ مواقع البيت وأقرب مستشفى ومصدر ماء ونقطة تجمّع العائلة",
+"In Airplane Mode, search for a place and build a route to it":"في وضع الطيران، ابحث عن مكان وأنشئ مسارًا إليه",
+"GPS still works in Airplane Mode. The first fix can take a minute or two under open sky.":"يظل GPS يعمل في وضع الطيران. قد يستغرق تحديد الموقع أول مرة دقيقة أو دقيقتين تحت سماء مكشوفة.",
+"AI":"الذكاء الاصطناعي","Free, open source":"مجاني، مفتوح المصدر",
+"Runs small language models fully on the phone. Slower and less capable than cloud AI, but it answers with no connection.":"يشغّل نماذج لغوية صغيرة بالكامل على الهاتف. أبطأ وأقل قدرة من الذكاء الاصطناعي السحابي، لكنه يجيب بلا اتصال.",
+"Install PocketPal AI from the App Store":"ثبّت PocketPal AI من App Store",
+"Download one model that fits your iPhone (see the table below)":"نزّل نموذجًا واحدًا يناسب جهاز iPhone لديك (انظر الجدول أدناه)",
+"Load the model and ask it a test question":"حمّل النموذج واطرح عليه سؤالًا تجريبيًا",
+"In Airplane Mode, ask again to prove it runs offline":"في وضع الطيران، اسأل مرة أخرى لتتأكد أنه يعمل بلا إنترنت",
+"Small models make things up with confidence. For anything medical, check the answer in WikiMed.":"النماذج الصغيرة قد تختلق معلومات بثقة. في أي أمر طبي، تحقّق من الإجابة في WikiMed.",
+"4 GB RAM":"ذاكرة 4 GB","6 GB RAM":"ذاكرة 6 GB","8 GB or more":"8 GB أو أكثر",
+"iPhone 11, 12, 13, SE":"iPhone 11 و12 و13 وSE","12 Pro, 13 Pro, 14, 14 Pro, 15":"12 Pro و13 Pro و14 و14 Pro و15","15 Pro, 16 and newer":"15 Pro و16 والأحدث",
+"A 1 to 2B model, such as Gemma 3 1B or Qwen 2.5 1.5B":"نموذج بحجم 1 إلى 2B، مثل Gemma 3 1B أو Qwen 2.5 1.5B",
+"A 3B model, such as Llama 3.2 3B (Q4)":"نموذج 3B، مثل Llama 3.2 3B (Q4)",
+"A 4B model, such as Phi-4 mini or Gemma 3 4B (Q4)":"نموذج 4B، مثل Phi-4 mini أو Gemma 3 4B (Q4)",
+"about 1 GB":"حوالي 1 GB","about 2 GB":"حوالي 2 GB","about 2.5 to 3 GB":"حوالي 2.5 إلى 3 GB",
+"WikiMed medical encyclopedia":"موسوعة WikiMed الطبية","Wikipedia English, mini edition":"ويكيبيديا الإنجليزية، النسخة المصغّرة",
+"Wikipedia English, no pictures":"ويكيبيديا الإنجليزية، بدون صور","Wikipedia English, with pictures":"ويكيبيديا الإنجليزية، مع الصور",
+"Wikivoyage travel guide":"دليل السفر Wikivoyage","Other packs (Khan Academy, iFixit)":"حزم أخرى (Khan Academy وiFixit)",
+"Maps for your region":"خرائط منطقتك","AI model, small":"نموذج ذكاء اصطناعي صغير","AI model, medium":"نموذج ذكاء اصطناعي متوسط",
+/* go-bag */
+"Water and food":"الماء والطعام","Water, about 4 litres per person per day, 3 days":"ماء، حوالي 4 لترات للشخص يوميًا، لمدة 3 أيام",
+"Food that needs no cooking, 3 days":"طعام لا يحتاج إلى طهي، يكفي 3 أيام","Water purification tablets or a filter":"أقراص تنقية الماء أو فلتر",
+"Manual can opener":"فتّاحة علب يدوية","Light and power":"الإضاءة والطاقة","Flashlight or headlamp":"كشّاف يدوي أو كشّاف رأس",
+"Spare batteries":"بطاريات احتياطية","Charged power bank and cable":"باور بانك مشحون مع كابل","Lighter or matches in a dry bag":"ولّاعة أو أعواد ثقاب في كيس جاف",
+"Health":"الصحة","First aid kit":"حقيبة إسعافات أولية","Personal medication, one week":"أدويتك الشخصية لمدة أسبوع",
+"Soap, sanitiser and hygiene items":"صابون ومعقّم وأدوات نظافة","Dust masks":"كمامات للغبار","Papers and money":"الأوراق والنقود",
+"Copies of ID and key documents in a waterproof bag":"نسخ من البطاقة الشخصية والمستندات المهمة في كيس مقاوم للماء",
+"Cash in small notes":"نقود بفئات صغيرة","Written list of phone numbers":"قائمة مكتوبة بأرقام الهواتف","Tools and shelter":"الأدوات والمأوى",
+"Multi-tool or knife":"أداة متعددة الاستخدامات أو سكين","Whistle":"صفّارة","Emergency blanket":"بطانية طوارئ",
+"Warm layer and rain cover":"طبقة ملابس دافئة وغطاء للمطر","Duct tape and cord":"شريط لاصق قوي وحبل","Comms":"الاتصالات",
+"Battery or hand-crank radio":"راديو يعمل بالبطاريات أو بالتدوير اليدوي","Paper map of your area":"خريطة ورقية لمنطقتك","Pen and notepad":"قلم ودفتر",
+/* field reference */
+"Not breathing: CPR for an adult":"لا يتنفس: الإنعاش القلبي الرئوي لشخص بالغ",
+"Check for danger, then tap the shoulders and shout. No response: shout for help and call the emergency number, on speaker.":"تأكد من عدم وجود خطر، ثم اربت على كتفيه وناده بصوت عالٍ. إن لم يستجب: اطلب المساعدة واتصل برقم الطوارئ مع تشغيل مكبّر الصوت.",
+"Tilt the head back, lift the chin, and check for normal breathing for no more than 10 seconds.":"أمِل الرأس للخلف وارفع الذقن، وافحص التنفس الطبيعي لمدة لا تزيد على 10 ثوانٍ.",
+"Not breathing normally: put the heel of your hand on the centre of the chest, other hand on top, arms straight.":"إن لم يكن يتنفس بشكل طبيعي: ضع أسفل راحة يدك على منتصف الصدر، واليد الأخرى فوقها، مع فرد الذراعين.",
+"Push hard and fast: 5 to 6 cm deep, 100 to 120 pushes a minute, letting the chest rise fully each time.":"اضغط بقوة وبسرعة: بعمق 5 إلى 6 سم، بمعدل 100 إلى 120 ضغطة في الدقيقة، مع ترك الصدر يرتفع بالكامل بعد كل ضغطة.",
+"If trained, give 2 rescue breaths after every 30 pushes. If not, keep pushing without stopping.":"إن كنت مدرّبًا، أعطِ نفَسين إنقاذيين بعد كل 30 ضغطة. وإن لم تكن، استمر في الضغط دون توقف.",
+"Use a defibrillator (AED) the moment one arrives and follow its voice prompts.":"استخدم جهاز الصدمات الكهربائية (AED) فور وصوله واتبع تعليماته الصوتية.",
+"Keep going until help takes over or the person starts breathing.":"استمر حتى يتولى المسعفون الأمر أو يبدأ الشخص بالتنفس.",
+"Do not stop to re-check for a pulse. Swap with another rescuer every 2 minutes if you can.":"لا تتوقف لفحص النبض مرة أخرى. تبادل مع مسعف آخر كل دقيقتين إن أمكن.",
+"Severe bleeding":"نزيف شديد",
+"Press firmly and directly on the wound with a clean cloth or your hand. Use a glove or plastic bag as a barrier if you have one.":"اضغط بقوة مباشرة على الجرح بقطعة قماش نظيفة أو بيدك. استخدم قفازًا أو كيسًا بلاستيكيًا كحاجز إن وُجد.",
+"Keep pressing. If blood soaks through, add more cloth on top. Do not lift the first layer.":"استمر في الضغط. إذا تشبّع القماش بالدم، أضف قماشًا آخر فوقه. لا ترفع الطبقة الأولى.",
+"Lay the person down and keep them warm.":"مدّد الشخص على الأرض وحافظ على دفئه.",
+"Limb bleeding that is life-threatening and will not stop: put a tourniquet 5 to 7 cm above the wound, not over a joint. Tighten until the bleeding stops and write down the time.":"نزيف في أحد الأطراف يهدد الحياة ولا يتوقف: ضع رباطًا ضاغطًا (تورنيكيه) على بعد 5 إلى 7 سم فوق الجرح، وليس على مفصل. شدّه حتى يتوقف النزيف ودوّن الوقت.",
+"Get emergency help. Do not loosen a tourniquet once it is on.":"اطلب المساعدة الطارئة. لا ترخِ الرباط الضاغط بعد وضعه.",
+"Do not remove an object stuck in a wound. Pad around it and press on either side.":"لا تنزع جسمًا عالقًا في الجرح. ضع حشوة حوله واضغط على جانبيه.",
+"Choking (adult or child over 1)":"الاختناق (بالغ أو طفل فوق سنة)",
+"If they can cough or speak, tell them to keep coughing.":"إن كان يستطيع السعال أو الكلام، اطلب منه الاستمرار في السعال.",
+"If they cannot: lean them forward and give up to 5 sharp back blows between the shoulder blades with the heel of your hand.":"إن لم يستطع: أمِله للأمام ووجّه حتى 5 ضربات قوية على الظهر بين لوحي الكتف بأسفل راحة يدك.",
+"Still blocked: give up to 5 abdominal thrusts. Stand behind, fist just above the navel, pull sharply in and up.":"إن ظل مسدودًا: أعطِ حتى 5 ضغطات على البطن. قف خلفه، وضع قبضتك فوق السرّة مباشرة، واسحب بقوة للداخل وللأعلى.",
+"Alternate 5 back blows and 5 thrusts. Call the emergency number.":"بدّل بين 5 ضربات على الظهر و5 ضغطات على البطن. اتصل برقم الطوارئ.",
+"If they go unresponsive, lower them to the ground and start CPR.":"إذا فقد الوعي، أنزله إلى الأرض وابدأ الإنعاش القلبي الرئوي.",
+"Babies under 1 need a different method: back blows and chest thrusts, face down along your forearm. No abdominal thrusts.":"الرضّع تحت سنة يحتاجون طريقة مختلفة: ضربات على الظهر وضغطات على الصدر، ووجه الرضيع لأسفل على ساعدك. بدون ضغطات على البطن.",
+"Unresponsive but breathing: recovery position":"فاقد الوعي لكنه يتنفس: وضعية الإفاقة",
+"Kneel beside them. Place the arm nearest you out at a right angle.":"اجثُ بجانبه. ضع ذراعه الأقرب إليك ممدودة بزاوية قائمة.",
+"Bring the far hand across and hold the back of it against their near cheek.":"اسحب يده البعيدة عبر صدره وثبّت ظهرها على خده القريب منك.",
+"Pull the far knee up, then roll them toward you onto their side.":"ارفع ركبته البعيدة، ثم اقلبه نحوك على جنبه.",
+"Tilt the head back slightly so the airway stays open and fluid can drain.":"أمِل الرأس للخلف قليلًا ليبقى مجرى الهواء مفتوحًا وتخرج السوائل.",
+"Call for help and keep checking their breathing.":"اطلب المساعدة واستمر في مراقبة تنفسه.",
+"If you suspect a spinal injury, move them only if the airway is at risk.":"إذا اشتبهت في إصابة بالعمود الفقري، لا تحرّكه إلا إذا كان مجرى الهواء في خطر.",
+"Burns":"الحروق",
+"Cool the burn under cool running water for 20 minutes. Start as soon as possible.":"برّد الحرق تحت ماء جارٍ بارد لمدة 20 دقيقة. ابدأ في أسرع وقت ممكن.",
+"Remove rings, watches and clothing near the burn, unless stuck to the skin.":"انزع الخواتم والساعات والملابس القريبة من الحرق، إلا إذا كانت ملتصقة بالجلد.",
+"Cover loosely with cling film or a clean, non-fluffy cloth.":"غطِّه بشكل فضفاض بغلاف بلاستيكي شفاف أو قطعة قماش نظيفة لا تترك وبرًا.",
+"Get medical help for burns bigger than the person's hand, burns on the face, hands or groin, deep burns, chemical or electrical burns, and any burn on a child.":"اطلب مساعدة طبية للحروق الأكبر من كف الشخص، وحروق الوجه أو اليدين أو منطقة العانة، والحروق العميقة، والحروق الكيميائية أو الكهربائية، وأي حرق لدى طفل.",
+"No ice, butter, oil or toothpaste. Do not burst blisters.":"لا ثلج ولا زبدة ولا زيت ولا معجون أسنان. لا تفقأ الفقاعات.",
+"Shock (pale, cold, clammy, fast pulse)":"الصدمة (شحوب، برودة، عرق بارد، نبض سريع)",
+"Lay the person down. Raise the legs if injuries allow.":"مدّد الشخص. ارفع ساقيه إذا سمحت الإصابات.",
+"Treat the cause you can see, such as bleeding.":"عالج السبب الظاهر، مثل النزيف.",
+"Keep them warm with a blanket or coat.":"حافظ على دفئه ببطانية أو معطف.",
+"Call the emergency number. Watch their breathing and response.":"اتصل برقم الطوارئ. راقب تنفسه واستجابته.",
+"Give nothing to eat or drink.":"لا تعطه شيئًا يأكله أو يشربه.",
+"Broken bones and sprains":"الكسور والالتواءات",
+"Keep the injured part still in the position you found it.":"أبقِ الجزء المصاب ثابتًا في الوضع الذي وجدته عليه.",
+"Pad and splint it, covering the joints above and below the injury.":"ضع حشوة وجبيرة تغطي المفصلين فوق الإصابة وتحتها.",
+"Check fingers or toes beyond the injury for colour, warmth and feeling.":"افحص الأصابع بعد موضع الإصابة من حيث اللون والدفء والإحساس.",
+"A wrapped cold pack helps swelling. 15 to 20 minutes at a time.":"الكمادة الباردة الملفوفة تخفف التورم، لمدة 15 إلى 20 دقيقة في كل مرة.",
+"Cover an open wound with a clean dressing before splinting.":"غطِّ الجرح المفتوح بضمادة نظيفة قبل التجبير.",
+"Do not try to straighten a bone or push it back in.":"لا تحاول تعديل العظم أو إعادته إلى مكانه.",
+"Heat exhaustion and heat stroke":"الإجهاد الحراري وضربة الشمس",
+"Heat exhaustion (heavy sweat, headache, weakness, nausea): move to shade, lie down, loosen clothing, sip water or rehydration drink, cool with wet cloths and fanning.":"الإجهاد الحراري (تعرّق غزير، صداع، ضعف، غثيان): انتقل إلى الظل واستلقِ، وخفّف الملابس، واشرب الماء أو محلول الإرواء على رشفات، وبرّد الجسم بقطع قماش مبللة والتهوية.",
+"Heat stroke (confusion, collapse, very hot skin, 40 °C or more) is an emergency. Call for help.":"ضربة الشمس (تشوّش، انهيار، جلد شديد السخونة، 40 °م أو أكثر) حالة طارئة. اطلب المساعدة.",
+"Cool them fast: cold water immersion if possible, otherwise soak the skin and fan hard, with cold packs at the neck, armpits and groin.":"برّده بسرعة: اغمره في ماء بارد إن أمكن، وإلا فبلّل الجلد وهوِّ عليه بقوة، مع كمادات باردة على الرقبة والإبطين وأعلى الفخذين.",
+"Keep cooling until help arrives.":"استمر في التبريد حتى تصل المساعدة.",
+"Do not give drinks to someone who is confused or drowsy.":"لا تعطِ مشروبات لشخص مشوّش أو نعسان.",
+"Hypothermia":"انخفاض حرارة الجسم",
+"Get out of wind and wet. Insulate them from the ground.":"ابتعد عن الرياح والبلل. اعزله عن الأرض.",
+"Replace wet clothing with dry layers. Cover the head.":"استبدل الملابس المبللة بطبقات جافة. غطِّ الرأس.",
+"Warm the chest, neck and groin first, with blankets or skin contact.":"دفّئ الصدر والرقبة وأعلى الفخذين أولًا، بالبطانيات أو بملامسة الجلد.",
+"If fully alert, give warm sweet drinks.":"إذا كان واعيًا تمامًا، أعطه مشروبات دافئة محلّاة.",
+"Handle them gently. Severe cases (drowsy, slurred speech, shivering has stopped) need emergency help.":"تعامل معه برفق. الحالات الشديدة (نعاس، تلعثم في الكلام، توقف الارتجاف) تحتاج مساعدة طارئة.",
+"No alcohol. Do not rub the arms and legs, and do not use very hot water.":"لا كحول. لا تفرك الذراعين والساقين، ولا تستخدم ماءً شديد السخونة.",
+"Dehydration and rehydration drink":"الجفاف ومحلول الإرواء",
+"Signs: dark urine, dry mouth, dizziness, headache, tiredness.":"العلامات: بول داكن، جفاف الفم، دوخة، صداع، تعب.",
+"Mix 1 litre of safe water with 6 level teaspoons of sugar and half a level teaspoon of salt.":"اخلط لترًا واحدًا من الماء الآمن مع 6 ملاعق صغيرة مستوية من السكر ونصف ملعقة صغيرة مستوية من الملح.",
+"Take small sips often, especially after vomiting or diarrhoea.":"اشرب رشفات صغيرة بشكل متكرر، خاصة بعد القيء أو الإسهال.",
+"Rest in shade and avoid effort in the heat of the day.":"استرح في الظل وتجنب المجهود في وقت الحر.",
+"Get medical help for confusion, no urine in 8 hours, or if fluids will not stay down.":"اطلب مساعدة طبية عند التشوّش، أو عدم التبول لمدة 8 ساعات، أو إذا لم تبقَ السوائل في المعدة.",
+"Severe allergic reaction":"حساسية شديدة",
+"Signs: swelling of the face or throat, trouble breathing, widespread rash, faintness.":"العلامات: تورم الوجه أو الحلق، صعوبة التنفس، طفح جلدي منتشر، شعور بالإغماء.",
+"If they carry an adrenaline auto-injector, use it in the outer thigh straight away.":"إذا كان يحمل حقنة أدرينالين ذاتية، استخدمها فورًا في الجانب الخارجي من الفخذ.",
+"Call the emergency number and say anaphylaxis.":"اتصل برقم الطوارئ وقل إنها صدمة حساسية (تأق).",
+"Lay them flat with legs raised. If breathing is hard, let them sit up.":"مدّده مع رفع ساقيه. وإذا كان التنفس صعبًا، دعه يجلس.",
+"A second injector can be used after 5 minutes if there is no improvement.":"يمكن استخدام حقنة ثانية بعد 5 دقائق إذا لم يحدث تحسن.",
+"Do not let them stand or walk, even if they feel better.":"لا تدعه يقف أو يمشي، حتى لو شعر بتحسن.",
+"Snake bite":"لدغة ثعبان",
+"Move away from the snake. Keep the person calm and as still as possible.":"ابتعد عن الثعبان. حافظ على هدوء الشخص وأبقه ساكنًا قدر الإمكان.",
+"Remove rings and tight items near the bite.":"انزع الخواتم وأي شيء ضيق قريب من اللدغة.",
+"Keep the bitten limb still, at about heart level.":"أبقِ الطرف الملدوغ ثابتًا عند مستوى القلب تقريبًا.",
+"Get to a hospital as fast as you safely can. Note the time and what the snake looked like.":"توجّه إلى المستشفى بأسرع ما يمكن بأمان. دوّن الوقت وشكل الثعبان.",
+"Do not cut, suck, ice or tourniquet the bite. Do not try to catch the snake.":"لا تجرح مكان اللدغة ولا تمصّه ولا تضع عليه ثلجًا أو رباطًا ضاغطًا. لا تحاول الإمساك بالثعبان.",
+"Make water safe to drink":"اجعل الماء آمنًا للشرب",
+"Cloudy water: let it settle, then pour through a clean cloth first.":"الماء العكر: اتركه حتى يترسب، ثم صفّه أولًا عبر قطعة قماش نظيفة.",
+"Boil: bring to a rolling boil for 1 minute. Above about 2,000 m, boil for 3 minutes. Let it cool covered.":"الغلي: اغلِه غليانًا قويًا لمدة دقيقة واحدة. فوق ارتفاع 2,000 م تقريبًا، اغلِه 3 دقائق. اتركه يبرد وهو مغطى.",
+"Bleach, if you cannot boil: plain unscented household bleach (5 to 9%). 2 drops per litre of clear water, 4 if cloudy. Stir and wait 30 minutes. It should smell faintly of chlorine.":"الكلور إذا لم تستطع الغلي: كلور منزلي عادي بدون رائحة (5 إلى 9%). نقطتان لكل لتر من الماء الصافي، و4 نقاط إن كان عكرًا. حرّك وانتظر 30 دقيقة. يجب أن تكون فيه رائحة كلور خفيفة.",
+"Purification tablets: follow the packet.":"أقراص التنقية: اتبع التعليمات على العبوة.",
+"Store treated water in clean, closed containers.":"خزّن الماء المعالج في أوعية نظيفة ومغلقة.",
+"Boiling and bleach kill germs. They do not remove fuel, chemicals or salt.":"الغلي والكلور يقتلان الجراثيم، لكنهما لا يزيلان الوقود أو المواد الكيميائية أو الملح.",
+"How much water, and where to find it":"كم تحتاج من الماء، وأين تجده",
+"Plan on about 4 litres per person per day for drinking and basic hygiene, for at least 3 days. More in heat.":"احسب حوالي 4 لترات للشخص يوميًا للشرب والنظافة الأساسية، لمدة 3 أيام على الأقل. وأكثر في الحر.",
+"Safe emergency sources at home: the water heater tank, melted ice cubes, liquid from canned food.":"مصادر طوارئ آمنة في البيت: خزان سخان المياه، ومكعبات الثلج المذابة، والسائل الموجود في المعلبات.",
+"Collect rainwater in clean containers, then treat it.":"اجمع مياه الأمطار في أوعية نظيفة، ثم عالجها.",
+"Drink what you need today. Rationing water too hard makes you less able to find more.":"اشرب ما تحتاجه اليوم. التقتير الشديد في الماء يضعف قدرتك على إيجاد المزيد.",
+"Do not drink from radiators, waterbeds or pools.":"لا تشرب من مياه الرادياتير أو الأسرّة المائية أو حمامات السباحة.",
+"Food when the power is out":"الطعام عند انقطاع الكهرباء",
+"Keep fridge and freezer doors shut.":"أبقِ بابي الثلاجة والفريزر مغلقين.",
+"A closed fridge keeps food safe for about 4 hours.":"الثلاجة المغلقة تحفظ الطعام آمنًا لحوالي 4 ساعات.",
+"A full freezer holds for about 48 hours, a half-full one about 24.":"الفريزر الممتلئ يصمد حوالي 48 ساعة، ونصف الممتلئ حوالي 24 ساعة.",
+"Eat fridge food first, then freezer food, then shelf-stable food.":"كُل طعام الثلاجة أولًا، ثم طعام الفريزر، ثم الأطعمة التي لا تحتاج تبريدًا.",
+"Throw out meat, dairy and leftovers that sat above 4 °C for more than 4 hours.":"تخلّص من اللحوم ومنتجات الألبان وبقايا الطعام التي بقيت فوق 4 °م لأكثر من 4 ساعات.",
+"Never taste food to test it. When in doubt, throw it out.":"لا تتذوق الطعام لتختبره أبدًا. إن شككت فيه، تخلّص منه.",
+"The rule of threes":"قاعدة الثلاثات",
+"About 3 minutes without air.":"حوالي 3 دقائق بلا هواء.",
+"About 3 hours without shelter in harsh cold or heat.":"حوالي 3 ساعات بلا مأوى في البرد أو الحر القاسي.",
+"About 3 days without water.":"حوالي 3 أيام بلا ماء.",
+"About 3 weeks without food.":"حوالي 3 أسابيع بلا طعام.",
+"Use this order to decide what to fix first.":"استخدم هذا الترتيب لتقرر ما تعالجه أولًا.",
+"Shelter basics":"أساسيات المأوى",
+"Get out of wind, rain and direct sun before anything else.":"ابتعد عن الرياح والمطر وأشعة الشمس المباشرة قبل أي شيء آخر.",
+"Insulate yourself from the ground. It takes heat faster than air.":"اعزل نفسك عن الأرض، فهي تسحب الحرارة أسرع من الهواء.",
+"Small spaces are warmer. Build only as big as you need.":"الأماكن الصغيرة أدفأ. ابنِ بالحجم الذي تحتاجه فقط.",
+"In heat, rest in shade through midday and move early or late.":"في الحر، استرح في الظل وقت الظهيرة وتحرّك في الصباح الباكر أو المساء.",
+"Stay with a broken-down vehicle. It is shelter and easier to spot.":"ابقَ بجانب السيارة المعطلة، فهي مأوى ويسهل رصدها.",
+"Never run a generator, grill or charcoal fire indoors or in a tent. Carbon monoxide kills without warning.":"لا تشغّل مولدًا أو شوّاية أو فحمًا داخل المنزل أو الخيمة أبدًا. أول أكسيد الكربون يقتل دون إنذار.",
+"Start a fire":"إشعال النار",
+"Clear a bare patch of ground away from anything that burns.":"نظّف بقعة من الأرض بعيدًا عن أي شيء قابل للاشتعال.",
+"Gather three piles before you light: tinder (dry grass, paper, lint), kindling (pencil-thin sticks), fuel (wrist-thick wood).":"اجمع ثلاث كومات قبل الإشعال: مادة الإشعال (عشب جاف، ورق، وبر)، وأعواد رفيعة بسُمك القلم، ووقود (حطب بسُمك المعصم).",
+"Light the tinder, add kindling slowly, and leave gaps for air.":"أشعل مادة الإشعال، وأضف الأعواد الرفيعة ببطء، واترك فراغات للهواء.",
+"Add fuel once the kindling burns steadily.":"أضف الحطب عندما تشتعل الأعواد بثبات.",
+"Put it out fully: drown, stir, and feel for heat.":"أطفئها تمامًا: اغمرها بالماء، وقلّبها، وتحسّس الحرارة.",
+"Signal for rescue":"إشارات طلب الإنقاذ",
+"Three of anything means distress: three whistle blasts, three flashes, three fires.":"ثلاثة من أي شيء تعني الاستغاثة: ثلاث صفارات، ثلاث ومضات، ثلاث نيران.",
+"SOS in Morse is three short, three long, three short. The beacon in Tools flashes it for you.":"إشارة SOS بشفرة مورس هي ثلاث قصيرة، ثلاث طويلة، ثلاث قصيرة. منارة SOS في الأدوات تومضها لك.",
+"Aim mirror or screen flashes at aircraft and distant people.":"وجّه ومضات المرآة أو الشاشة نحو الطائرات والأشخاص البعيدين.",
+"Ground signals for aircraft: a large V means you need help, a large X means you need medical help. Make them at least 3 m long in a colour that contrasts with the ground.":"إشارات أرضية للطائرات: حرف V كبير يعني أنك تحتاج مساعدة، وحرف X كبير يعني أنك تحتاج مساعدة طبية. اجعلها بطول 3 م على الأقل وبلون يتباين مع الأرض.",
+"A text message gets through on weaker signal than a call.":"الرسالة النصية تصل بإشارة أضعف مما تحتاجه المكالمة.",
+"Some newer iPhones can text emergency services by satellite in supported regions. Check if yours can before you rely on it.":"بعض أجهزة iPhone الأحدث يمكنها مراسلة الطوارئ عبر القمر الصناعي في المناطق المدعومة. تحقّق من دعم جهازك قبل الاعتماد عليه.",
+"Find direction without a compass":"تحديد الاتجاه بدون بوصلة",
+"The sun rises roughly in the east and sets roughly in the west.":"تشرق الشمس تقريبًا من الشرق وتغرب تقريبًا في الغرب.",
+"Shadow stick: push a stick upright in flat ground and mark the shadow tip. Wait 15 to 20 minutes and mark it again. The first mark is west, the second is east.":"عصا الظل: اغرس عصا رأسيًا في أرض مستوية وعلّم طرف ظلها. انتظر 15 إلى 20 دقيقة وعلّمه مرة أخرى. العلامة الأولى هي الغرب، والثانية هي الشرق.",
+"Analog watch, northern hemisphere: point the hour hand at the sun. South lies halfway between the hour hand and 12.":"ساعة بعقارب، في نصف الكرة الشمالي: وجّه عقرب الساعات نحو الشمس. الجنوب يقع في منتصف المسافة بين عقرب الساعات والرقم 12.",
+"Night, northern hemisphere: the two stars at the end of the Big Dipper's bowl point to the North Star.":"ليلًا في نصف الكرة الشمالي: النجمان في طرف وعاء الدب الأكبر يشيران إلى النجم القطبي.",
+"Night, southern hemisphere: extend the long axis of the Southern Cross about 4.5 times its length. The point below that is roughly south.":"ليلًا في نصف الكرة الجنوبي: مدّ المحور الطويل للصليب الجنوبي نحو 4.5 أضعاف طوله. النقطة أسفل ذلك هي الجنوب تقريبًا.",
+"If you are lost: STOP":"إذا ضللت الطريق: توقّف",
+"Stop. Sit down and stay calm.":"توقّف. اجلس وحافظ على هدوئك.",
+"Think. When did you last know where you were?":"فكّر. متى كانت آخر مرة عرفت فيها مكانك؟",
+"Observe. Check landmarks, weather, daylight, water and what you carry.":"لاحظ. تفقّد المعالم والطقس وضوء النهار والماء وما تحمله.",
+"Plan. If someone knows your route, staying put is usually the best choice.":"خطّط. إذا كان أحد يعرف مسارك، فالبقاء في مكانك غالبًا هو الخيار الأفضل.",
+"Make yourself visible and audible, and save your phone battery.":"اجعل نفسك مرئيًا ومسموعًا، ووفّر بطارية هاتفك.",
+"Make your phone battery last":"إطالة عمر بطارية الهاتف",
+"Turn on Low Power Mode and lower the screen brightness.":"شغّل وضع الطاقة المنخفضة وخفّض سطوع الشاشة.",
+"Use Airplane Mode and check for signal briefly at set times.":"استخدم وضع الطيران وافحص الإشارة لفترة قصيرة في أوقات محددة.",
+"Close navigation and camera when you are not using them.":"أغلق الملاحة والكاميرا عندما لا تستخدمهما.",
+"Keep the phone warm in cold weather and shaded in heat.":"أبقِ الهاتف دافئًا في البرد وفي الظل في الحر.",
+"Download maps and reference packs before you leave coverage.":"نزّل الخرائط والحزم المرجعية قبل أن تخرج من نطاق التغطية.",
+"Power cut checklist":"قائمة انقطاع الكهرباء",
+"Use flashlights, not candles.":"استخدم الكشافات، لا الشموع.",
+"Unplug sensitive electronics until power is stable.":"افصل الأجهزة الإلكترونية الحساسة حتى تستقر الكهرباء.",
+"Keep fridge and freezer closed.":"أبقِ الثلاجة والفريزر مغلقين.",
+"Fill containers with water if your supply depends on pumps.":"املأ أوعية بالماء إذا كان إمداد الماء لديك يعتمد على مضخات.",
+"Check on neighbours who are elderly or unwell.":"اطمئن على الجيران من كبار السن أو المرضى.",
+"Never use a generator, camp stove or grill indoors.":"لا تستخدم مولدًا أو موقد تخييم أو شوّاية داخل المنزل أبدًا.",
+"Family contact plan":"خطة التواصل العائلية",
+"Agree on two meeting points: one near home, one outside your neighbourhood.":"اتفقوا على نقطتي تجمّع: واحدة قرب البيت، وأخرى خارج الحي.",
+"Choose one contact who lives in another city for everyone to report to.":"اختاروا شخصًا يعيش في مدينة أخرى ليتواصل معه الجميع.",
+"Keep phone numbers on paper as well as in your phone.":"احتفظوا بأرقام الهواتف على ورق إلى جانب الهاتف.",
+"Agree on check-in times so phones can stay off in between.":"اتفقوا على مواعيد للاطمئنان حتى تبقى الهواتف مغلقة بينها.",
+"All":"الكل","First aid":"إسعافات أولية","Shelter and fire":"المأوى والنار","Signal and navigate":"الإشارة والاتجاه",
+"Power and comms":"الطاقة والاتصال","Numbers":"الأرقام","Go-bag":"حقيبة الطوارئ",
+"AID":"إسعاف","WATER":"ماء","SHLTR":"مأوى","SIGNL":"إشارة","POWER":"طاقة",
+"EU, and works from most mobile phones in many countries":"الاتحاد الأوروبي، ويعمل من معظم الهواتف المحمولة في دول كثيرة",
+"United States, Canada":"الولايات المتحدة، كندا","United Kingdom":"المملكة المتحدة","Australia":"أستراليا",
+"Egypt, ambulance":"مصر، الإسعاف","Egypt, police":"مصر، الشرطة","Egypt, fire":"مصر، المطافئ",
+/* home */
+"Ready":"جاهز","Getting there":"اقتربت","Started":"بدأت","Not started":"لم تبدأ","READY":"جاهز","Readiness":"الجاهزية",
+"Offline apps":"تطبيقات بلا إنترنت","This kit offline":"هذه الحقيبة بلا إنترنت","yes":"نعم","not yet":"ليس بعد",
+"SOS beacon":"منارة SOS","Flash and beep SOS in Morse":"وميض وصفير SOS بشفرة مورس","Emergency numbers":"أرقام الطوارئ",
+"112, 911, 123 and more":"112 و911 و123 وغيرها","CPR, bleeding, burns, choking":"الإنعاش، النزيف، الحروق، الاختناق",
+"Safe water":"ماء آمن","Boil times and bleach doses":"مدة الغلي وجرعات الكلور","Text vault":"خزنة النصوص",
+"Lock a message with a passphrase":"اقفل رسالة بعبارة مرور","What replaces what":"ما البديل لكل جزء",
+"NOMAD server":"خادم NOMAD","On your iPhone":"على جهاز iPhone","Offline library":"مكتبة بلا إنترنت","Offline maps":"خرائط بلا إنترنت",
+"Local AI":"ذكاء اصطناعي محلي","Khan Academy courses":"دورات Khan Academy","Kiwix packs":"حزم Kiwix","Data tools":"أدوات البيانات",
+"Tools tab":"تبويب الأدوات","Notes tab":"تبويب الملاحظات","Set up the three apps":"جهّز التطبيقات الثلاثة",
+"Use this kit with no signal":"استخدم هذه الحقيبة بدون إشارة","Installed. It opens with no connection.":"مثبّتة. تفتح بدون اتصال.",
+"Checklists and notes are stored on this phone.":"القوائم والملاحظات محفوظة على هذا الهاتف.",
+"This copy still needs a connection to open":"هذه النسخة ما زالت تحتاج اتصالًا لتفتح",
+"This browser is blocking storage, so checklists and notes will reset when you close the page.":"هذا المتصفح يمنع التخزين، لذا ستُمسح القوائم والملاحظات عند إغلاق الصفحة.",
+/* stack view */
+"The iPhone stack":"تطبيقات iPhone","Three free apps cover the heavy parts":"ثلاثة تطبيقات مجانية تغطي الجزء الأكبر",
+"Tick each step as you go. Do the downloads on Wi-Fi, then test everything in Airplane Mode.":"علّم كل خطوة عند إنجازها. نزّل الملفات على Wi-Fi، ثم اختبر كل شيء في وضع الطيران.",
+"DONE":"تم","Open in the App Store":"افتح في App Store","Phone memory":"ذاكرة الهاتف","Models":"الأجهزة","Try":"جرّب","Size":"الحجم",
+"Storage planner":"مخطط التخزين","Will it fit?":"هل تكفي المساحة؟",
+"Sizes are rough and change with every release. Edit any number to match what the app shows before you download.":"الأحجام تقريبية وتتغير مع كل إصدار. عدّل أي رقم ليطابق ما يظهره التطبيق قبل التنزيل.",
+"Free space on your iPhone, in GB (Settings, General, iPhone Storage)":"المساحة الفارغة على iPhone بالجيجابايت (الإعدادات، عام، مساحة تخزين iPhone)",
+"e.g. 40":"مثلًا 40","Selected":"المحدد","size in GB":"الحجم بالجيجابايت",
+"Enter your free space to see if this fits.":"أدخل المساحة الفارغة لترى إن كانت تكفي.",
+"It fits, but leaves under 20% free. iPhones slow down when nearly full.":"تكفي، لكن يتبقى أقل من 20% فارغًا. يبطؤ iPhone عندما يقترب من الامتلاء.",
+/* tools */
+"Encode":"ترميز","Hash":"بصمة","Vault":"الخزنة","Convert":"تحويل","Password":"كلمة مرور","Coordinates":"الإحداثيات",
+"Base64 encode":"ترميز Base64","Base64 decode":"فك Base64","URL encode":"ترميز URL","URL decode":"فك URL",
+"Hex encode":"ترميز Hex","Hex decode":"فك Hex","Binary encode":"ترميز ثنائي","Binary decode":"فك ثنائي",
+"Morse encode":"ترميز مورس","Morse decode":"فك مورس","ROT13":"ROT13","Reverse":"عكس النص",
+"Encode and decode":"الترميز وفك الترميز","Operation":"العملية","Input":"المدخل","Type or paste text":"اكتب أو الصق نصًا",
+"Copy result":"انسخ النتيجة","Use result as input":"استخدم النتيجة كمدخل","Could not decode that. ":"تعذّر فك ذلك. ",
+"Hex needs an even number of digits.":"يحتاج Hex عددًا زوجيًا من الخانات.","Binary needs groups of 8 bits.":"يحتاج النظام الثنائي مجموعات من 8 بتات.",
+"Check the input matches the operation.":"تأكد أن المدخل يناسب العملية.",
+"A fingerprint of text. The same input always gives the same hash, so you can check that a message was not changed.":"بصمة للنص. المدخل نفسه يعطي دائمًا البصمة نفسها، فيمكنك التأكد أن الرسالة لم تتغير.",
+"Algorithm":"الخوارزمية","Text":"النص","Copy hash":"انسخ البصمة","Hashing is not available in this browser context.":"حساب البصمة غير متاح في هذا المتصفح.",
+"Locks text with AES-256 and a passphrase. Nothing leaves the phone. Store the locked text anywhere, even on paper.":"يقفل النص بتشفير AES-256 وعبارة مرور. لا شيء يغادر الهاتف. احفظ النص المقفل في أي مكان، حتى على الورق.",
+"Passphrase":"عبارة المرور","Long and memorable":"طويلة وسهلة التذكر","Text to lock, or locked text to open":"نص لقفله، أو نص مقفل لفتحه",
+"Type a message, or paste text that starts with OP1.":"اكتب رسالة، أو الصق نصًا يبدأ بـ OP1.","Lock":"اقفل","Unlock":"افتح",
+"The result appears here.":"تظهر النتيجة هنا.","There is no reset. If you forget the passphrase, the text is gone.":"لا توجد إعادة تعيين. إذا نسيت عبارة المرور، يضيع النص.",
+"Enter both a passphrase and some text.":"أدخل عبارة المرور والنص معًا.","Working…":"جارٍ العمل…",
+"Locking is not available in this browser context.":"القفل غير متاح في هذا المتصفح.",
+"That is not locked text. It should start with OP1.":"هذا ليس نصًا مقفلًا. يجب أن يبدأ بـ OP1.",
+"Wrong passphrase, or the locked text is damaged.":"عبارة مرور خاطئة، أو النص المقفل تالف.",
+"Unit converter":"محوّل الوحدات","Kind":"النوع","Value":"القيمة","From":"من","To":"إلى","Swap units":"بدّل الوحدات","Enter a number":"أدخل رقمًا",
+"Length":"الطول","Weight":"الوزن","Volume":"الحجم","Speed":"السرعة","Temperature":"الحرارة",
+"m":"م","km":"كم","cm":"سم","mm":"مم","mile":"ميل","yard":"ياردة","foot":"قدم","inch":"بوصة","nautical mile":"ميل بحري",
+"kg":"كجم","g":"جم","lb":"رطل","oz":"أونصة","litre":"لتر","ml":"مل","US gallon":"جالون أمريكي","UK gallon":"جالون بريطاني",
+"US cup":"كوب أمريكي","US fl oz":"أونصة سائلة أمريكية","tablespoon":"ملعقة كبيرة","teaspoon":"ملعقة صغيرة",
+"km/h":"كم/س","m/s":"م/ث","mph":"ميل/س","knot":"عقدة","°C":"°م","°F":"°ف","K":"كلفن",
+"Password generator":"مولّد كلمات المرور","Made on this phone with its secure random source.":"تُنشأ على هذا الهاتف بمصدره العشوائي الآمن.",
+"Length: ":"الطول: ","Symbols":"رموز","Skip look-alikes (0 O 1 l I)":"تجنّب المتشابهات (0 O 1 l I)","New password":"كلمة مرور جديدة","Copy":"نسخ",
+"Switch between decimal degrees and degrees, minutes, seconds. Useful for reading a position to rescuers.":"حوّل بين الدرجات العشرية والدرجات والدقائق والثواني. مفيد لإملاء موقعك على فرق الإنقاذ.",
+"Position":"الموقع","Accepts":"يقبل","or":"أو",
+"Could not read that. Use latitude then longitude, like 30.0444, 31.2357":"تعذّرت قراءة ذلك. اكتب خط العرض ثم خط الطول، مثل 30.0444, 31.2357",
+"Turn the screen into a signal lamp":"حوّل الشاشة إلى مصباح إشارة",
+"The whole screen flashes your message in Morse. Set brightness to full and point the screen at whoever you are signalling.":"تومض الشاشة كلها برسالتك بشفرة مورس. اضبط السطوع على الحد الأقصى ووجّه الشاشة نحو من ترسل إليه الإشارة.",
+"Message":"الرسالة","Beep as well (needs the ring switch on)":"صفير أيضًا (يحتاج تشغيل زر الرنين)","Start beacon":"ابدأ المنارة",
+"Flashes are slow, about two a second at most. Still, avoid it near anyone sensitive to flashing light.":"الومضات بطيئة، ومضتان في الثانية كحد أقصى. ومع ذلك، تجنّب استخدامها قرب من يتأثر بالضوء الوامض.",
+"Type letters or numbers":"اكتب حروفًا إنجليزية أو أرقامًا","Type letters or numbers first":"اكتب حروفًا إنجليزية أو أرقامًا أولًا",
+"Works with no connection":"تعمل بدون اتصال",
+/* notes */
+"‹ All notes":"› كل الملاحظات","Saved":"محفوظ","Title":"العنوان","Write here":"اكتب هنا","Copy note":"انسخ الملاحظة","Delete":"حذف",
+"Kept on this phone":"محفوظة على هذا الهاتف","New note":"ملاحظة جديدة","Search notes":"ابحث في الملاحظات","SAVE":"حفظ",
+"Back up or move your notes":"انسخ ملاحظاتك احتياطيًا أو انقلها",
+"Notes live only in this browser. Copy a backup now and then and paste it somewhere safe.":"الملاحظات موجودة في هذا المتصفح فقط. انسخ نسخة احتياطية من وقت لآخر والصقها في مكان آمن.",
+"Copy backup of all notes":"انسخ نسخة احتياطية لكل الملاحظات","Restore: paste a backup here":"الاستعادة: الصق النسخة الاحتياطية هنا",
+"Paste backup text":"الصق نص النسخة الاحتياطية","Restore from pasted backup":"استعد من النسخة الملصقة","Untitled":"بدون عنوان",
+"No notes match that search.":"لا توجد ملاحظات تطابق البحث.","No notes yet. Tap New note to write one.":"لا توجد ملاحظات بعد. اضغط «ملاحظة جديدة» لكتابة واحدة.",
+"Saving…":"جارٍ الحفظ…","Not saved: storage is blocked":"لم تُحفظ: التخزين ممنوع","Tap again to delete":"اضغط مرة أخرى للحذف",
+"Note deleted":"حُذفت الملاحظة","That is not a valid backup":"هذه ليست نسخة احتياطية صالحة",
+/* field view */
+"Field reference":"مرجع ميداني","Short cards for bad moments":"بطاقات قصيرة للحظات الصعبة","Search: burn, water, lost…":"ابحث: حرق، ماء، ضائع…",
+"Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.":"الأرقام تختلف حسب الدولة. تأكد من رقم بلدك واكتبه في الملاحظات. قل مكانك أولًا، ثم ما حدث.",
+"Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه."
+};
+const isAr=()=>S.lang==="ar";
+const tr=s=>{ if(!isAr()) return s; const v=AR[s]; if(v===undefined){ (window.__miss||(window.__miss=new Set())).add(s); return s; } return v; };
+function applyStatic(){
+  const h=document.documentElement; h.lang=isAr()?"ar":"en"; h.dir=isAr()?"rtl":"ltr";
+  $$("[data-en]").forEach(e=>e.textContent=tr(e.dataset.en));
+  $$("[data-en-label]").forEach(e=>e.setAttribute("aria-label",tr(e.dataset.enLabel)));
+  $("#swLang").setAttribute("aria-checked",isAr()?"true":"false");
+  $("#swTheme").setAttribute("aria-checked",S.theme==="light"?"true":"false");
+}
+function setLang(l){ S.lang=l; store.set("lang",l); applyStatic(); net(); show(S.view,true); }
+function setTheme(t){ S.theme=t; store.set("theme",t); document.documentElement.setAttribute("data-theme",t); applyStatic(); }
 
 /* ---------- data: the app stack ---------- */
 const STACK=[
@@ -286,7 +621,7 @@ const CATK={aid:"AID",water:"WATER",shelter:"SHLTR",signal:"SIGNL",power:"POWER"
 const NUMBERS=[["112","EU, and works from most mobile phones in many countries"],["911","United States, Canada"],["999","United Kingdom"],["000","Australia"],["123","Egypt, ambulance"],["122","Egypt, police"],["180","Egypt, fire"]];
 
 /* ---------- state ---------- */
-const S={view:"home",tool:"codec",cat:"all",q:"",noteId:null,noteQ:"",
+const S={lang:store.get("lang","en")==="ar"?"ar":"en",theme:store.get("theme","dark")==="light"?"light":"dark",view:"home",tool:"codec",cat:"all",q:"",noteId:null,noteQ:"",
   checks:store.get("checks",{}), kit:store.get("kit",{}), plan:store.get("plan",null), free:store.get("free",""),
   notes:store.get("notes",null)};
 if(!S.plan){S.plan={}; PLAN.forEach(p=>S.plan[p[0]]={on:p[3],gb:p[2]});}
@@ -305,75 +640,86 @@ function progress(){
 /* ---------- HOME ---------- */
 function renderHome(){
   const p=progress(), C=2*Math.PI*46;
-  const word=p.pct>=90?"Ready":p.pct>=50?"Getting there":p.pct>0?"Started":"Not started";
-  $("#v-home").innerHTML=`
-  <div class="card ready">
-    <div class="ring"><svg viewBox="0 0 112 112"><circle class="bg" cx="56" cy="56" r="46"/><circle class="fg" cx="56" cy="56" r="46" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p.pct/100)}"/></svg>
-      <div class="num">${p.pct}%<small>READY</small></div></div>
-    <div class="bars">
-      <div><div class="eyebrow">Readiness</div><h3>${word}</h3></div>
-      <button class="bar" data-go="stack"><span>Offline apps <em>${p.sd}/${p.st}</em></span><div class="track"><b style="width:${100*p.sd/p.st}%"></b></div></button>
-      <button class="bar" data-go="field" data-cat="kit"><span>Go-bag <em>${p.kd}/${p.kt}</em></span><div class="track"><b style="width:${100*p.kd/p.kt}%"></b></div></button>
-      <div class="bar"><span>This kit offline <em>${p.inst?"yes":"not yet"}</em></span><div class="track"><b style="width:${p.inst*100}%"></b></div></div>
-    </div>
-  </div>
-  <div class="tiles">
-    <button class="tile sos" data-go="tools" data-tool="sos"><b>SOS beacon</b><span>Flash and beep SOS in Morse</span></button>
-    <button class="tile" data-go="field" data-cat="numbers"><b>Emergency numbers</b><span>112, 911, 123 and more</span></button>
-    <button class="tile" data-go="field" data-cat="aid"><b>First aid</b><span>CPR, bleeding, burns, choking</span></button>
-    <button class="tile" data-go="field" data-cat="water"><b>Safe water</b><span>Boil times and bleach doses</span></button>
-    <button class="tile" data-go="tools" data-tool="vault"><b>Text vault</b><span>Lock a message with a passphrase</span></button>
-    <button class="tile" data-go="notes"><b>Notes</b><span>${S.notes.length} saved on this phone</span></button>
-  </div>
-  <div class="card">
-    <div class="eyebrow">What replaces what</div>
-    <div class="map">
-      <div class="h">NOMAD server</div><div></div><div class="h">On your iPhone</div>
-      <div class="n">Offline library</div><div class="a">→</div><div><b>Kiwix</b></div>
-      <div class="n">Offline maps</div><div class="a">→</div><div><b>Organic Maps</b></div>
-      <div class="n">Local AI</div><div class="a">→</div><div><b>PocketPal AI</b></div>
-      <div class="n">Khan Academy courses</div><div class="a">→</div><div><b>Kiwix packs</b></div>
-      <div class="n">Data tools</div><div class="a">→</div><div><b>Tools tab</b></div>
-      <div class="n">Notes</div><div class="a">→</div><div><b>Notes tab</b></div>
-    </div>
-    <button class="btn primary" data-go="stack">Set up the three apps</button>
-  </div>
-  <div class="card">
-    <div class="eyebrow">Use this kit with no signal</div>
-    ${p.inst?`<h3>Installed. It opens with no connection.</h3><p class="sub">Checklists and notes are stored on this phone.</p>`:
-    `<h3>This copy still needs a connection to open</h3>
+  const word=tr(p.pct>=90?"Ready":p.pct>=50?"Getting there":p.pct>0?"Started":"Not started");
+  const arrow=`<div class="a">${tr("→")}</div>`;
+  const setup=isAr()?`
+     <p class="sub">لتحصل على تطبيق حقيقي على الشاشة الرئيسية يفتح في وضع الطيران، استضف ملفات الحقيبة مرة واحدة. GitHub Pages يفعل ذلك مجانًا.</p>
+     <ol style="margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;font-size:15px">
+       <li>على github.com، أنشئ مستودعًا عامًا جديدًا، مثلًا <b>outpost</b>.</li>
+       <li>فك ضغط الحقيبة وارفع الملفات الخمسة إليه (Add file ثم Upload files).</li>
+       <li>في المستودع، افتح Settings ثم Pages. اختر النشر من الفرع <b>main</b> واحفظ.</li>
+       <li>بعد دقيقة، افتح <b dir="ltr">yourname.github.io/outpost</b> في Safari واتركه يحمّل بالكامل.</li>
+       <li>اضغط مشاركة، ثم «إضافة إلى الشاشة الرئيسية».</li>
+       <li>شغّل وضع الطيران وافتحه من الشاشة الرئيسية لتختبره.</li>
+     </ol>`:`
      <p class="sub">To get a real home-screen app that opens in Airplane Mode, host the kit's files once. GitHub Pages does it free.</p>
-     <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:15px">
+     <ol style="margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;font-size:15px">
        <li>On github.com, create a new public repository, for example <b>outpost</b>.</li>
        <li>Unzip the kit and upload all five files to it (Add file, Upload files).</li>
        <li>In the repository, open Settings, then Pages. Deploy from the <b>main</b> branch and save.</li>
        <li>After a minute, open <b>yourname.github.io/outpost</b> in Safari and let it load fully.</li>
        <li>Tap Share, then Add to Home Screen.</li>
        <li>Turn on Airplane Mode and open it from the home screen to test.</li>
-     </ol>`}
-    ${store.set("probe",1)?"":`<p class="tip">This browser is blocking storage, so checklists and notes will reset when you close the page.</p>`}
+     </ol>`;
+  $("#v-home").innerHTML=`
+  <div class="card ready">
+    <div class="ring"><svg viewBox="0 0 112 112"><circle class="bg" cx="56" cy="56" r="46"/><circle class="fg" cx="56" cy="56" r="46" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p.pct/100)}"/></svg>
+      <div class="num">${p.pct}%<small>${tr("READY")}</small></div></div>
+    <div class="bars">
+      <div><div class="eyebrow">${tr("Readiness")}</div><h3>${word}</h3></div>
+      <button class="bar" data-go="stack"><span>${tr("Offline apps")} <em>${p.sd}/${p.st}</em></span><div class="track"><b style="width:${100*p.sd/p.st}%"></b></div></button>
+      <button class="bar" data-go="field" data-cat="kit"><span>${tr("Go-bag")} <em>${p.kd}/${p.kt}</em></span><div class="track"><b style="width:${100*p.kd/p.kt}%"></b></div></button>
+      <div class="bar"><span>${tr("This kit offline")} <em>${tr(p.inst?"yes":"not yet")}</em></span><div class="track"><b style="width:${p.inst*100}%"></b></div></div>
+    </div>
+  </div>
+  <div class="tiles">
+    <button class="tile sos" data-go="tools" data-tool="sos"><b>${tr("SOS beacon")}</b><span>${tr("Flash and beep SOS in Morse")}</span></button>
+    <button class="tile" data-go="field" data-cat="numbers"><b>${tr("Emergency numbers")}</b><span>${tr("112, 911, 123 and more")}</span></button>
+    <button class="tile" data-go="field" data-cat="aid"><b>${tr("First aid")}</b><span>${tr("CPR, bleeding, burns, choking")}</span></button>
+    <button class="tile" data-go="field" data-cat="water"><b>${tr("Safe water")}</b><span>${tr("Boil times and bleach doses")}</span></button>
+    <button class="tile" data-go="tools" data-tool="vault"><b>${tr("Text vault")}</b><span>${tr("Lock a message with a passphrase")}</span></button>
+    <button class="tile" data-go="notes"><b>${tr("Notes")}</b><span>${isAr()?S.notes.length+" محفوظة على هذا الهاتف":S.notes.length+" saved on this phone"}</span></button>
+  </div>
+  <div class="card">
+    <div class="eyebrow">${tr("What replaces what")}</div>
+    <div class="map">
+      <div class="h">${tr("NOMAD server")}</div><div></div><div class="h">${tr("On your iPhone")}</div>
+      <div class="n">${tr("Offline library")}</div>${arrow}<div><b>Kiwix</b></div>
+      <div class="n">${tr("Offline maps")}</div>${arrow}<div><b>Organic Maps</b></div>
+      <div class="n">${tr("Local AI")}</div>${arrow}<div><b>PocketPal AI</b></div>
+      <div class="n">${tr("Khan Academy courses")}</div>${arrow}<div><b>${tr("Kiwix packs")}</b></div>
+      <div class="n">${tr("Data tools")}</div>${arrow}<div><b>${tr("Tools tab")}</b></div>
+      <div class="n">${tr("Notes")}</div>${arrow}<div><b>${tr("Notes tab")}</b></div>
+    </div>
+    <button class="btn primary" data-go="stack">${tr("Set up the three apps")}</button>
+  </div>
+  <div class="card">
+    <div class="eyebrow">${tr("Use this kit with no signal")}</div>
+    ${p.inst?`<h3>${tr("Installed. It opens with no connection.")}</h3><p class="sub">${tr("Checklists and notes are stored on this phone.")}</p>`:
+    `<h3>${tr("This copy still needs a connection to open")}</h3>${setup}`}
+    ${store.set("probe",1)?"":`<p class="tip">${tr("This browser is blocking storage, so checklists and notes will reset when you close the page.")}</p>`}
   </div>`;
 }
 
 /* ---------- STACK ---------- */
 function renderStack(){
   $("#v-stack").innerHTML=`
-  <div><div class="eyebrow">The iPhone stack</div><h2>Three free apps cover the heavy parts</h2><p class="sub">Tick each step as you go. Do the downloads on Wi-Fi, then test everything in Airplane Mode.</p></div>
+  <div><div class="eyebrow">${tr("The iPhone stack")}</div><h2>${tr("Three free apps cover the heavy parts")}</h2><p class="sub">${tr("Tick each step as you go. Do the downloads on Wi-Fi, then test everything in Airplane Mode.")}</p></div>
   ${STACK.map(a=>{const [d,t]=stackProg(a.id); return `
   <div class="card appcard" id="app-${a.id}">
-    <header><div><div class="eyebrow">${a.role}</div><h2>${a.name}</h2><p class="sub">${a.by}</p></div><span class="tag ${d===t?"done":""}" data-tag="${a.id}">${d===t?"DONE":d+" / "+t}</span></header>
-    <p>${a.what}</p>
-    <a class="btn" style="text-align:center;text-decoration:none;color:inherit;display:flex;align-items:center;justify-content:center" href="${a.url}" target="_blank" rel="noopener">Open in the App Store</a>
-    <ul class="steps">${a.steps.map((s,i)=>`<li><label><input type="checkbox" id="c-${a.id}-${i}" data-check="${a.id}.${i}" ${S.checks[a.id+"."+i]?"checked":""}><span>${s}</span></label></li>`).join("")}</ul>
-    <p class="tip">${a.tip}</p>
-    ${a.id==="ai"?`<div class="scroll"><table><tr><th>Phone memory</th><th>Models</th><th>Try</th><th>Size</th></tr>${MODELS.map(m=>`<tr><td class="num">${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td><td>${m[3]}</td></tr>`).join("")}</table></div>`:""}
+    <header><div><div class="eyebrow">${tr(a.role)}</div><h2>${a.name}</h2><p class="sub">${tr(a.by)}</p></div><span class="tag ${d===t?"done":""}" data-tag="${a.id}">${d===t?tr("DONE"):d+" / "+t}</span></header>
+    <p>${tr(a.what)}</p>
+    <a class="btn" style="text-align:center;text-decoration:none;color:inherit;display:flex;align-items:center;justify-content:center" href="${a.url}" target="_blank" rel="noopener">${tr("Open in the App Store")}</a>
+    <ul class="steps">${a.steps.map((s,i)=>`<li><label><input type="checkbox" id="c-${a.id}-${i}" data-check="${a.id}.${i}" ${S.checks[a.id+"."+i]?"checked":""}><span>${tr(s)}</span></label></li>`).join("")}</ul>
+    <p class="tip">${tr(a.tip)}</p>
+    ${a.id==="ai"?`<div class="scroll"><table><tr><th>${tr("Phone memory")}</th><th>${tr("Models")}</th><th>${tr("Try")}</th><th>${tr("Size")}</th></tr>${MODELS.map(m=>`<tr><td class="num">${tr(m[0])}</td><td>${tr(m[1])}</td><td>${tr(m[2])}</td><td>${tr(m[3])}</td></tr>`).join("")}</table></div>`:""}
   </div>`;}).join("")}
   <div class="card">
-    <div class="eyebrow">Storage planner</div><h2>Will it fit?</h2>
-    <p class="sub">Sizes are rough and change with every release. Edit any number to match what the app shows before you download.</p>
-    <label class="f">Free space on your iPhone, in GB (Settings, General, iPhone Storage)<input type="number" id="free" inputmode="decimal" min="0" step="1" placeholder="e.g. 40" value="${esc(S.free)}"></label>
-    <div class="plan">${PLAN.map(p=>`<div class="pr"><input type="checkbox" id="p-${p[0]}" data-plan="${p[0]}" ${S.plan[p[0]].on?"checked":""}><label for="p-${p[0]}">${p[1]}</label><input type="number" id="g-${p[0]}" data-gb="${p[0]}" inputmode="decimal" min="0" step="0.5" value="${S.plan[p[0]].gb}" aria-label="${p[1]} size in GB"></div>`).join("")}</div>
-    <div class="row" style="justify-content:space-between"><span class="sub">Selected</span><span class="big" id="planTotal"></span></div>
+    <div class="eyebrow">${tr("Storage planner")}</div><h2>${tr("Will it fit?")}</h2>
+    <p class="sub">${tr("Sizes are rough and change with every release. Edit any number to match what the app shows before you download.")}</p>
+    <label class="f">${tr("Free space on your iPhone, in GB (Settings, General, iPhone Storage)")}<input type="number" id="free" inputmode="decimal" min="0" step="1" placeholder="${tr("e.g. 40")}" value="${esc(S.free)}"></label>
+    <div class="plan">${PLAN.map(p=>`<div class="pr"><input type="checkbox" id="p-${p[0]}" data-plan="${p[0]}" ${S.plan[p[0]].on?"checked":""}><label for="p-${p[0]}">${tr(p[1])}</label><input type="number" id="g-${p[0]}" data-gb="${p[0]}" inputmode="decimal" min="0" step="0.5" value="${S.plan[p[0]].gb}" aria-label="${tr(p[1])} ${tr("size in GB")}"></div>`).join("")}</div>
+    <div class="row" style="justify-content:space-between"><span class="sub">${tr("Selected")}</span><span class="big" id="planTotal"></span></div>
     <div class="meter" id="planMeter"><b></b></div>
     <p class="sub" id="planMsg"></p>
   </div>`;
@@ -384,11 +730,12 @@ function updatePlan(){
   $("#planTotal").textContent=(Math.round(tot*10)/10)+" GB";
   const free=parseFloat(S.free), m=$("#planMeter"), msg=$("#planMsg");
   m.className="meter";
-  if(!(free>0)){ m.firstElementChild.style.width="0%"; msg.textContent="Enter your free space to see if this fits."; return; }
+  if(!(free>0)){ m.firstElementChild.style.width="0%"; msg.textContent=tr("Enter your free space to see if this fits."); return; }
   const r=tot/free; m.firstElementChild.style.width=Math.min(100,r*100)+"%";
-  if(r>1){m.classList.add("crit"); msg.textContent="Too big by "+(Math.round((tot-free)*10)/10)+" GB. Untick something or pick a smaller Wikipedia edition.";}
-  else if(r>0.8){m.classList.add("warn"); msg.textContent="It fits, but leaves under 20% free. iPhones slow down when nearly full.";}
-  else msg.textContent="Fits, with "+(Math.round((free-tot)*10)/10)+" GB to spare.";
+  const over=Math.round((tot-free)*10)/10, spare=Math.round((free-tot)*10)/10;
+  if(r>1){m.classList.add("crit"); msg.textContent=isAr()?"أكبر من المساحة بـ "+over+" GB. ألغِ تحديد شيء أو اختر نسخة أصغر من ويكيبيديا.":"Too big by "+over+" GB. Untick something or pick a smaller Wikipedia edition.";}
+  else if(r>0.8){m.classList.add("warn"); msg.textContent=tr("It fits, but leaves under 20% free. iPhones slow down when nearly full.");}
+  else msg.textContent=isAr()?"تكفي، ويتبقى "+spare+" GB.":"Fits, with "+spare+" GB to spare.";
 }
 
 /* ---------- TOOLS ---------- */
@@ -424,70 +771,70 @@ function convert(cat,v,a,b){
 const fmt=n=>{if(!isFinite(n))return "–"; const a=Math.abs(n); return (a!==0&&(a<0.0001||a>=1e9))?n.toExponential(4):String(+n.toPrecision(7));};
 
 function renderTools(){
-  const t=S.tool;
+  const t=S.tool, ck=`style="width:22px;height:22px;accent-color:var(--signal)"`;
   const panels={
-  codec:`<div class="card"><div class="eyebrow">Encode and decode</div>
-    <label class="f">Operation<select id="codecOp">${Object.keys(CODEC).map(k=>`<option>${k}</option>`).join("")}</select></label>
-    <label class="f">Input<textarea id="codecIn" placeholder="Type or paste text">Meet at the bridge at 0600</textarea></label>
+  codec:`<div class="card"><div class="eyebrow">${tr("Encode and decode")}</div>
+    <label class="f">${tr("Operation")}<select id="codecOp">${Object.keys(CODEC).map(k=>`<option value="${k}">${tr(k)}</option>`).join("")}</select></label>
+    <label class="f">${tr("Input")}<textarea id="codecIn" placeholder="${tr("Type or paste text")}">Meet at the bridge at 0600</textarea></label>
     <div class="out" id="codecOut"></div>
-    <div class="row"><button class="btn primary grow" data-act="copyOut" data-from="codecOut">Copy result</button><button class="btn" data-act="codecSwap">Use result as input</button></div></div>`,
-  hash:`<div class="card"><div class="eyebrow">Hash</div><p class="sub">A fingerprint of text. The same input always gives the same hash, so you can check that a message was not changed.</p>
-    <label class="f">Algorithm<select id="hashAlg"><option>SHA-256</option><option>SHA-384</option><option>SHA-512</option><option>SHA-1</option></select></label>
-    <label class="f">Text<textarea id="hashIn">hello</textarea></label>
+    <div class="row"><button class="btn primary grow" data-act="copyOut" data-from="codecOut">${tr("Copy result")}</button><button class="btn" data-act="codecSwap">${tr("Use result as input")}</button></div></div>`,
+  hash:`<div class="card"><div class="eyebrow">${tr("Hash")}</div><p class="sub">${tr("A fingerprint of text. The same input always gives the same hash, so you can check that a message was not changed.")}</p>
+    <label class="f">${tr("Algorithm")}<select id="hashAlg"><option>SHA-256</option><option>SHA-384</option><option>SHA-512</option><option>SHA-1</option></select></label>
+    <label class="f">${tr("Text")}<textarea id="hashIn">hello</textarea></label>
     <div class="out" id="hashOut"></div>
-    <button class="btn primary" data-act="copyOut" data-from="hashOut">Copy hash</button></div>`,
-  vault:`<div class="card"><div class="eyebrow">Text vault</div><p class="sub">Locks text with AES-256 and a passphrase. Nothing leaves the phone. Store the locked text anywhere, even on paper.</p>
-    <label class="f">Passphrase<input type="password" id="vaultPass" autocomplete="off" placeholder="Long and memorable"></label>
-    <label class="f">Text to lock, or locked text to open<textarea id="vaultIn" placeholder="Type a message, or paste text that starts with OP1."></textarea></label>
-    <div class="row"><button class="btn primary grow" data-act="lock">Lock</button><button class="btn grow" data-act="unlock">Unlock</button></div>
-    <div class="out" id="vaultOut">The result appears here.</div>
-    <button class="btn" data-act="copyOut" data-from="vaultOut">Copy result</button>
-    <p class="tip">There is no reset. If you forget the passphrase, the text is gone.</p></div>`,
-  convert:`<div class="card"><div class="eyebrow">Unit converter</div>
-    <label class="f">Kind<select id="cvCat">${Object.keys(UNITS).map(k=>`<option>${k}</option>`).join("")}</select></label>
-    <div class="row"><label class="f grow">Value<input type="number" id="cvVal" inputmode="decimal" value="1"></label></div>
-    <div class="row"><label class="f grow">From<select id="cvFrom"></select></label><label class="f grow">To<select id="cvTo"></select></label></div>
+    <button class="btn primary" data-act="copyOut" data-from="hashOut">${tr("Copy hash")}</button></div>`,
+  vault:`<div class="card"><div class="eyebrow">${tr("Text vault")}</div><p class="sub">${tr("Locks text with AES-256 and a passphrase. Nothing leaves the phone. Store the locked text anywhere, even on paper.")}</p>
+    <label class="f">${tr("Passphrase")}<input type="password" id="vaultPass" autocomplete="off" placeholder="${tr("Long and memorable")}"></label>
+    <label class="f">${tr("Text to lock, or locked text to open")}<textarea id="vaultIn" placeholder="${tr("Type a message, or paste text that starts with OP1.")}"></textarea></label>
+    <div class="row"><button class="btn primary grow" data-act="lock">${tr("Lock")}</button><button class="btn grow" data-act="unlock">${tr("Unlock")}</button></div>
+    <div class="out" id="vaultOut">${tr("The result appears here.")}</div>
+    <button class="btn" data-act="copyOut" data-from="vaultOut">${tr("Copy result")}</button>
+    <p class="tip">${tr("There is no reset. If you forget the passphrase, the text is gone.")}</p></div>`,
+  convert:`<div class="card"><div class="eyebrow">${tr("Unit converter")}</div>
+    <label class="f">${tr("Kind")}<select id="cvCat">${Object.keys(UNITS).map(k=>`<option value="${k}">${tr(k)}</option>`).join("")}</select></label>
+    <div class="row"><label class="f grow">${tr("Value")}<input type="number" id="cvVal" inputmode="decimal" value="1"></label></div>
+    <div class="row"><label class="f grow">${tr("From")}<select id="cvFrom"></select></label><label class="f grow">${tr("To")}<select id="cvTo"></select></label></div>
     <div class="out big" id="cvOut"></div>
-    <button class="btn" data-act="cvSwap">Swap units</button></div>`,
-  pass:`<div class="card"><div class="eyebrow">Password generator</div><p class="sub">Made on this phone with its secure random source.</p>
-    <label class="f">Length: <span id="pwLenV">20</span><input type="range" id="pwLen" min="8" max="48" value="20" style="width:100%;accent-color:var(--signal);min-height:36px"></label>
-    <div class="row"><label class="row" style="gap:8px"><input type="checkbox" id="pwSym" checked style="width:22px;height:22px;accent-color:var(--signal)">Symbols</label>
-    <label class="row" style="gap:8px"><input type="checkbox" id="pwAmb" checked style="width:22px;height:22px;accent-color:var(--signal)">Skip look-alikes (0 O 1 l I)</label></div>
-    <div class="out big" id="pwOut" style="font-size:18px"></div>
-    <div class="row"><button class="btn primary grow" data-act="pwNew">New password</button><button class="btn" data-act="copyOut" data-from="pwOut">Copy</button></div></div>`,
-  coord:`<div class="card"><div class="eyebrow">Coordinates</div><p class="sub">Switch between decimal degrees and degrees, minutes, seconds. Useful for reading a position to rescuers.</p>
-    <label class="f">Position<input type="text" id="coIn" value="30.0444, 31.2357" autocomplete="off" autocapitalize="characters"></label>
-    <div class="out" id="coOut"></div>
-    <button class="btn" data-act="copyOut" data-from="coOut">Copy</button>
-    <p class="sub">Accepts <b>30.0444, 31.2357</b> or <b>30 2 40 N 31 14 8.5 E</b>.</p></div>`,
-  sos:`<div class="card"><div class="eyebrow">SOS beacon</div><h2>Turn the screen into a signal lamp</h2>
-    <p class="sub">The whole screen flashes your message in Morse. Set brightness to full and point the screen at whoever you are signalling.</p>
-    <label class="f">Message<input type="text" id="sosMsg" value="SOS" maxlength="40" autocapitalize="characters" autocomplete="off"></label>
+    <button class="btn" data-act="cvSwap">${tr("Swap units")}</button></div>`,
+  pass:`<div class="card"><div class="eyebrow">${tr("Password generator")}</div><p class="sub">${tr("Made on this phone with its secure random source.")}</p>
+    <label class="f">${tr("Length: ")}<span id="pwLenV">20</span><input type="range" id="pwLen" min="8" max="48" value="20" style="width:100%;accent-color:var(--signal);min-height:36px"></label>
+    <div class="row"><label class="row" style="gap:8px"><input type="checkbox" id="pwSym" checked ${ck}>${tr("Symbols")}</label>
+    <label class="row" style="gap:8px"><input type="checkbox" id="pwAmb" checked ${ck}>${tr("Skip look-alikes (0 O 1 l I)")}</label></div>
+    <div class="out big" id="pwOut" style="font-size:18px" dir="ltr"></div>
+    <div class="row"><button class="btn primary grow" data-act="pwNew">${tr("New password")}</button><button class="btn" data-act="copyOut" data-from="pwOut">${tr("Copy")}</button></div></div>`,
+  coord:`<div class="card"><div class="eyebrow">${tr("Coordinates")}</div><p class="sub">${tr("Switch between decimal degrees and degrees, minutes, seconds. Useful for reading a position to rescuers.")}</p>
+    <label class="f">${tr("Position")}<input type="text" id="coIn" value="30.0444, 31.2357" autocomplete="off" autocapitalize="characters" dir="ltr"></label>
+    <div class="out" id="coOut" dir="ltr"></div>
+    <button class="btn" data-act="copyOut" data-from="coOut">${tr("Copy")}</button>
+    <p class="sub">${tr("Accepts")} <b dir="ltr">30.0444, 31.2357</b> ${tr("or")} <b dir="ltr">30 2 40 N 31 14 8.5 E</b>.</p></div>`,
+  sos:`<div class="card"><div class="eyebrow">${tr("SOS beacon")}</div><h2>${tr("Turn the screen into a signal lamp")}</h2>
+    <p class="sub">${tr("The whole screen flashes your message in Morse. Set brightness to full and point the screen at whoever you are signalling.")}</p>
+    <label class="f">${tr("Message")}<input type="text" id="sosMsg" value="SOS" maxlength="40" autocapitalize="characters" autocomplete="off"></label>
     <div class="out" id="sosCode"></div>
-    <label class="row" style="gap:8px"><input type="checkbox" id="sosSound" checked style="width:22px;height:22px;accent-color:var(--signal)">Beep as well (needs the ring switch on)</label>
-    <button class="btn primary" data-act="beacon">Start beacon</button>
-    <p class="tip">Flashes are slow, about two a second at most. Still, avoid it near anyone sensitive to flashing light.</p></div>`
+    <label class="row" style="gap:8px"><input type="checkbox" id="sosSound" checked ${ck}>${tr("Beep as well (needs the ring switch on)")}</label>
+    <button class="btn primary" data-act="beacon">${tr("Start beacon")}</button>
+    <p class="tip">${tr("Flashes are slow, about two a second at most. Still, avoid it near anyone sensitive to flashing light.")}</p></div>`
   };
-  $("#v-tools").innerHTML=`<div><div class="eyebrow">Data tools</div><h2>Works with no connection</h2></div>
-    <div class="chips">${TOOLS.map(x=>`<button class="chip ${x[0]===t?"on":""}" data-tool="${x[0]}">${x[1]}</button>`).join("")}</div>${panels[t]}`;
+  $("#v-tools").innerHTML=`<div><div class="eyebrow">${tr("Data tools")}</div><h2>${tr("Works with no connection")}</h2></div>
+    <div class="chips">${TOOLS.map(x=>`<button class="chip ${x[0]===t?"on":""}" data-tool="${x[0]}">${tr(x[1])}</button>`).join("")}</div>${panels[t]}`;
   ({codec:runCodec,hash:runHash,convert:()=>{fillUnits();runConvert();},pass:runPass,coord:runCoord,sos:runSosPreview,vault:()=>{}})[t]();
 }
-function runCodec(){const o=$("#codecOut"); try{o.textContent=CODEC[$("#codecOp").value]($("#codecIn").value); o.classList.remove("err");}catch(e){o.textContent="Could not decode that. "+(e.message&&/needs/.test(e.message)?e.message:"Check the input matches the operation."); o.classList.add("err");}}
-async function runHash(){const o=$("#hashOut"); try{const d=await crypto.subtle.digest($("#hashAlg").value,te.encode($("#hashIn").value)); o.textContent=[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,"0")).join(""); o.classList.remove("err");}catch(e){o.textContent="Hashing is not available in this browser context."; o.classList.add("err");}}
+function runCodec(){const o=$("#codecOut"); try{o.textContent=CODEC[$("#codecOp").value]($("#codecIn").value); o.classList.remove("err");}catch(e){o.textContent=tr("Could not decode that. ")+tr(e.message&&/needs/.test(e.message)?e.message:"Check the input matches the operation."); o.classList.add("err");}}
+async function runHash(){const o=$("#hashOut"); try{const d=await crypto.subtle.digest($("#hashAlg").value,te.encode($("#hashIn").value)); o.textContent=[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,"0")).join(""); o.classList.remove("err");}catch(e){o.textContent=tr("Hashing is not available in this browser context."); o.classList.add("err");}}
 async function vaultKey(pass,salt){const km=await crypto.subtle.importKey("raw",te.encode(pass),"PBKDF2",false,["deriveKey"]); return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:250000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
 async function vault(lock){
   const o=$("#vaultOut"), pass=$("#vaultPass").value, txt=$("#vaultIn").value.trim(); o.classList.remove("err");
-  if(!pass||!txt){o.textContent="Enter both a passphrase and some text."; o.classList.add("err"); return;}
-  o.textContent="Working…";
+  if(!pass||!txt){o.textContent=tr("Enter both a passphrase and some text."); o.classList.add("err"); return;}
+  o.textContent=tr("Working…");
   try{
     if(lock){const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12)); const key=await vaultKey(pass,salt);
       const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,te.encode(txt))); const all=new Uint8Array(28+ct.length); all.set(salt); all.set(iv,16); all.set(ct,28); o.textContent="OP1."+b64(all);}
     else{ if(!txt.startsWith("OP1.")) throw new Error("fmt"); const all=unb64(txt.slice(4)); const key=await vaultKey(pass,all.slice(0,16));
       o.textContent=td.decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:all.slice(16,28)},key,all.slice(28)));}
-  }catch(e){o.textContent=lock?"Locking is not available in this browser context.":(e.message==="fmt"?"That is not locked text. It should start with OP1.":"Wrong passphrase, or the locked text is damaged."); o.classList.add("err");}
+  }catch(e){o.textContent=tr(lock?"Locking is not available in this browser context.":(e.message==="fmt"?"That is not locked text. It should start with OP1.":"Wrong passphrase, or the locked text is damaged.")); o.classList.add("err");}
 }
-function fillUnits(){const u=Object.keys(UNITS[$("#cvCat").value]); $("#cvFrom").innerHTML=u.map(x=>`<option>${x}</option>`).join(""); $("#cvTo").innerHTML=u.map(x=>`<option>${x}</option>`).join(""); $("#cvTo").selectedIndex=Math.min(1,u.length-1);}
-function runConvert(){const v=parseFloat($("#cvVal").value), a=$("#cvFrom").value, b=$("#cvTo").value; $("#cvOut").textContent=isNaN(v)?"Enter a number":fmt(v)+" "+a+" = "+fmt(convert($("#cvCat").value,v,a,b))+" "+b;}
+function fillUnits(){const u=Object.keys(UNITS[$("#cvCat").value]); const opts=u.map(x=>`<option value="${esc(x)}">${esc(tr(x))}</option>`).join(""); $("#cvFrom").innerHTML=opts; $("#cvTo").innerHTML=opts; $("#cvTo").selectedIndex=Math.min(1,u.length-1);}
+function runConvert(){const v=parseFloat($("#cvVal").value), a=$("#cvFrom").value, b=$("#cvTo").value; $("#cvOut").textContent=isNaN(v)?tr("Enter a number"):fmt(v)+" "+tr(a)+" = "+fmt(convert($("#cvCat").value,v,a,b))+" "+tr(b);}
 function runPass(){
   const n=+$("#pwLen").value; $("#pwLenV").textContent=n;
   let cs="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; if($("#pwSym").checked) cs+="!@#$%^&*-_=+?"; if($("#pwAmb").checked) cs=cs.replace(/[0O1lI]/g,"");
@@ -507,17 +854,17 @@ function runCoord(){
       const n=(t.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number); if(n.length!==2) throw 0; check(n[0],n[1]);
       o.textContent=dms(n[0],"N","S")+"\n"+dms(n[1],"E","W");
     }
-  }catch(e){o.textContent="Could not read that. Use latitude then longitude, like 30.0444, 31.2357"; o.classList.add("err");}
+  }catch(e){o.textContent=tr("Could not read that. Use latitude then longitude, like 30.0444, 31.2357"); o.classList.add("err");}
   function check(a,b){if(Math.abs(a)>90||Math.abs(b)>180) throw 0;}
 }
-function runSosPreview(){$("#sosCode").textContent=toMorse($("#sosMsg").value)||"Type letters or numbers";}
+function runSosPreview(){$("#sosCode").textContent=toMorse($("#sosMsg").value)||tr("Type letters or numbers");}
 
 /* beacon */
 let bT=null,bCtx=null,bGain=null;
 function startBeacon(){
   const msg=$("#sosMsg").value.trim().toUpperCase(), U=240, seq=[];
   msg.split(/\s+/).forEach(w=>{[...w].forEach(ch=>{const m=MORSE[ch]; if(!m)return; [...m].forEach(s=>{seq.push([1,s==="."?U:3*U]); seq.push([0,U]);}); seq[seq.length-1][1]=3*U;}); if(seq.length) seq[seq.length-1][1]=7*U;});
-  if(!seq.length){toast("Type letters or numbers first"); return;}
+  if(!seq.length){toast(tr("Type letters or numbers first")); return;}
   const el=$("#beacon"); $("#beaconMsg").textContent=msg; $("#beaconCode").textContent=toMorse(msg);
   if($("#sosSound").checked){ try{ const AC=window.AudioContext||window.webkitAudioContext; bCtx=new AC(); const osc=bCtx.createOscillator(); bGain=bCtx.createGain(); osc.frequency.value=800; bGain.gain.value=0; osc.connect(bGain); bGain.connect(bCtx.destination); osc.start(); }catch(e){bCtx=null;bGain=null;} }
   el.classList.add("show"); let i=0;
@@ -527,52 +874,52 @@ function stopBeacon(){clearTimeout(bT); bT=null; const el=$("#beacon"); el.class
 
 /* ---------- NOTES ---------- */
 const saveNotes=()=>store.set("notes",S.notes);
-const ago=ts=>{const d=new Date(ts); return d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});};
+const ago=ts=>{const d=new Date(ts); const loc=isAr()?"ar-EG":undefined; return d.toLocaleDateString(loc,{day:"numeric",month:"short"})+" "+d.toLocaleTimeString(loc,{hour:"2-digit",minute:"2-digit"});};
 function renderNotes(){
   const v=$("#v-notes");
   if(S.noteId){
     const n=S.notes.find(x=>x.id===S.noteId); if(!n){S.noteId=null; return renderNotes();}
-    v.innerHTML=`<div class="row"><button class="btn small" data-act="noteBack">‹ All notes</button><span class="sub grow" id="noteSaved" style="text-align:right">Saved</span></div>
-      <input type="text" id="noteTitle" placeholder="Title" value="${esc(n.title)}" style="font-weight:700;font-size:18px">
-      <textarea id="noteBody" placeholder="Write here">${esc(n.body)}</textarea>
-      <div class="row"><button class="btn grow" data-act="noteCopy">Copy note</button><button class="btn danger" data-act="noteDel">Delete</button></div>`;
+    v.innerHTML=`<div class="row"><button class="btn small" data-act="noteBack">${tr("‹ All notes")}</button><span class="sub grow" id="noteSaved" style="text-align:end">${tr("Saved")}</span></div>
+      <input type="text" id="noteTitle" placeholder="${tr("Title")}" value="${esc(n.title)}" style="font-weight:700;font-size:18px">
+      <textarea id="noteBody" placeholder="${tr("Write here")}">${esc(n.body)}</textarea>
+      <div class="row"><button class="btn grow" data-act="noteCopy">${tr("Copy note")}</button><button class="btn danger" data-act="noteDel">${tr("Delete")}</button></div>`;
     return;
   }
   const q=S.noteQ.toLowerCase(), list=S.notes.filter(n=>!q||(n.title+" "+n.body).toLowerCase().includes(q)).sort((a,b)=>b.ts-a.ts);
-  v.innerHTML=`<div class="row"><div class="grow"><div class="eyebrow">Notes</div><h2>Kept on this phone</h2></div><button class="btn primary" data-act="noteNew">New note</button></div>
-    <input type="search" id="noteQ" placeholder="Search notes" value="${esc(S.noteQ)}">
+  v.innerHTML=`<div class="row"><div class="grow"><div class="eyebrow">${tr("Notes")}</div><h2>${tr("Kept on this phone")}</h2></div><button class="btn primary" data-act="noteNew">${tr("New note")}</button></div>
+    <input type="search" id="noteQ" placeholder="${tr("Search notes")}" value="${esc(S.noteQ)}">
     <div id="noteList" style="display:flex;flex-direction:column;gap:10px">${noteListHtml(list)}</div>
-    <details class="ref"><summary><span class="k">SAVE</span><b>Back up or move your notes</b></summary><div class="bd">
-      <p class="sub">Notes live only in this browser. Copy a backup now and then and paste it somewhere safe.</p>
-      <button class="btn" data-act="noteBackup">Copy backup of all notes</button>
-      <label class="f">Restore: paste a backup here<textarea id="noteRestore" style="min-height:70px" placeholder="Paste backup text"></textarea></label>
-      <button class="btn" data-act="noteRestoreGo">Restore from pasted backup</button></div></details>`;
+    <details class="ref"><summary><span class="k">${tr("SAVE")}</span><b>${tr("Back up or move your notes")}</b></summary><div class="bd">
+      <p class="sub">${tr("Notes live only in this browser. Copy a backup now and then and paste it somewhere safe.")}</p>
+      <button class="btn" data-act="noteBackup">${tr("Copy backup of all notes")}</button>
+      <label class="f">${tr("Restore: paste a backup here")}<textarea id="noteRestore" style="min-height:70px" placeholder="${tr("Paste backup text")}"></textarea></label>
+      <button class="btn" data-act="noteRestoreGo">${tr("Restore from pasted backup")}</button></div></details>`;
 }
-function noteListHtml(list){return list.length?list.map(n=>`<button class="note" data-note="${esc(n.id)}"><b>${esc(n.title||"Untitled")}</b><span>${esc(n.body.slice(0,160))}</span><time>${ago(n.ts)}</time></button>`).join(""):`<div class="empty">${S.notes.length?"No notes match that search.":"No notes yet. Tap New note to write one."}</div>`;}
+function noteListHtml(list){return list.length?list.map(n=>`<button class="note" data-note="${esc(n.id)}"><b>${esc(n.title||tr("Untitled"))}</b><span>${esc(n.body.slice(0,160))}</span><time>${ago(n.ts)}</time></button>`).join(""):`<div class="empty">${tr(S.notes.length?"No notes match that search.":"No notes yet. Tap New note to write one.")}</div>`;}
 let noteT, delArm=false;
-function noteInput(){const n=S.notes.find(x=>x.id===S.noteId); if(!n)return; n.title=$("#noteTitle").value; n.body=$("#noteBody").value; n.ts=Date.now(); $("#noteSaved").textContent="Saving…"; clearTimeout(noteT); noteT=setTimeout(()=>{$("#noteSaved")&&($("#noteSaved").textContent=saveNotes()?"Saved":"Not saved: storage is blocked");},350);}
+function noteInput(){const n=S.notes.find(x=>x.id===S.noteId); if(!n)return; n.title=$("#noteTitle").value; n.body=$("#noteBody").value; n.ts=Date.now(); $("#noteSaved").textContent=tr("Saving…"); clearTimeout(noteT); noteT=setTimeout(()=>{$("#noteSaved")&&($("#noteSaved").textContent=tr(saveNotes()?"Saved":"Not saved: storage is blocked"));},350);}
 
 /* ---------- FIELD ---------- */
 function renderField(){
-  $("#v-field").innerHTML=`<div><div class="eyebrow">Field reference</div><h2>Short cards for bad moments</h2></div>
-    <input type="search" id="refQ" placeholder="Search: burn, water, lost…" value="${esc(S.q)}">
-    <div class="chips">${CATS.map(c=>`<button class="chip ${c[0]===S.cat?"on":""}" data-cat="${c[0]}">${c[1]}</button>`).join("")}</div>
+  $("#v-field").innerHTML=`<div><div class="eyebrow">${tr("Field reference")}</div><h2>${tr("Short cards for bad moments")}</h2></div>
+    <input type="search" id="refQ" placeholder="${tr("Search: burn, water, lost…")}" value="${esc(S.q)}">
+    <div class="chips">${CATS.map(c=>`<button class="chip ${c[0]===S.cat?"on":""}" data-cat="${c[0]}">${tr(c[1])}</button>`).join("")}</div>
     <div id="refList" style="display:flex;flex-direction:column;gap:10px"></div>`;
   renderRefList();
 }
-function numbersHtml(){return `<div class="card"><div class="eyebrow">Emergency numbers</div><div class="scroll"><table>${NUMBERS.map(n=>`<tr><td class="num">${n[0]}</td><td>${n[1]}</td></tr>`).join("")}</table></div><p class="sub">Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.</p></div>`;}
+function numbersHtml(){return `<div class="card"><div class="eyebrow">${tr("Emergency numbers")}</div><div class="scroll"><table>${NUMBERS.map(n=>`<tr><td class="num">${n[0]}</td><td>${tr(n[1])}</td></tr>`).join("")}</table></div><p class="sub">${tr("Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.")}</p></div>`;}
 function kitHtml(){let d=0,t=0; KIT.forEach((g,gi)=>g[1].forEach((_,i)=>{t++; if(S.kit[gi+"."+i])d++;}));
-  return `<div class="card"><header class="row" style="justify-content:space-between"><div><div class="eyebrow">Go-bag</div><h3>Pack once, check twice a year</h3></div><span class="tag ${d===t?"done":""}" id="kitTag">${d} / ${t}</span></header>
-  ${KIT.map((g,gi)=>`<div class="kitgroup"><div class="eyebrow" style="padding:8px 0 6px">${g[0]}</div><ul class="steps">${g[1].map((s,i)=>`<li><label><input type="checkbox" id="k-${gi}-${i}" data-kit="${gi}.${i}" ${S.kit[gi+"."+i]?"checked":""}><span>${s}</span></label></li>`).join("")}</ul></div>`).join("")}</div>`;}
+  return `<div class="card"><header class="row" style="justify-content:space-between"><div><div class="eyebrow">${tr("Go-bag")}</div><h3>${tr("Pack once, check twice a year")}</h3></div><span class="tag ${d===t?"done":""}" id="kitTag">${d} / ${t}</span></header>
+  ${KIT.map((g,gi)=>`<div class="kitgroup"><div class="eyebrow" style="padding:8px 0 6px">${tr(g[0])}</div><ul class="steps">${g[1].map((s,i)=>`<li><label><input type="checkbox" id="k-${gi}-${i}" data-kit="${gi}.${i}" ${S.kit[gi+"."+i]?"checked":""}><span>${tr(s)}</span></label></li>`).join("")}</ul></div>`).join("")}</div>`;}
 function renderRefList(){
   const q=S.q.trim().toLowerCase(), c=S.cat; let h="";
   if(c==="numbers") h=numbersHtml();
   else if(c==="kit") h=kitHtml();
   else{
-    const list=REF.filter(r=>(c==="all"||r.c===c)&&(!q||(r.t+" "+r.s.join(" ")+" "+(r.n||"")).toLowerCase().includes(q)));
-    h=list.map(r=>`<details class="ref"${q&&list.length<=2?" open":""}><summary><span class="k ${r.c==="aid"?"aid":""}">${CATK[r.c]}</span><b>${r.t}</b></summary><div class="bd"><ol>${r.s.map(s=>`<li>${s}</li>`).join("")}</ol>${r.n?`<p class="never"><b>Careful.</b> ${r.n}</p>`:""}</div></details>`).join("");
+    const list=REF.filter(r=>(c==="all"||r.c===c)&&(!q||(r.t+" "+r.s.join(" ")+" "+(r.n||"")+" "+tr(r.t)+" "+r.s.map(tr).join(" ")+" "+(r.n?tr(r.n):"")).toLowerCase().includes(q)));
+    h=list.map(r=>`<details class="ref"${q&&list.length<=2?" open":""}><summary><span class="k ${r.c==="aid"?"aid":""}">${tr(CATK[r.c])}</span><b>${tr(r.t)}</b></summary><div class="bd"><ol>${r.s.map(s=>`<li>${tr(s)}</li>`).join("")}</ol>${r.n?`<p class="never"><b>${tr("Careful.")}</b> ${tr(r.n)}</p>`:""}</div></details>`).join("");
     if(c==="all"&&!q) h=numbersHtml()+h;
-    if(!list.length) h=`<div class="empty">Nothing matches “${esc(S.q)}”. Try one word, like burn or water.</div>`;
+    if(!list.length) h=isAr()?`<div class="empty">لا شيء يطابق «${esc(S.q)}». جرّب كلمة واحدة، مثل حرق أو ماء.</div>`:`<div class="empty">Nothing matches “${esc(S.q)}”. Try one word, like burn or water.</div>`;
   }
   $("#refList").innerHTML=h;
 }
@@ -591,6 +938,8 @@ document.addEventListener("click",e=>{
   if(el.dataset.cat){ S.cat=el.dataset.cat; $$("#v-field .chip").forEach(c=>c.classList.toggle("on",c.dataset.cat===S.cat)); return renderRefList(); }
   if(el.dataset.note){ S.noteId=el.dataset.note; delArm=false; return show("notes"); }
   const a=el.dataset.act;
+  if(a==="lang") return setLang(isAr()?"en":"ar");
+  if(a==="theme") return setTheme(S.theme==="light"?"dark":"light");
   if(a==="copyOut") return copy($("#"+el.dataset.from).textContent);
   if(a==="codecSwap"){ $("#codecIn").value=$("#codecOut").textContent; return runCodec(); }
   if(a==="lock") return vault(true);
@@ -601,9 +950,9 @@ document.addEventListener("click",e=>{
   if(a==="noteNew"){ const n={id:"n"+Date.now(),title:"",body:"",ts:Date.now()}; S.notes.push(n); saveNotes(); S.noteId=n.id; delArm=false; show("notes"); return $("#noteTitle").focus(); }
   if(a==="noteBack"){ const n=S.notes.find(x=>x.id===S.noteId); if(n&&!n.title.trim()&&!n.body.trim()){S.notes=S.notes.filter(x=>x!==n);} saveNotes(); S.noteId=null; return show("notes"); }
   if(a==="noteCopy"){ const n=S.notes.find(x=>x.id===S.noteId); return copy((n.title?n.title+"\n\n":"")+n.body); }
-  if(a==="noteDel"){ if(!delArm){delArm=true; el.textContent="Tap again to delete"; return;} S.notes=S.notes.filter(x=>x.id!==S.noteId); saveNotes(); S.noteId=null; delArm=false; toast("Note deleted"); return show("notes"); }
+  if(a==="noteDel"){ if(!delArm){delArm=true; el.textContent=tr("Tap again to delete"); return;} S.notes=S.notes.filter(x=>x.id!==S.noteId); saveNotes(); S.noteId=null; delArm=false; toast(tr("Note deleted")); return show("notes"); }
   if(a==="noteBackup") return copy(JSON.stringify({outpost:1,notes:S.notes}));
-  if(a==="noteRestoreGo"){ try{ const d=JSON.parse($("#noteRestore").value); if(!d||!Array.isArray(d.notes)) throw 0; let add=0; d.notes.forEach(n=>{ if(n&&typeof n.body==="string"&&!S.notes.some(x=>x.id===n.id)){ S.notes.push({id:String(n.id||"n"+Math.random()),title:String(n.title||""),body:n.body,ts:+n.ts||Date.now()}); add++; } }); saveNotes(); toast(add+" note"+(add===1?"":"s")+" restored"); show("notes",true); }catch(x){ toast("That is not a valid backup"); } return; }
+  if(a==="noteRestoreGo"){ try{ const d=JSON.parse($("#noteRestore").value); if(!d||!Array.isArray(d.notes)) throw 0; let add=0; d.notes.forEach(n=>{ if(n&&typeof n.body==="string"&&!S.notes.some(x=>x.id===n.id)){ S.notes.push({id:String(n.id||"n"+Math.random()),title:String(n.title||""),body:n.body,ts:+n.ts||Date.now()}); add++; } }); saveNotes(); toast(isAr()?"استُعيدت "+add+" ملاحظة":add+" note"+(add===1?"":"s")+" restored"); show("notes",true); }catch(x){ toast(tr("That is not a valid backup")); } return; }
 });
 document.addEventListener("input",e=>{
   const t=e.target, id=t.id;
@@ -621,7 +970,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("change",e=>{
   const t=e.target;
-  if(t.dataset.check){ S.checks[t.dataset.check]=t.checked; store.set("checks",S.checks); const id=t.dataset.check.split(".")[0], [d,n]=stackProg(id), tag=$(`[data-tag="${id}"]`); tag.textContent=d===n?"DONE":d+" / "+n; tag.classList.toggle("done",d===n); return; }
+  if(t.dataset.check){ S.checks[t.dataset.check]=t.checked; store.set("checks",S.checks); const id=t.dataset.check.split(".")[0], [d,n]=stackProg(id), tag=$(`[data-tag="${id}"]`); tag.textContent=d===n?tr("DONE"):d+" / "+n; tag.classList.toggle("done",d===n); return; }
   if(t.dataset.kit){ S.kit[t.dataset.kit]=t.checked; store.set("kit",S.kit); const p=progress(), tag=$("#kitTag"); tag.textContent=p.kd+" / "+p.kt; tag.classList.toggle("done",p.kd===p.kt); return; }
   if(t.dataset.plan){ S.plan[t.dataset.plan].on=t.checked; store.set("plan",S.plan); return updatePlan(); }
   if(t.id==="codecOp") return runCodec();
@@ -630,8 +979,8 @@ document.addEventListener("change",e=>{
   if(t.id==="cvFrom"||t.id==="cvTo") return runConvert();
   if(t.id==="pwSym"||t.id==="pwAmb") return runPass();
 });
-function net(){const on=navigator.onLine!==false, p=$("#net"); p.classList.toggle("off",!on); p.lastElementChild.textContent=on?"ONLINE":"NO SIGNAL";}
-window.addEventListener("online",net); window.addEventListener("offline",net); net();
+function net(){const on=navigator.onLine!==false, p=$("#net"); p.classList.toggle("off",!on); p.lastElementChild.textContent=tr(on?"ONLINE":"NO SIGNAL");}
+window.addEventListener("online",net); window.addEventListener("offline",net); applyStatic(); net();
 
 /* offline install: only works when the files are hosted on their own site */
 try{ if("serviceWorker" in navigator && location.protocol==="https:" && window.top===window.self){ navigator.serviceWorker.register("sw.js").then(()=>{ if(S.view==="home") renderHome(); }).catch(()=>{}); } }catch(e){}
