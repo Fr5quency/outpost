@@ -424,6 +424,12 @@ h3.sect{margin-top:6px}
 .btime{font-family:var(--display);font-weight:700}.btime.low{color:#e0312a}
 .bscore small b{color:var(--ink);font:700 13px/1 var(--display)}
 .qblk{display:grid;grid-template-columns:20px 20px;gap:3px}.qblk i{height:20px;border-radius:4px;background:#ffb627}.qblk i:nth-child(2){background:#4cc9f0}.qblk i:nth-child(3){background:#7bd389}.qblk i:nth-child(4){background:#f25f5c}
+.elochips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.elochips span{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.elochips small{font-size:13px;color:var(--muted);font-weight:600}.elochips b{font:800 18px/1 var(--display);font-variant-numeric:tabular-nums}
+.eloline{font-size:15px}.eloline span{color:var(--muted)}.eloline b{font-family:var(--display)}
+.eloline em{font-style:normal;font-weight:800;font-family:var(--display);padding:2px 7px;border-radius:99px;background:var(--sunk)}
+.eloline em.up{color:var(--good)}.eloline em.down{color:var(--crit)}
 /* settings bar: language and theme switches */
 .prefs{display:flex;gap:8px;margin:-4px 0 14px}
 .sw{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:46px;font-weight:600;font-size:14px;text-align:start}
@@ -798,6 +804,8 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Online Elo":"إيلو أونلاين","Offline Elo":"إيلو ضد الكمبيوتر",
+
 "Score battle: you both get the same pieces for 3 minutes. The highest score wins.":"معركة نقاط: تحصلان على القطع نفسها لمدة 3 دقائق. الأعلى نقاطًا يفوز.","You lost":"خسرت","Back to solo game":"العودة للعب الفردي",
 "Leave battle":"غادر المعركة","Online battle":"معركة أونلاين","No space left. Waiting for the timer…":"لا توجد مساحة. في انتظار انتهاء الوقت…","Leave this battle?":"مغادرة المعركة؟","Leaving counts as losing.":"المغادرة تُحتسب خسارة.","Leave":"مغادرة",
 
@@ -1663,7 +1671,25 @@ const pcFile=p=>(p>0?"w":"b")+"PNBRQK"[Math.abs(p)-1];
 const pcImg=(p,cls)=>`<i class="${cls||"pc"}" style="background-image:url(pieces/${pcFile(p)}.svg)"></i>`;
 const MP_TIME=15*60*1000;
 let CE=null, CW=null, AW=null, CH=null, chessReq=0, CLK=null, gameSeq=0;
-const meName=()=>myName()||tr("You");          // your online name, shown in offline games too; "You" when none is set
+const meName=()=>myName()||tr("You");
+/* Elo. Online: starts at 800, standard Elo formula against the opponent's online rating.
+   Offline (standard chess against the bots): beat a higher-rated bot and you take its rating; lose to a lower-rated bot and you drop 10;
+   beating a bot at or below your rating is worth 5. The two ratings never mix. */
+const ELO_MIN=100;
+const eloOn=()=>+store.get("eloOnline",800)||800, eloOff=()=>+store.get("eloOffline",400)||400;
+const eloDelta=(me,opp,score)=>Math.round(32*(score-1/(1+Math.pow(10,(opp-me)/400))));
+function rateGame(res){ // returns {kind, from, to} or null; applied once per game
+  if(!CH||CH.rated) return null; CH.rated=true;
+  const sc=["win","oppResign","timeWin","left"].includes(res)?1:["lose","resign","timeLose"].includes(res)?0:0.5;
+  if(CH.mode==="mp"){ const from=eloOn(), to=Math.max(ELO_MIN,from+eloDelta(from,CH.oppElo,sc)); store.set("eloOnline",to); store.set("eloPending",null); return {kind:"Online Elo",from,to}; }
+  if(CH.variant!=="std"||!CH.moves.length) return null;
+  const bot=LEVELS[CH.lvl].elo, from=eloOff(); let to=from;
+  if(sc===1) to=bot>from?bot:from+5; else if(sc===0&&bot<from) to=from-10;
+  to=Math.max(ELO_MIN,to); store.set("eloOffline",to); return {kind:"Offline Elo",from,to};
+}
+/* an online game that never finished on this phone (app closed mid-game) counts as a loss */
+(function(){ const pend=store.get("eloPending",null); if(pend&&pend.opp){ const me=eloOn(); store.set("eloOnline",Math.max(ELO_MIN,me+eloDelta(me,+pend.opp||800,0))); } if(pend) store.set("eloPending",null); })();
+const eloChips=()=>`<div class="elochips"><span><small>${tr("Online Elo")}</small><b>${eloOn()}</b></span><span><small>${tr("Offline Elo")}</small><b>${eloOff()}</b></span></div>`;          // your online name, shown in offline games too; "You" when none is set
 /* ---- chess modes (bots only) ---- */
 const STD_FEN="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const VARIANTS=[["std","Standard","Classic chess."],["960","Chess960","A random starting row. To castle, tap your king, then your rook."],
@@ -1793,6 +1819,7 @@ function renderChessMenu(v){
     <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Choose your opponent")}</h2></div>
     <button class="onlinecard" data-act="mpPlay"><span class="oicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></span><span class="otxt"><b>${tr("Play online")}</b><small>${tr("15 minutes each · against another Outpost player · needs internet")}</small></span></button>
     ${nameChip()}
+    ${eloChips()}
     <h3 class="sect">${tr("Play the computer")}</h3>
     <p class="sub">${tr("Ratings are approximate. The bot plays fully offline.")}</p>
     <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
@@ -1815,9 +1842,9 @@ function renderChess(v){
   const mp=CH.mode==="mp", on=oppName();
   v.innerHTML=`<div class="gwrap" id="gameRoot">
     <div class="gtop"><button class="btn small gback" data-act="chessMenu">${tr(mp?"‹ Leave":"‹ Opponents")}</button>${CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
-    <div class="pbar"><span class="ava" style="background:${mp?"#5b7bd5":AVC[CH.lvl]}">${esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${tr("Online")}</em>`:`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
+    <div class="pbar"><span class="ava" style="background:${mp?"#5b7bd5":AVC[CH.lvl]}">${esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
-    <div class="pbar"><span class="ava you">${esc(meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(meName())} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mp?`<span class="clock" id="clkYou"></span>`:""}</div>
+    <div class="pbar"><span class="ava you">${esc(meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(meName())} ${mp?`<em>${eloOn()}</em>`:CH.variant==="std"?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mp?`<span class="clock" id="clkYou"></span>`:""}</div>
     <div class="revline" id="revLine"></div>
     <div class="coach" id="coachBox" hidden></div>
     <div class="navrow" dir="ltr">
@@ -1929,7 +1956,9 @@ function finishChess(res){
   const why={win:tr("Checkmate."),lose:tr("Checkmate."),stalemate:tr("Stalemate: no legal moves, but not in check."),fifty:tr("50 moves without a capture or pawn move."),repetition:tr("The same position happened three times."),material:tr("Not enough pieces left to checkmate.")}[res]||"";
   const why2=CH.why==="hill"?tr("The king reached the centre."):CH.why==="3check"?tr("Third check."):why;
   if(mp){ const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },2500); }
-  setTimeout(()=>modal(`<div class="result">${WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${head}</h3>${why2?`<p class="sub">${why2}</p>`:""}
+  const R=rateGame(res), d=R?R.to-R.from:0;
+  const eloLine=R?`<p class="eloline"><span>${tr(R.kind)}</span> <b>${R.from}</b> → <b>${R.to}</b> <em class="${d>0?"up":d<0?"down":""}">${d>0?"+"+d:d<0?d:"±0"}</em></p>`:"";
+  setTimeout(()=>modal(`<div class="result">${WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${head}</h3>${why2?`<p class="sub">${why2}</p>`:""}${eloLine}
     ${CH.moves.length?`<button class="btn primary reviewbtn" data-act="review">★ ${tr("Game review")}</button>`:""}
     <div class="row">${mp?`<button class="btn grow" data-act="mpPlay">${tr("Find a new opponent")}</button>`:`<button class="btn grow" data-act="chessRematch">${tr("Rematch")}</button>`}<button class="btn grow" data-act="chessMenu">${tr(mp?"Back to chess":"Other opponent")}</button></div>
     <button class="btn ghost" data-act="modalClose">${tr("Look at the board")}</button>`),350);
@@ -2079,8 +2108,8 @@ const MPG={};
 const cleanName=n=>String(n||"").replace(/\s+/g," ").trim().slice(0,20)||tr("Opponent");
 window.OUTPOST_MP={register:(id,h)=>{ MPG[id]=h; },play:g=>mpPlay(g),send:o=>mpSend(o),stop:()=>mpStop(),stopLater:ms=>{ const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },ms); },name:()=>myName(),game:()=>MP?MP.game:null};
 MPG.chess={title:"Chess",info:"You'll play the next person who taps Play online in Outpost. 15 minutes each, no extra time.",back:"chessMenu",icon:()=>pcImg(5),
-  busy:()=>!!(CH&&CH.mode==="mp"&&!CH.over),init:()=>({hostColor:Math.random()<.5?1:-1}),
-  start:(role,init,name)=>startMp(role==="host"?init.hostColor:-init.hostColor,name),data:d=>mpOnData(MP,d),left:()=>{ if(CH&&CH.mode==="mp"&&!CH.over) finishChess("left"); }};
+  busy:()=>!!(CH&&CH.mode==="mp"&&!CH.over),init:()=>({hostColor:Math.random()<.5?1:-1,elo:eloOn()}),meta:()=>({elo:eloOn()}),
+  start:(role,init,name,meta)=>startMp(role==="host"?init.hostColor:-init.hostColor,name,role==="host"?(meta&&meta.elo):init.elo),data:d=>mpOnData(MP,d),left:()=>{ if(CH&&CH.mode==="mp"&&!CH.over) finishChess("left"); }};
 function loadPeer(){ return window.Peer?Promise.resolve():new Promise((ok,no)=>{ const s=document.createElement("script"); s.src="peerjs.min.js"; s.onload=()=>window.Peer?ok():no(); s.onerror=no; document.head.appendChild(s); }); }
 function askName(thenPlay){
   modal(`<h3>${tr(thenPlay?"Choose a name for online games":"Change your online name")}</h3><p class="sub">${tr("Your opponent will see this name.")}</p>
@@ -2136,7 +2165,7 @@ function connectHost(my,id){
   if(MP!==my||my.conn) return;
   const c=my.me.connect(id,{reliable:true}); let done=false;
   const to=setTimeout(()=>{ if(!done){ done=true; try{c.close();}catch(e){} mpStatus("Looking for another player…"); retryLater(my); } },10000);
-  c.on("open",()=>c.send({t:"hello",name:myName(),game:my.game,v:2}));
+  c.on("open",()=>c.send({t:"hello",name:myName(),game:my.game,v:2,meta:MPG[my.game].meta?MPG[my.game].meta():null}));
   c.on("data",d=>{ if(!d||done) return;
     if(d.t==="busy"){ done=true; clearTimeout(to); try{c.close();}catch(e){} retryLater(my,300); }
     else if(d.t==="start"){ done=true; clearTimeout(to); my.conn=c; bindConn(my,c); MPG[my.game].start("guest",d.init||{},cleanName(d.name)); } });
@@ -2146,7 +2175,7 @@ function onIncoming(my,c){
     if(MP!==my||my.conn||(d.game||"chess")!==my.game){ c.send({t:"busy"}); setTimeout(()=>{ try{c.close();}catch(e){} },300); return; }
     my.conn=c; if(my.lob){ try{ my.lob.destroy(); }catch(e){} my.lob=null; }
     const init=MPG[my.game].init(); c.send({t:"start",init,name:myName()});
-    bindConn(my,c); MPG[my.game].start("host",init,cleanName(d.name)); });
+    bindConn(my,c); MPG[my.game].start("host",init,cleanName(d.name),d.meta||null); });
 }
 function bindConn(my,c){
   clearTimeout(my.retry); clearInterval(my.tick);
@@ -2154,8 +2183,9 @@ function bindConn(my,c){
   c.on("close",()=>{ if(MP===my) MPG[my.game].left(); });
 }
 const mpSend=o=>{ try{ MP&&MP.conn&&MP.conn.send(o); }catch(e){} };
-function startMp(color,opp){
-  chessReq++; CH=newCH({mode:"mp",color,flip:color<0,opp:String(opp||"").replace(/\s+/g," ").trim().slice(0,20)||tr("Opponent"),clock:{w:MP_TIME,b:MP_TIME},tStart:Date.now()});
+function startMp(color,opp,oppElo){
+  oppElo=Math.max(ELO_MIN,Math.min(4000,Math.round(+oppElo)||800)); store.set("eloPending",{opp:oppElo,t:Date.now()});
+  chessReq++; CH=newCH({mode:"mp",oppElo,color,flip:color<0,opp:String(opp||"").replace(/\s+/g," ").trim().slice(0,20)||tr("Opponent"),clock:{w:MP_TIME,b:MP_TIME},tStart:Date.now()});
   CH.keys=chessReplay([]); CH.fens=[engine().fen()]; closeModal(); S.game="chess"; show("games");
   toast(GL()?`بدأت المباراة ضد ${CH.opp}`:`Playing ${CH.opp}`); try{ navigator.vibrate&&navigator.vibrate([30,60,30]); }catch(e){}
   clearInterval(CLK); CLK=setInterval(tickClock,200);
