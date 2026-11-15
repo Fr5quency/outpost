@@ -1916,8 +1916,10 @@ function drawBoard(){
   reviewOverlay();
   userArrows();
 }
-/* your own arrows: hold a square for 1 second to start one, hold another for 1 second to finish it; a tap on the board clears them */
-const ARROW_START_MS=1000, ARROW_END_MS=1000;
+/* your own arrows: hold a square for 0.4 seconds to start one, hold another for 0.4 seconds to finish it; a tap on the board clears them */
+const ARROW_START_MS=400, ARROW_END_MS=400;
+/* haptic tap: the Vibration API where it exists (Android); on iPhone, toggling a hidden "switch" checkbox makes Safari 17.4+ give a small tap */
+function haptic(ms){ try{ if(navigator.vibrate){ navigator.vibrate(ms||30); return; } let l=$("#hapticLabel"); if(!l){ document.body.insertAdjacentHTML("beforeend",'<label id="hapticLabel" style="position:fixed;left:-99px;top:0;opacity:0;pointer-events:none" aria-hidden="true"><input type="checkbox" switch tabindex="-1"></label>'); l=$("#hapticLabel"); } l.click(); }catch(e){} }
 let arrowT=null, arrowSkipTap=false, arrowDown=null;
 function userArrows(){
   const B=$("#board"); if(!B||!CH) return; const old=B.querySelector(".uarrows"); if(old) old.remove();
@@ -1925,8 +1927,8 @@ function userArrows(){
   if(CH.arrows.length) B.insertAdjacentHTML("beforeend",`<svg class="arrows uarrows" viewBox="0 0 8 8" preserveAspectRatio="none">${CH.arrows.map(a=>arrow(a[0],a[1],"rgba(255,170,0,.88)")).join("")}</svg>`);
 }
 function arrowHold(sq){ // the hold timer fired on this square
-  arrowSkipTap=true; try{ navigator.vibrate&&navigator.vibrate(25); }catch(e){}
-  if(CH.arrowFrom===null){ CH.arrowFrom=sq; if(!store.get("arrowTip",0)){ store.set("arrowTip",1); toast(tr("Now hold another square to draw the arrow")); } }
+  arrowSkipTap=true;
+  if(CH.arrowFrom===null){ CH.arrowFrom=sq; haptic(45); if(!store.get("arrowTip",0)){ store.set("arrowTip",1); toast(tr("Now hold another square to draw the arrow")); } }
   else { if(sq!==CH.arrowFrom) CH.arrows.push([CH.arrowFrom,sq]); CH.arrowFrom=null; }
   drawBoard();
 }
