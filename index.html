@@ -430,6 +430,11 @@ h3.sect{margin-top:6px}
 .eloline{font-size:15px}.eloline span{color:var(--muted)}.eloline b{font-family:var(--display)}
 .eloline em{font-style:normal;font-weight:800;font-family:var(--display);padding:2px 7px;border-radius:99px;background:var(--sunk)}
 .eloline em.up{color:var(--good)}.eloline em.down{color:var(--crit)}
+.hotcard{display:flex;align-items:center;gap:14px;text-align:start;border:1px solid var(--line);border-radius:18px;padding:14px 16px;background:var(--panel);color:var(--ink)}
+.hoticon{flex:none;width:64px;height:52px;border-radius:14px;background:#739552;display:flex;align-items:center;justify-content:center}
+.hoticon .pc{width:30px;height:38px;margin:0 -2px}
+.hotcard .otxt small{opacity:1;color:var(--muted)}
+.ava.sidew{background:#ebecd0}.ava.sideb{background:#3a3a3a}.ava .cp{width:26px;height:26px;margin:0}
 /* settings bar: language and theme switches */
 .prefs{display:flex;gap:8px;margin:-4px 0 14px}
 .sw{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:46px;font-weight:600;font-size:14px;text-align:start}
@@ -804,6 +809,9 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"1v1 on this phone":"لاعبان على هذا الهاتف","Play on this phone":"العب على هذا الهاتف","Two players pass the phone. The board flips after every move. Uses the mode chosen above.":"لاعبان يتبادلان الهاتف. تنقلب الرقعة بعد كل نقلة. يستخدم الوضع المختار أعلاه.",
+"White to move":"دور الأبيض","Black to move":"دور الأسود","White wins":"فاز الأبيض","Black wins":"فاز الأسود","White resigned.":"استسلم الأبيض.","Black resigned.":"استسلم الأسود.",
+
 "Online Elo":"إيلو أونلاين","Offline Elo":"إيلو ضد الكمبيوتر",
 
 "Score battle: you both get the same pieces for 3 minutes. The highest score wins.":"معركة نقاط: تحصلان على القطع نفسها لمدة 3 دقائق. الأعلى نقاطًا يفوز.","You lost":"خسرت","Back to solo game":"العودة للعب الفردي",
@@ -1682,7 +1690,7 @@ function rateGame(res){ // returns {kind, from, to} or null; applied once per ga
   if(!CH||CH.rated) return null; CH.rated=true;
   const sc=["win","oppResign","timeWin","left"].includes(res)?1:["lose","resign","timeLose"].includes(res)?0:0.5;
   if(CH.mode==="mp"){ const from=eloOn(), to=Math.max(ELO_MIN,from+eloDelta(from,CH.oppElo,sc)); store.set("eloOnline",to); store.set("eloPending",null); return {kind:"Online Elo",from,to}; }
-  if(CH.variant!=="std"||!CH.moves.length) return null;
+  if(CH.mode!=="bot"||CH.variant!=="std"||!CH.moves.length) return null;
   const bot=LEVELS[CH.lvl].elo, from=eloOff(); let to=from;
   if(sc===1) to=bot>from?bot:from+5; else if(sc===0&&bot<from) to=from-10;
   to=Math.max(ELO_MIN,to); store.set("eloOffline",to); return {kind:"Offline Elo",from,to};
@@ -1730,7 +1738,7 @@ function fillAn(){ // when idle, analyse one earlier move that is still missing 
 function liveClass(i){ // rate the move as soon as its analysis arrives; a brilliant move by you dings and keeps its badge until the next move
   if(CH.liveC[i]) return; const V=ChessEngine(null); chessReplay(CH.moves.slice(0,i),V);
   const P=classifyPly(V,CH.rows[i],CH.moves[i],i,CH.liveC[i-1],null); if(!P) return; CH.liveC[i]=P.c;
-  if(P.c==="brilliant"&&P.color===CH.color&&i===CH.moves.length-1){ CH.live={ply:i,t:Date.now(),san:P.san}; ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){}
+  if(P.c==="brilliant"&&(CH.mode==="hot"||P.color===CH.color)&&i===CH.moves.length-1){ CH.live={ply:i,t:Date.now(),san:P.san}; ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){}
     drawBoard(); }
 }
 /* ---- coach: short spoken comments in the review ---- */
@@ -1791,20 +1799,25 @@ function sanWords(s){ // turn "Nxf7+" into words a voice can read
   if(m[7]) out+=(ar?" ويترقى إلى ":" promotes to ")+PN[m[7]]; if(m[8]==="+") out+=ar?"، كش":", check"; if(m[8]==="#") out+=ar?"، كش مات":", checkmate";
   return out;
 }
-function coachText(P,i,spoken){ const T=COACH[GL()?"ar":"en"][P.color===CH.color?"me":"opp"][P.c], t=T[i%T.length]; return t.replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan); }
+function coachText(P,i,spoken){ const T=COACH[GL()?"ar":"en"][CH.mode!=="hot"&&P.color===CH.color?"me":"opp"][P.c], t=T[i%T.length]; return t.replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan); }
 const voiceOn=()=>store.get("coachVoice",true)!==false;
 function coachSay(text){ try{ const sy=window.speechSynthesis; if(!sy) return; sy.cancel(); if(!voiceOn()||!text) return; const u=new SpeechSynthesisUtterance(text); u.lang=GL()?"ar-SA":"en-US"; u.rate=1.06; u.pitch=1.08; sy.speak(u); }catch(e){} }
 function coachSayMove(){ if(!CH||!CH.an) return; const k=CH.view===null?CH.moves.length:CH.view, P=CH.an.plies[k-1]; if(P) coachSay(coachText(P,k-1,true)); else coachSay(""); }
-const coachSum=()=>{ const a=CH.color>0?CH.an.acc.w:CH.an.acc.b; return COACH[GL()?"ar":"en"].sum[a>=90?0:a>=75?1:a>=50?2:3]; };
+const coachSum=()=>{ if(CH.mode==="hot") return ""; const a=CH.color>0?CH.an.acc.w:CH.an.acc.b; return COACH[GL()?"ar":"en"].sum[a>=90?0:a>=75?1:a>=50?2:3]; };
 function engine(){ if(!CE) CE=ChessEngine(null); return CE; }
 function worker(){ if(CW===null){ try{ CW=new Worker(URL.createObjectURL(new Blob(["("+ChessEngine.toString()+")(self);"],{type:"text/javascript"}))); CW.onmessage=e=>{ if(e.data&&e.data.type) onAnalysis(e.data); else onBotMove(e.data); }; CW.onerror=()=>{CW=false;}; }catch(e){ CW=false; } } return CW; }
 function chessReplay(moves,E){ E=E||engine(); setupEngine(E); const keys=[E.fen().split(" ").slice(0,4).join(" ")]; for(const s of moves){ const m=E.legal().find(x=>E.moveStr(x)===s); if(!m) break; E.make(m); keys.push(E.fen().split(" ").slice(0,4).join(" ")); } return keys; }
 const posKey=()=>engine().fen().split(" ").slice(0,4).join(" ");
 const strSq=s=>(s.charCodeAt(1)-49)*16+(s.charCodeAt(0)-97);
 function saveChess(){ if(CH&&CH.mode==="bot") store.set("chess",{lvl:CH.lvl,color:CH.color,moves:CH.moves,over:CH.over||null,variant:CH.variant,start:CH.start}); }
-const oppName=()=>CH.mode==="mp"?CH.opp:botName(CH.lvl);
+const oppName=()=>CH.mode==="mp"?CH.opp:CH.mode==="hot"?tr(CH.color>0?"Black":"White"):botName(CH.lvl);
+const youLabel=()=>CH&&CH.mode==="hot"?tr(CH.color>0?"White":"Black"):meName();
+function startHot(){
+  chessReq++; const variant=S.chessVariant||"std"; CH=newCH({mode:"hot",lvl:0,color:1,flip:false,variant,start:variantFen(variant)});
+  CH.keys=chessReplay([]); CH.fens=[engine().fen()]; closeModal(); S.game="chess"; show("games");
+}
 function openChess(){
-  if(CH&&CH.mode==="mp"&&!CH.over){ S.game="chess"; return show("games"); }
+  if(CH&&(CH.mode==="mp"||CH.mode==="hot")&&!CH.over&&(CH.mode==="mp"||CH.moves.length)){ S.game="chess"; return show("games"); }
   const cs=store.get("chess",null);
   if(cs&&!cs.over&&cs.moves&&LEVELS[cs.lvl]){
     modal(`<h3>${tr("Continue your game?")}</h3><p class="sub">${GL()?`كنت تلعب ضد ${esc(botName(cs.lvl))} (${LEVELS[cs.lvl].elo})، بعد ${AD(Math.ceil(cs.moves.length/2))} نقلة.`:`You were playing ${esc(botName(cs.lvl))} (${LEVELS[cs.lvl].elo}), ${Math.ceil(cs.moves.length/2)} moves in.`}</p>
@@ -1820,10 +1833,11 @@ function renderChessMenu(v){
     <button class="onlinecard" data-act="mpPlay"><span class="oicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></span><span class="otxt"><b>${tr("Play online")}</b><small>${tr("15 minutes each · against another Outpost player · needs internet")}</small></span></button>
     ${nameChip()}
     ${eloChips()}
-    <h3 class="sect">${tr("Play the computer")}</h3>
+    <h3 class="sect">${tr("Play on this phone")}</h3>
     <p class="sub">${tr("Ratings are approximate. The bot plays fully offline.")}</p>
     <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
     <p class="sub">${tr((VARIANTS.find(x=>x[0]===(S.chessVariant||"std"))||VARIANTS[0])[2])}</p>
+    <button class="hotcard" data-act="chessHot"><span class="hoticon">${pcImg(6)}${pcImg(-6)}</span><span class="otxt"><b>${tr("1v1 on this phone")}</b><small>${tr("Two players pass the phone. The board flips after every move. Uses the mode chosen above.")}</small></span></button>
     <div class="seg seg3"><button data-act="chessColor" data-c="w" class="${col==="w"?"on":""}">${tr("White")}</button><button data-act="chessColor" data-c="r" class="${col==="r"?"on":""}">${tr("Random")}</button><button data-act="chessColor" data-c="b" class="${col==="b"?"on":""}">${tr("Black")}</button></div>
     <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
     <p class="foot">${tr("Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.")}</p>`;
@@ -1839,12 +1853,12 @@ function resumeChess(){ const cs=store.get("chess",null); chessReq++; CH=newCH({
 const NAV='<svg viewBox="0 0 24 24">';
 function renderChess(v){
   if(!CH){ S.game=null; return renderGames(); }
-  const mp=CH.mode==="mp", on=oppName();
+  const mp=CH.mode==="mp", hot=CH.mode==="hot", on=oppName();
   v.innerHTML=`<div class="gwrap" id="gameRoot">
     <div class="gtop"><button class="btn small gback" data-act="chessMenu">${tr(mp?"‹ Leave":"‹ Opponents")}</button>${CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
-    <div class="pbar"><span class="ava" style="background:${mp?"#5b7bd5":AVC[CH.lvl]}">${esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
+    <div class="pbar"><span class="ava${hot?(CH.color>0?" sideb":" sidew"):""}" style="${hot?"":`background:${mp?"#5b7bd5":AVC[CH.lvl]}`}">${hot?pcImg(-6*CH.color,"cp"):esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:hot?"":`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
-    <div class="pbar"><span class="ava you">${esc(meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(meName())} ${mp?`<em>${eloOn()}</em>`:CH.variant==="std"?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mp?`<span class="clock" id="clkYou"></span>`:""}</div>
+    <div class="pbar"><span class="ava ${hot?(CH.color>0?"sidew":"sideb"):"you"}">${hot?pcImg(6*CH.color,"cp"):esc(meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(youLabel())} ${mp?`<em>${eloOn()}</em>`:(!hot&&CH.variant==="std")?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mp?`<span class="clock" id="clkYou"></span>`:""}</div>
     <div class="revline" id="revLine"></div>
     <div class="coach" id="coachBox" hidden></div>
     <div class="navrow" dir="ltr">
@@ -1888,6 +1902,7 @@ function drawBoard(){
   $("#capsBot").innerHTML=byBot.map(p=>pcImg(p,"cp")).join("")+(diff<0?` <em>+${-diff}</em>`:"");
   const yourTurn=engine().turn()===CH.color, inChk=engine().inCheck();
   $("#botStatus").textContent=CH.over?"":CH.thinking?tr("Thinking…"):(!yourTurn&&inChk?tr("Check!"):"");
+  if(CH.mode==="hot"&&live&&!CH.over) $("#youStatus").textContent=(inChk?tr("Check!")+" ":"")+tr(engine().turn()>0?"White to move":"Black to move"); else
   $("#youStatus").textContent=!live?(GL()?`مراجعة: النقلة ${AD(CH.view)} من ${AD(CH.moves.length)}`:`Reviewing move ${CH.view} of ${CH.moves.length}`):CH.over?"":yourTurn?(inChk?tr("Check! Your move"):tr("Your move")):"";
   if(CH.variant==="3check"){ const c=E.checks(), yi=CH.color>0?0:1; $("#chkYou").textContent="✚ "+c[yi]+"/3"; $("#chkBot").textContent="✚ "+c[1-yi]+"/3"; }
   const n=CH.moves.length, at=live?n:CH.view;
@@ -1916,7 +1931,10 @@ function playMove(m,remote){
   const s=E.moveStr(m); CH.moves.push(s); CH.keys.push(posKey()); CH.fens.push(E.fen()); CH.last=[f,t]; CH.sel=-1; CH.view=null; CH.moveT=Date.now(); CH.an=null; queueAn(CH.moves.length-1);
   if(CH.mode==="mp"){ const k=mover>0?"w":"b"; if(!remote){ CH.clock[k]-=Date.now()-CH.tStart; mpSend({t:"move",m:s,left:CH.clock[k]}); } CH.tStart=Date.now(); }
   try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){}
-  saveChess(); drawBoard(); if(!chessEnd()&&CH.mode==="bot") maybeBot(); return true;
+  if(CH.mode==="hot") CH.color=E.turn();
+  saveChess(); drawBoard(); const ended=chessEnd(); if(!ended&&CH.mode==="bot") maybeBot();
+  if(!ended&&CH.mode==="hot"){ const g=CH.gid; setTimeout(()=>{ if(!CH||CH.gid!==g||CH.over||CH.mode!=="hot") return; CH.flip=engine().turn()<0; if(S.view==="games"&&S.game==="chess") renderChess($("#v-games")); },550); }
+  return true;
 }
 function maybeBot(){
   const E=engine(); if(!CH||CH.mode!=="bot"||CH.over||E.turn()===CH.color) return;
@@ -1949,18 +1967,21 @@ function chessEnd(){
 function finishChess(res){
   if(!CH||CH.over) return;
   CH.over=res; CH.thinking=false; chessReq++; saveChess(); drawBoard(); tickClock();
-  const name=esc(oppName()), mp=CH.mode==="mp";
+  const mp=CH.mode==="mp", hot=CH.mode==="hot"; let hotWin=0;
+  if(hot){ hotWin=res==="win"?CH.color:(res==="lose"||res==="resign")?-CH.color:0; CH.color=1; CH.flip=false; if(S.view==="games"&&S.game==="chess") renderChess($("#v-games")); }
+  const name=esc(oppName());
   const WIN=["win","oppResign","timeWin","left"], LOSE=["lose","resign","timeLose"];
   const head={win:tr("You won!"),lose:GL()?`فاز ${name}`:`${name} wins`,resign:tr("You resigned"),oppResign:GL()?`استسلم ${name}، فزت!`:`${name} resigned. You won!`,
     timeWin:tr("You won on time!"),timeLose:tr("You ran out of time"),left:GL()?`غادر ${name} المباراة، فزت!`:`${name} left the game. You won!`}[res]||tr("Draw");
+  const hotHead=hotWin?tr(hotWin>0?"White wins":"Black wins"):tr("Draw"), hotSub=res==="resign"?tr(hotWin>0?"Black resigned.":"White resigned."):"";
   const why={win:tr("Checkmate."),lose:tr("Checkmate."),stalemate:tr("Stalemate: no legal moves, but not in check."),fifty:tr("50 moves without a capture or pawn move."),repetition:tr("The same position happened three times."),material:tr("Not enough pieces left to checkmate.")}[res]||"";
   const why2=CH.why==="hill"?tr("The king reached the centre."):CH.why==="3check"?tr("Third check."):why;
   if(mp){ const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },2500); }
   const R=rateGame(res), d=R?R.to-R.from:0;
   const eloLine=R?`<p class="eloline"><span>${tr(R.kind)}</span> <b>${R.from}</b> → <b>${R.to}</b> <em class="${d>0?"up":d<0?"down":""}">${d>0?"+"+d:d<0?d:"±0"}</em></p>`:"";
-  setTimeout(()=>modal(`<div class="result">${WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${head}</h3>${why2?`<p class="sub">${why2}</p>`:""}${eloLine}
+  setTimeout(()=>modal(`<div class="result">${hot?(hotWin?pcImg(6*hotWin,"pcbig"):"½"):WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${hot?hotHead:head}</h3>${(hot?(hotSub||why2):why2)?`<p class="sub">${hot?(hotSub||why2):why2}</p>`:""}${eloLine}
     ${CH.moves.length?`<button class="btn primary reviewbtn" data-act="review">★ ${tr("Game review")}</button>`:""}
-    <div class="row">${mp?`<button class="btn grow" data-act="mpPlay">${tr("Find a new opponent")}</button>`:`<button class="btn grow" data-act="chessRematch">${tr("Rematch")}</button>`}<button class="btn grow" data-act="chessMenu">${tr(mp?"Back to chess":"Other opponent")}</button></div>
+    <div class="row">${mp?`<button class="btn grow" data-act="mpPlay">${tr("Find a new opponent")}</button>`:`<button class="btn grow" data-act="chessRematch">${tr("Rematch")}</button>`}<button class="btn grow" data-act="chessMenu">${tr(mp||hot?"Back to chess":"Other opponent")}</button></div>
     <button class="btn ghost" data-act="modalClose">${tr("Look at the board")}</button>`),350);
 }
 
@@ -2062,11 +2083,11 @@ function showSummary(){
   const $m=$("#modal"); $m.innerHTML=`<div class="modal-in review-in" role="dialog">
     <div class="rv-head"><span class="rv-star">★</span><h3>${tr("Game Review")}</h3></div>
     <div class="rv-players">
-      <div class="rvp"><span class="ava you">${esc(meName()).slice(0,1)}</span><small>${esc(meName())}</small><b class="accn" data-count="${meAcc.toFixed(1)}" data-dec="1">0</b></div>
+      <div class="rvp"><span class="ava you">${esc(youLabel()).slice(0,1)}</span><small>${esc(youLabel())}</small><b class="accn" data-count="${meAcc.toFixed(1)}" data-dec="1">0</b></div>
       <div class="rv-acc">${tr("Accuracy")}</div>
       <div class="rvp"><span class="ava" style="background:${mp?"#5b7bd5":AVC[CH.lvl]}">${esc(oppName()).slice(0,1)}</span><small>${esc(oppName())}</small><b class="accn" data-count="${opAcc.toFixed(1)}" data-dec="1">0</b></div>
     </div>
-    <div class="coach"><i class="coachava" style="background-image:url(pieces/wN.svg)"></i><p>${esc(coachSum())}</p><button class="btn small ghost" data-act="coachMute" aria-label="${tr("Coach voice")}">${voiceOn()?"🔊":"🔇"}</button></div>
+    <div class="coach" ${coachSum()?"":"hidden"}><i class="coachava" style="background-image:url(pieces/wN.svg)"></i><p>${esc(coachSum())}</p><button class="btn small ghost" data-act="coachMute" aria-label="${tr("Coach voice")}">${voiceOn()?"🔊":"🔇"}</button></div>
     <div class="rv-rows">${rows}</div>
     <button class="btn primary" data-act="reviewMoves">${tr("Review moves")}</button>
     <button class="btn ghost" data-act="modalClose">${tr("Close")}</button></div>`;
@@ -2381,7 +2402,8 @@ document.addEventListener("click",e=>{
   if(ga==="chessFlip"){ CH.flip=!CH.flip; return drawBoard(); }
   if(ga==="chessResign"){ if(!CH||CH.over) return; return modal(`<h3>${tr("Resign this game?")}</h3><div class="row"><button class="btn danger grow" data-act="chessResignYes">${tr("Yes, resign")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); }
   if(ga==="chessResignYes"){ closeModal(); if(CH&&CH.mode==="mp") mpSend({t:"resign"}); return finishChess("resign"); }
-  if(ga==="chessRematch"){ closeModal(); S.chessVariant=CH.variant; return startChess(CH.lvl,CH.color>0?"w":"b"); }
+  if(ga==="chessRematch"){ closeModal(); S.chessVariant=CH.variant; return CH.mode==="hot"?startHot():startChess(CH.lvl,CH.color>0?"w":"b"); }
+  if(ga==="chessHot") return startHot();
   if(ga==="promo"){ closeModal(); return playMove(+gel.dataset.m); }
   if(ga==="blocksNew"){ if(BL&&!BL.over&&BL.score>0&&!$("#modal").innerHTML) return modal(`<h3>${tr("Start a new game?")}</h3><p class="sub">${tr("Your current score will be lost.")}</p><div class="row"><button class="btn primary grow" data-act="blocksNewYes">${tr("Start over")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); return newBlocks(true); }
   if(ga==="blocksNewYes") return newBlocks(true);
