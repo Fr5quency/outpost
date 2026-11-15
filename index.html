@@ -437,6 +437,18 @@ h3.sect{margin-top:6px}
 .ava.sidew{background:#ebecd0}.ava.sideb{background:#3a3a3a}.ava .cp{width:26px;height:26px;margin:0}
 .board{-webkit-touch-callout:none}
 .sq.astart::before{content:"";position:absolute;inset:6%;border-radius:50%;border:calc(var(--bs)/8*.09) solid rgba(255,170,0,.9);pointer-events:none;z-index:2}
+/* puzzles */
+.puzmode .navrow,.puzmode .revline,.puzmode .coach,.puzmode .caps{display:none}
+.pzicon{color:#fff;font:800 30px/1 var(--display);background:#c2410c}
+.pzgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.pz{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 2px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.pz b{font:800 17px/1 var(--display)}.pz small{font-size:10px;color:var(--muted)}
+.pz::before{content:"";position:absolute;top:5px;left:6px;width:6px;height:6px;border-radius:50%;background:#94a3b8}
+.pz.t-m1::before{background:#22c55e}.pz.t-m2::before{background:#3b82f6}.pz.t-m3::before{background:#a855f7}.pz.t-win::before{background:#f59e0b}
+.pz.done{background:color-mix(in srgb,var(--good) 22%,var(--panel));border-color:var(--good)}
+.pz.star::after{content:"★";position:absolute;top:2px;right:5px;font-size:11px;color:#eab308}
+.sq.hintsq{box-shadow:inset 0 0 0 calc(var(--bs)/8*.09) #3b82f6}
+.sq.wrongsq{background:#e5584f!important}
 /* settings bar: language and theme switches */
 .prefs{display:flex;gap:8px;margin:-4px 0 14px}
 .sw{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:46px;font-weight:600;font-size:14px;text-align:start}
@@ -811,6 +823,11 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Puzzles":"الألغاز","Puzzle":"لغز","Mate in 1":"كش مات في نقلة","Mate in 2":"كش مات في نقلتين","Mate in 3":"كش مات في 3 نقلات","Win material":"اكسب قطعة","Loading puzzles…":"جارٍ تحميل الألغاز…",
+"‹ Chess":"› الشطرنج","‹ Puzzles":"› الألغاز","Could not load the puzzles":"تعذّر تحميل الألغاز","Open Outpost once while online so the puzzles are saved on this phone.":"افتح Outpost مرة وأنت متصل لتُحفظ الألغاز على الهاتف.",
+"Play again from the start":"العب من البداية","Start":"ابدأ","Green: solved. Gold star: solved on the first try, with no hint.":"الأخضر: تم الحل. النجمة الذهبية: الحل من أول محاولة بدون تلميح.",
+"Not the best move. Try again.":"ليست أفضل نقلة. حاول مرة أخرى.","Solved":"تم الحل","Solved on the first try!":"تم الحل من أول محاولة!","Retry":"أعد المحاولة","Next puzzle":"اللغز التالي","Show solution":"أظهر الحل",
+
 "Now double-tap another square to draw the arrow":"الآن اضغط مرتين على مربع آخر لرسم السهم",
 
 "1v1 on this phone":"لاعبان على هذا الهاتف","Play on this phone":"العب على هذا الهاتف","Two players pass the phone. The board flips after every move. Uses the mode chosen above.":"لاعبان يتبادلان الهاتف. تنقلب الرقعة بعد كل نقلة. يستخدم الوضع المختار أعلاه.",
@@ -1648,6 +1665,7 @@ function renderGames(){
   if(S.game==="chess") return renderChess(v);
   if(S.game==="chessMenu") return renderChessMenu(v);
   if(S.game==="mpQueue") return renderQueue(v);
+  if(S.game==="puzList") return renderPuzList(v);
   if(S.game==="blocks") return renderBlocks(v);
   const XG=window.OUTPOST_GAMES||{}; if(XG[S.game]) return XG[S.game].render(v);
   const best=store.get("blocksBest",0), cs=store.get("chess",null);
@@ -1814,8 +1832,52 @@ function chessReplay(moves,E){ E=E||engine(); setupEngine(E); const keys=[E.fen(
 const posKey=()=>engine().fen().split(" ").slice(0,4).join(" ");
 const strSq=s=>(s.charCodeAt(1)-49)*16+(s.charCodeAt(0)-97);
 function saveChess(){ if(CH&&CH.mode==="bot") store.set("chess",{lvl:CH.lvl,color:CH.color,moves:CH.moves,over:CH.over||null,variant:CH.variant,start:CH.start}); }
-const oppName=()=>CH.mode==="mp"?CH.opp:CH.mode==="hot"?tr(CH.color>0?"Black":"White"):botName(CH.lvl);
-const youLabel=()=>CH&&CH.mode==="hot"?tr(CH.color>0?"White":"Black"):meName();
+const oppName=()=>CH.mode==="puz"?tr("Puzzle")+" "+(CH.puz.i+1):CH.mode==="mp"?CH.opp:CH.mode==="hot"?tr(CH.color>0?"Black":"White"):botName(CH.lvl);
+const youLabel=()=>CH&&(CH.mode==="hot"||CH.mode==="puz")?tr(CH.color>0?"White":"Black"):meName();
+/* ===== PUZZLES: 100 positions in puzzles.json, each with one correct line. f = position, m = moves (yours, reply, yours...), t = type, r = rating ===== */
+let PZ=null, PZp=null;
+const PZ_TYPE={m1:"Mate in 1",m2:"Mate in 2",m3:"Mate in 3",win:"Win material"};
+const puzState=()=>{ const st=store.get("puz",null); return st&&st.done?st:{done:{}}; };
+const puzCount=()=>Object.keys(puzState().done).length;
+function loadPuzzles(){ return PZ?Promise.resolve(PZ):(PZp||(PZp=getJSON("puzzles.json").then(d=>{ PZ=d; return d; }).catch(e=>{ PZp=null; throw e; }))); }
+function openPuzzles(){ closeModal(); S.game="puzList"; show("games"); }
+function renderPuzList(v){
+  if(!PZ){ v.innerHTML=`<div class="card"><p class="sub">${tr("Loading puzzles…")}</p></div>`;
+    loadPuzzles().then(()=>{ if(S.game==="puzList"&&S.view==="games") renderPuzList(v); }).catch(()=>{ v.innerHTML=`<div class="row"><button class="btn small" data-act="chessMenu">${tr("‹ Chess")}</button></div><div class="card"><h3>${tr("Could not load the puzzles")}</h3><p class="sub">${tr("Open Outpost once while online so the puzzles are saved on this phone.")}</p></div>`; }); return; }
+  const st=puzState(), n=PZ.length, solved=Object.keys(st.done).length, stars=Object.values(st.done).filter(x=>x===2).length, next=PZ.findIndex((_,i)=>!st.done[i]);
+  v.innerHTML=`<div class="row"><button class="btn small" data-act="chessMenu">${tr("‹ Chess")}</button></div>
+    <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Puzzles")}</h2><p class="sub">${GL()?`حللت ${solved} من ${n} · ${stars} من أول محاولة`:`${solved} of ${n} solved · ${stars} on the first try`}</p></div>
+    <div class="meter"><b style="width:${100*solved/n}%"></b></div>
+    <button class="btn primary" data-act="puzGo" data-i="${next<0?0:next}">${tr(next<0?"Play again from the start":solved?"Continue":"Start")}</button>
+    <div class="pzgrid">${PZ.map((P,i)=>`<button class="pz t-${P.t}${st.done[i]?" done":""}${st.done[i]===2?" star":""}" data-act="puzGo" data-i="${i}" aria-label="${tr("Puzzle")} ${i+1}"><b>${i+1}</b><small>${P.r}</small></button>`).join("")}</div>
+    <p class="sub">${tr("Green: solved. Gold star: solved on the first try, with no hint.")}</p>`;
+}
+function startPuzzle(i){
+  if(!PZ||!PZ[i]) return openPuzzles(); const P=PZ[i], color=P.f.split(" ")[1]==="b"?-1:1; chessReq++;
+  CH=newCH({mode:"puz",lvl:0,color,flip:color<0,variant:"std",start:P.f,puz:{i,step:0,fail:false,done:false,hint:null,wrong:null}});
+  CH.keys=chessReplay([]); CH.fens=[engine().fen()]; closeModal(); S.game="chess"; show("games");
+}
+function puzApply(m){ // play one move of the solution on the board
+  const E=engine(), f=m&127, t=(m>>7)&127, s=E.moveStr(m); if(!E.make(m)) return;
+  CH.moves.push(s); CH.last=[f,t]; CH.sel=-1; CH.puz.hint=null; CH.puz.wrong=null; CH.puz.step++; CH.arrows=[]; CH.arrowFrom=null;
+  try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){}
+  const P=PZ[CH.puz.i];
+  if(CH.puz.step>=P.m.length){ CH.puz.done=true; CH.over="puz"; const st=puzState(); st.done[CH.puz.i]=Math.max(st.done[CH.puz.i]||0,CH.puz.fail?1:2); store.set("puz",st); drawBoard(); if(!CH.puz.fail){ ensureAudio(); ding(); } return; }
+  drawBoard();
+}
+function puzReply(then){ const g=CH.gid; setTimeout(()=>{ if(!CH||CH.gid!==g||CH.puz.done) return; const E=engine(), P=PZ[CH.puz.i], m=E.legal().find(x=>E.moveStr(x)===P.m[CH.puz.step]); if(m!==undefined) puzApply(m); if(then) then(); },520); }
+function puzMove(m){ // your move: it must be the puzzle's move (any checkmate is accepted on the last move of a mate puzzle)
+  const E=engine(), P=PZ[CH.puz.i], want=P.m[CH.puz.step]; let ok=E.moveStr(m)===want;
+  if(!ok&&P.t!=="win"&&CH.puz.step===P.m.length-1&&E.make(m)){ ok=E.inCheck()&&!E.legal().length; E.unmake(); }
+  if(!ok){ CH.puz.fail=true; CH.puz.wrong=(m>>7)&127; CH.sel=-1; drawBoard(); haptic(60); toast(tr("Not the best move. Try again.")); return false; }
+  puzApply(m); if(!CH.puz.done) puzReply(); return true;
+}
+function puzSolution(){ // show the rest of the line, one move at a time
+  if(!CH||CH.mode!=="puz"||CH.puz.done) return; CH.puz.fail=true; const g=CH.gid;
+  const step=()=>{ if(!CH||CH.gid!==g||CH.puz.done) return; const E=engine(), P=PZ[CH.puz.i]; if(E.turn()!==CH.color) return puzReply(step);
+    const m=E.legal().find(x=>E.moveStr(x)===P.m[CH.puz.step]); if(m===undefined) return; puzApply(m); if(!CH.puz.done) puzReply(()=>setTimeout(step,350)); };
+  step();
+}
 function startHot(){
   chessReq++; const variant=S.chessVariant||"std"; CH=newCH({mode:"hot",lvl:0,color:1,flip:false,variant,start:variantFen(variant)});
   CH.keys=chessReplay([]); CH.fens=[engine().fen()]; closeModal(); S.game="chess"; show("games");
@@ -1841,6 +1903,7 @@ function renderChessMenu(v){
     <p class="sub">${tr("Ratings are approximate. The bot plays fully offline.")}</p>
     <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
     <p class="sub">${tr((VARIANTS.find(x=>x[0]===(S.chessVariant||"std"))||VARIANTS[0])[2])}</p>
+    <button class="hotcard puzcard" data-act="puzOpen"><span class="hoticon pzicon">?</span><span class="otxt"><b>${tr("Puzzles")}</b><small>${GL()?`100 لغز: كش مات وتكتيكات · حللت ${puzCount()}`:`100 puzzles: checkmates and tactics · ${puzCount()} solved`}</small></span></button>
     <button class="hotcard" data-act="chessHot"><span class="hoticon">${pcImg(6)}${pcImg(-6)}</span><span class="otxt"><b>${tr("1v1 on this phone")}</b><small>${tr("Two players pass the phone. The board flips after every move. Uses the mode chosen above.")}</small></span></button>
     <div class="seg seg3"><button data-act="chessColor" data-c="w" class="${col==="w"?"on":""}">${tr("White")}</button><button data-act="chessColor" data-c="r" class="${col==="r"?"on":""}">${tr("Random")}</button><button data-act="chessColor" data-c="b" class="${col==="b"?"on":""}">${tr("Black")}</button></div>
     <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
@@ -1857,10 +1920,10 @@ function resumeChess(){ const cs=store.get("chess",null); chessReq++; CH=newCH({
 const NAV='<svg viewBox="0 0 24 24">';
 function renderChess(v){
   if(!CH){ S.game=null; return renderGames(); }
-  const mp=CH.mode==="mp", hot=CH.mode==="hot", on=oppName();
-  v.innerHTML=`<div class="gwrap" id="gameRoot">
-    <div class="gtop"><button class="btn small gback" data-act="chessMenu">${tr(mp?"‹ Leave":"‹ Opponents")}</button>${CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
-    <div class="pbar"><span class="ava${hot?(CH.color>0?" sideb":" sidew"):""}" style="${hot?"":`background:${mp?"#5b7bd5":AVC[CH.lvl]}`}">${hot?pcImg(-6*CH.color,"cp"):esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:hot?"":`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
+  const mp=CH.mode==="mp", puz=CH.mode==="puz", hot=CH.mode==="hot"||puz, on=oppName();
+  v.innerHTML=`<div class="gwrap${puz?" puzmode":""}" id="gameRoot">
+    <div class="gtop"><button class="btn small gback" data-act="${puz?"puzList":"chessMenu"}">${tr(puz?"‹ Puzzles":mp?"‹ Leave":"‹ Opponents")}</button>${CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
+    <div class="pbar"><span class="ava${hot?(CH.color>0?" sideb":" sidew"):""}" style="${hot?"":`background:${mp?"#5b7bd5":AVC[CH.lvl]}`}">${hot?pcImg(-6*CH.color,"cp"):esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:puz?`<em>${tr(PZ_TYPE[PZ[CH.puz.i].t])} · ${PZ[CH.puz.i].r}</em>`:hot?"":`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
     <div class="pbar"><span class="ava ${hot?(CH.color>0?"sidew":"sideb"):"you"}">${hot?pcImg(6*CH.color,"cp"):esc(meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(youLabel())} ${mp?`<em>${eloOn()}</em>`:(!hot&&CH.variant==="std")?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mp?`<span class="clock" id="clkYou"></span>`:""}</div>
     <div class="revline" id="revLine"></div>
@@ -1894,7 +1957,7 @@ function drawBoard(){
   let h="";
   for(let i=0;i<8;i++) for(let j=0;j<8;j++){
     const r=CH.flip?i:7-i, f=CH.flip?7-j:j, sq=r*16+f, p=bd[sq], t=targets.find(m=>((m>>7)&127)===sq);
-    const cls=["sq",(r+f)%2?"lt":"dk"]; if(sq===CH.sel) cls.push("sel"); if(last.includes(sq)) cls.push("last"); if(sq===kSq) cls.push("chk"); if(t!==undefined) cls.push(p?"cap":"dot"); if(CH.variant==="koth"&&E.onHill(sq)) cls.push("hill");
+    const cls=["sq",(r+f)%2?"lt":"dk"]; if(sq===CH.sel) cls.push("sel"); if(last.includes(sq)) cls.push("last"); if(sq===kSq) cls.push("chk"); if(CH.puz&&sq===CH.puz.hint) cls.push("hintsq"); if(CH.puz&&sq===CH.puz.wrong) cls.push("wrongsq"); if(t!==undefined) cls.push(p?"cap":"dot"); if(CH.variant==="koth"&&E.onHill(sq)) cls.push("hill");
     h+=`<div class="${cls.join(" ")}" data-sq="${sq}">${j===0?`<i class="cr">${r+1}</i>`:""}${i===7?`<i class="cf">${"abcdefgh"[f]}</i>`:""}${p?pcImg(p):""}</div>`;
   }
   const B=$("#board"); B.innerHTML=h; B.classList.toggle("review",!live);
@@ -1906,13 +1969,15 @@ function drawBoard(){
   $("#capsBot").innerHTML=byBot.map(p=>pcImg(p,"cp")).join("")+(diff<0?` <em>+${-diff}</em>`:"");
   const yourTurn=engine().turn()===CH.color, inChk=engine().inCheck();
   $("#botStatus").textContent=CH.over?"":CH.thinking?tr("Thinking…"):(!yourTurn&&inChk?tr("Check!"):"");
+  if(CH.mode==="puz") $("#youStatus").textContent=CH.puz.done?(CH.puz.fail?tr("Solved"):tr("Solved on the first try!")):(engine().turn()===CH.color?tr(CH.color>0?"White to move":"Black to move"):"…"); else
   if(CH.mode==="hot"&&live&&!CH.over) $("#youStatus").textContent=(inChk?tr("Check!")+" ":"")+tr(engine().turn()>0?"White to move":"Black to move"); else
   $("#youStatus").textContent=!live?(GL()?`مراجعة: النقلة ${AD(CH.view)} من ${AD(CH.moves.length)}`:`Reviewing move ${CH.view} of ${CH.moves.length}`):CH.over?"":yourTurn?(inChk?tr("Check! Your move"):tr("Your move")):"";
   if(CH.variant==="3check"){ const c=E.checks(), yi=CH.color>0?0:1; $("#chkYou").textContent="✚ "+c[yi]+"/3"; $("#chkBot").textContent="✚ "+c[1-yi]+"/3"; }
   const n=CH.moves.length, at=live?n:CH.view;
   $$(".navrow .btn").forEach(b=>{ const k=b.dataset.n; b.disabled=(k==="first"||k==="prev")?at===0:at===n; });
-  const g=$("#gctl"), want=CH.over?(CH.moves.length?"review":"flip"):"play";
-  if(g&&g.dataset.s!==want){ g.dataset.s=want; g.innerHTML=`<button class="btn" data-act="chessFlip">${tr("Flip board")}</button>`+(want==="review"?`<button class="btn primary" data-act="review">★ ${tr("Game review")}</button>`:want==="play"?`<button class="btn danger" data-act="chessResign">${tr("Resign")}</button>`:""); }
+  const g=$("#gctl"), want=CH.mode==="puz"?(CH.puz.done?"pd":"pp"):CH.over?(CH.moves.length?"review":"flip"):"play";
+  if(g&&g.dataset.s!==want&&CH.mode==="puz"){ g.dataset.s=want; g.innerHTML=want==="pd"?`<button class="btn" data-act="puzRetry">${tr("Retry")}</button><button class="btn primary" data-act="puzNext">${tr("Next puzzle")}</button>`:`<button class="btn" data-act="puzHint">${tr("Hint")}</button><button class="btn" data-act="puzSol">${tr("Show solution")}</button>`; }
+  else if(g&&g.dataset.s!==want){ g.dataset.s=want; g.innerHTML=`<button class="btn" data-act="chessFlip">${tr("Flip board")}</button>`+(want==="review"?`<button class="btn primary" data-act="review">★ ${tr("Game review")}</button>`:want==="play"?`<button class="btn danger" data-act="chessResign">${tr("Resign")}</button>`:""); }
   reviewOverlay();
   userArrows();
 }
@@ -1957,6 +2022,7 @@ function chessTap(sq){
   CH.sel=(p&&(p>0)===(CH.color>0)&&sq!==CH.sel)?sq:-1; drawBoard();
 }
 function playMove(m,remote){
+  if(CH.mode==="puz") return puzMove(m);
   const E=engine(), f=m&127, t=(m>>7)&127, mover=E.turn(); if(!E.make(m)) return false;
   const s=E.moveStr(m); CH.moves.push(s); CH.keys.push(posKey()); CH.fens.push(E.fen()); CH.last=[f,t]; CH.sel=-1; CH.view=null; CH.moveT=Date.now(); CH.an=null; CH.arrows=[]; CH.arrowFrom=null; queueAn(CH.moves.length-1);
   if(CH.mode==="mp"){ const k=mover>0?"w":"b"; if(!remote){ CH.clock[k]-=Date.now()-CH.tStart; mpSend({t:"move",m:s,left:CH.clock[k]}); } CH.tStart=Date.now(); }
@@ -2434,6 +2500,12 @@ document.addEventListener("click",e=>{
   if(ga==="chessResignYes"){ closeModal(); if(CH&&CH.mode==="mp") mpSend({t:"resign"}); return finishChess("resign"); }
   if(ga==="chessRematch"){ closeModal(); S.chessVariant=CH.variant; return CH.mode==="hot"?startHot():startChess(CH.lvl,CH.color>0?"w":"b"); }
   if(ga==="chessHot") return startHot();
+  if(ga==="puzOpen"||ga==="puzList") return openPuzzles();
+  if(ga==="puzGo") return startPuzzle(+gel.dataset.i);
+  if(ga==="puzRetry") return startPuzzle(CH.puz.i);
+  if(ga==="puzNext"){ const st=puzState(); let n=-1; for(let k=1;k<=PZ.length;k++){ const j=(CH.puz.i+k)%PZ.length; if(!st.done[j]){ n=j; break; } } return n<0?openPuzzles():startPuzzle(n); }
+  if(ga==="puzHint"){ if(CH.puz.done||engine().turn()!==CH.color) return; CH.puz.fail=true; CH.puz.hint=strSq(PZ[CH.puz.i].m[CH.puz.step]); CH.puz.wrong=null; return drawBoard(); }
+  if(ga==="puzSol") return puzSolution();
   if(ga==="promo"){ closeModal(); return playMove(+gel.dataset.m); }
   if(ga==="blocksNew"){ if(BL&&!BL.over&&BL.score>0&&!$("#modal").innerHTML) return modal(`<h3>${tr("Start a new game?")}</h3><p class="sub">${tr("Your current score will be lost.")}</p><div class="row"><button class="btn primary grow" data-act="blocksNewYes">${tr("Start over")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); return newBlocks(true); }
   if(ga==="blocksNewYes") return newBlocks(true);
