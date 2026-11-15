@@ -1567,7 +1567,7 @@ function setFS(on){
   const fb=$("#fsBtn"); if(fb){ fb.innerHTML=on?ICON_SHRINK:ICON_EXPAND; fb.setAttribute("aria-label",tr(on?"Exit full screen":"Full screen")); }
   try{ if(on&&document.documentElement.requestFullscreen&&!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
        if(!on&&document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }catch(e){}
-  requestAnimationFrame(()=>{ if(S.game==="chess") sizeBoard(); if(S.game==="blocks") sizeBlocks(); });
+  requestAnimationFrame(()=>{ if(S.game==="chess") sizeBoard(); if(S.game==="blocks") sizeBlocks(); const g=(window.OUTPOST_GAMES||{})[S.game]; g&&g.resize&&g.resize(); });
 }
 document.addEventListener("fullscreenchange",()=>{ if(!document.fullscreenElement&&S.gfs) setFS(false); });
 const ICON_EXPAND='<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
@@ -1582,11 +1582,13 @@ function renderGames(){
   if(S.game==="chessMenu") return renderChessMenu(v);
   if(S.game==="mpQueue") return renderQueue(v);
   if(S.game==="blocks") return renderBlocks(v);
+  const XG=window.OUTPOST_GAMES||{}; if(XG[S.game]) return XG[S.game].render(v);
   const best=store.get("blocksBest",0), cs=store.get("chess",null);
   v.innerHTML=`<div><div class="eyebrow">${tr("Games")}</div><h2>${tr("Games")}</h2></div>
     <div class="gcards">
       <button class="gcard chesscard" data-act="openChess"><span class="gicon"><i class="pcimg" style="background-image:url(pieces/wN.svg)"></i></span><span class="gtxt"><b>${tr("Chess")}</b><span>${tr("Bots from 400 to 2000 Elo, or play online")}</span>${cs&&!cs.over?`<em>${tr("Game in progress")}</em>`:""}</span></button>
       <button class="gcard blockcard" data-act="openBlocks"><span class="gicon"><i></i><i></i><i></i><i></i></span><span class="gtxt"><b>${tr("Block Puzzle")}</b><span>${tr("Fit the blocks, clear rows and columns")}</span>${best?`<em>${tr("Best")}: ${best}</em>`:""}</span></button>
+      ${Object.values(XG).map(g=>g.card()).join("")}
     </div>
     ${nameChip()}
     <p class="sub">${tr("Tip: tap the corner button in a game for full screen.")}</p>`;
@@ -2117,6 +2119,7 @@ document.addEventListener("click",e=>{
   if(e.target.id==="modal") return closeModal();
   const sqEl=e.target.closest("#board .sq"); if(sqEl) return chessTap(+sqEl.dataset.sq);
   const ga=(e.target.closest("[data-act]")||{dataset:{}}).dataset.act, gel=e.target.closest("[data-act]");
+  if(ga&&window.OUTPOST_ACT&&OUTPOST_ACT[ga]) return OUTPOST_ACT[ga](gel,e);
   if(ga==="fs") return setFS(!S.gfs);
   if(ga==="modalClose") return closeModal();
   if(ga==="openChess") return openChess();
@@ -2208,7 +2211,7 @@ document.addEventListener("change",e=>{
   if(t.id==="pwSym"||t.id==="pwAmb") return runPass();
 });
 function net(){const on=navigator.onLine!==false, p=$("#net"); p.classList.toggle("off",!on); p.lastElementChild.textContent=tr(on?"ONLINE":"NO SIGNAL");}
-window.addEventListener("resize",()=>{ if(S.view==="games"){ sizeBoard(); sizeBlocks(); } if(S.view==="quran"&&QD){ qFit(); const el=$("#qTrack").children[S.qPage]; el&&el.scrollIntoView({inline:"start",block:"nearest"}); } });
+window.addEventListener("resize",()=>{ if(S.view==="games"){ sizeBoard(); sizeBlocks(); const g=(window.OUTPOST_GAMES||{})[S.game]; g&&g.resize&&g.resize(); } if(S.view==="quran"&&QD){ qFit(); const el=$("#qTrack").children[S.qPage]; el&&el.scrollIntoView({inline:"start",block:"nearest"}); } });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); if(e.key==="Enter"&&e.target.id==="mpNameIn"){ const b=$("[data-act=mpNameSave]"); b&&saveName(b.dataset.q==="1"); } });
 window.addEventListener("online",net); window.addEventListener("offline",net); applyStatic(); net();
 
@@ -2217,5 +2220,6 @@ try{ if("serviceWorker" in navigator && location.protocol==="https:" && window.t
 
 show(VIEWS[location.hash.slice(1)]?location.hash.slice(1):"home");
 </script>
+<script src="games-more.js"></script>
 </body>
 </html>
