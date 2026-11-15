@@ -435,6 +435,8 @@ h3.sect{margin-top:6px}
 .hoticon .pc{width:30px;height:38px;margin:0 -2px}
 .hotcard .otxt small{opacity:1;color:var(--muted)}
 .ava.sidew{background:#ebecd0}.ava.sideb{background:#3a3a3a}.ava .cp{width:26px;height:26px;margin:0}
+.board{-webkit-touch-callout:none}
+.sq.astart::before{content:"";position:absolute;inset:6%;border-radius:50%;border:calc(var(--bs)/8*.09) solid rgba(255,170,0,.9);pointer-events:none;z-index:2}
 /* settings bar: language and theme switches */
 .prefs{display:flex;gap:8px;margin:-4px 0 14px}
 .sw{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:46px;font-weight:600;font-size:14px;text-align:start}
@@ -809,6 +811,8 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Now hold another square to draw the arrow":"الآن اضغط مطولًا على مربع آخر لرسم السهم",
+
 "1v1 on this phone":"لاعبان على هذا الهاتف","Play on this phone":"العب على هذا الهاتف","Two players pass the phone. The board flips after every move. Uses the mode chosen above.":"لاعبان يتبادلان الهاتف. تنقلب الرقعة بعد كل نقلة. يستخدم الوضع المختار أعلاه.",
 "White to move":"دور الأبيض","Black to move":"دور الأسود","White wins":"فاز الأبيض","Black wins":"فاز الأسود","White resigned.":"استسلم الأبيض.","Black resigned.":"استسلم الأسود.",
 
@@ -1842,7 +1846,7 @@ function renderChessMenu(v){
     <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
     <p class="foot">${tr("Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.")}</p>`;
 }
-function newCH(o){ return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null,variant:"std",start:STD_FEN,fens:[],rows:[],asked:[],liveC:[],live:null,why:null,gid:++gameSeq},o); }
+function newCH(o){ return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null,variant:"std",start:STD_FEN,fens:[],rows:[],asked:[],liveC:[],live:null,why:null,arrows:[],arrowFrom:null,gid:++gameSeq},o); }
 function rebuildFens(){ const V=ChessEngine(null); setupEngine(V); const out=[V.fen()]; for(const s of CH.moves){ const m=V.legal().find(x=>V.moveStr(x)===s); if(m===undefined) break; V.make(m); out.push(V.fen()); } CH.fens=out; }
 function startChess(lvl,colorPref){
   chessReq++; const color=colorPref==="b"?-1:colorPref==="r"?(Math.random()<.5?1:-1):1;
@@ -1910,6 +1914,31 @@ function drawBoard(){
   const g=$("#gctl"), want=CH.over?(CH.moves.length?"review":"flip"):"play";
   if(g&&g.dataset.s!==want){ g.dataset.s=want; g.innerHTML=`<button class="btn" data-act="chessFlip">${tr("Flip board")}</button>`+(want==="review"?`<button class="btn primary" data-act="review">★ ${tr("Game review")}</button>`:want==="play"?`<button class="btn danger" data-act="chessResign">${tr("Resign")}</button>`:""); }
   reviewOverlay();
+  userArrows();
+}
+/* your own arrows: hold a square for 2 seconds to start one, hold another for 1 second to finish it; a tap on the board clears them */
+const ARROW_START_MS=2000, ARROW_END_MS=1000;
+let arrowT=null, arrowSkipTap=false, arrowDown=null;
+function userArrows(){
+  const B=$("#board"); if(!B||!CH) return; const old=B.querySelector(".uarrows"); if(old) old.remove();
+  if(CH.arrowFrom!==null){ const c=B.querySelector(`.sq[data-sq="${CH.arrowFrom}"]`); if(c) c.classList.add("astart"); }
+  if(CH.arrows.length) B.insertAdjacentHTML("beforeend",`<svg class="arrows uarrows" viewBox="0 0 8 8" preserveAspectRatio="none">${CH.arrows.map(a=>arrow(a[0],a[1],"rgba(255,170,0,.88)")).join("")}</svg>`);
+}
+function arrowHold(sq){ // the hold timer fired on this square
+  arrowSkipTap=true; try{ navigator.vibrate&&navigator.vibrate(25); }catch(e){}
+  if(CH.arrowFrom===null){ CH.arrowFrom=sq; if(!store.get("arrowTip",0)){ store.set("arrowTip",1); toast(tr("Now hold another square to draw the arrow")); } }
+  else { if(sq!==CH.arrowFrom) CH.arrows.push([CH.arrowFrom,sq]); CH.arrowFrom=null; }
+  drawBoard();
+}
+document.addEventListener("pointerdown",e=>{ const c=e.target.closest&&e.target.closest("#board .sq"); if(!c||!CH) return; clearTimeout(arrowT); arrowSkipTap=false; arrowDown=[e.clientX,e.clientY];
+  const sq=+c.dataset.sq; arrowT=setTimeout(()=>arrowHold(sq),CH.arrowFrom===null?ARROW_START_MS:ARROW_END_MS); });
+document.addEventListener("pointermove",e=>{ if(arrowDown&&Math.hypot(e.clientX-arrowDown[0],e.clientY-arrowDown[1])>14){ clearTimeout(arrowT); arrowDown=null; } });
+["pointerup","pointercancel"].forEach(t=>document.addEventListener(t,()=>{ clearTimeout(arrowT); arrowDown=null; }));
+document.addEventListener("contextmenu",e=>{ if(e.target.closest&&e.target.closest("#board")) e.preventDefault(); });
+function boardTap(sq){ // a plain tap: first it clears any arrows, otherwise it plays as usual
+  if(arrowSkipTap){ arrowSkipTap=false; return; }
+  if(CH&&(CH.arrows.length||CH.arrowFrom!==null)){ CH.arrows=[]; CH.arrowFrom=null; return drawBoard(); }
+  chessTap(sq);
 }
 function navTo(k){ const n=CH.moves.length; CH.view=(k===null||k>=n)?null:Math.max(0,k); CH.sel=-1; drawBoard(); }
 function chessTap(sq){
@@ -1928,7 +1957,7 @@ function chessTap(sq){
 }
 function playMove(m,remote){
   const E=engine(), f=m&127, t=(m>>7)&127, mover=E.turn(); if(!E.make(m)) return false;
-  const s=E.moveStr(m); CH.moves.push(s); CH.keys.push(posKey()); CH.fens.push(E.fen()); CH.last=[f,t]; CH.sel=-1; CH.view=null; CH.moveT=Date.now(); CH.an=null; queueAn(CH.moves.length-1);
+  const s=E.moveStr(m); CH.moves.push(s); CH.keys.push(posKey()); CH.fens.push(E.fen()); CH.last=[f,t]; CH.sel=-1; CH.view=null; CH.moveT=Date.now(); CH.an=null; CH.arrows=[]; CH.arrowFrom=null; queueAn(CH.moves.length-1);
   if(CH.mode==="mp"){ const k=mover>0?"w":"b"; if(!remote){ CH.clock[k]-=Date.now()-CH.tStart; mpSend({t:"move",m:s,left:CH.clock[k]}); } CH.tStart=Date.now(); }
   try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){}
   if(CH.mode==="hot") CH.color=E.turn();
@@ -2375,7 +2404,7 @@ window.addEventListener("hashchange",()=>{const v=location.hash.slice(1); if(v!=
 document.addEventListener("click",e=>{
   if(e.target.id==="sheet") return closeSheet();
   if(e.target.id==="modal") return closeModal();
-  const sqEl=e.target.closest("#board .sq"); if(sqEl) return chessTap(+sqEl.dataset.sq);
+  const sqEl=e.target.closest("#board .sq"); if(sqEl) return boardTap(+sqEl.dataset.sq);
   const ga=(e.target.closest("[data-act]")||{dataset:{}}).dataset.act, gel=e.target.closest("[data-act]");
   if(ga&&window.OUTPOST_ACT&&OUTPOST_ACT[ga]) return OUTPOST_ACT[ga](gel,e);
   if(ga==="fs") return setFS(!S.gfs);
