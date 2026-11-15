@@ -764,7 +764,7 @@ const AR={
 /* stack view */
 "The iPhone stack":"تطبيقات iPhone","Three free apps cover the heavy parts":"ثلاثة تطبيقات مجانية تغطي الجزء الأكبر",
 "Tick each step as you go. Do the downloads on Wi-Fi, then test everything in Airplane Mode.":"علّم كل خطوة عند إنجازها. نزّل الملفات على Wi-Fi، ثم اختبر كل شيء في وضع الطيران.",
-"DONE":"تم","Open in the App Store":"افتح في App Store","Phone memory":"ذاكرة الهاتف","Models":"الأجهزة","Try":"جرّب","Size":"الحجم",
+"DONE":"تم","Open in the App Store":"افتح في App Store","Open in Google Play (Android)":"افتح في Google Play (أندرويد)","Phone memory":"ذاكرة الهاتف","Models":"الأجهزة","Try":"جرّب","Size":"الحجم",
 "Storage planner":"مخطط التخزين","Will it fit?":"هل تكفي المساحة؟",
 "Sizes are rough and change with every release. Edit any number to match what the app shows before you download.":"الأحجام تقريبية وتتغير مع كل إصدار. عدّل أي رقم ليطابق ما يظهره التطبيق قبل التنزيل.",
 "Free space on your iPhone, in GB (Settings, General, iPhone Storage)":"المساحة الفارغة على iPhone بالجيجابايت (الإعدادات، عام، مساحة تخزين iPhone)",
@@ -885,15 +885,15 @@ function setTheme(t){ S.theme=t; store.set("theme",t); document.documentElement.
 
 /* ---------- data: the app stack ---------- */
 const STACK=[
- {id:"kiwix",name:"Kiwix",role:"Library",by:"Free, from Wikimedia CH",url:"https://apps.apple.com/app/id997079563",
+ {id:"kiwix",name:"Kiwix",role:"Library",by:"Free, from Wikimedia CH",url:"https://apps.apple.com/app/id997079563",play:"https://play.google.com/store/apps/details?id=org.kiwix.kiwixmobile",
   what:"Stores Wikipedia and other reference sites on the phone. NOMAD uses Kiwix for its library too, so this is the same content.",
   steps:["Install Kiwix from the App Store","On Wi-Fi, open the library inside Kiwix and pick your language","Download WikiMed (medical encyclopedia) first. It is small and the most useful in an emergency","Download a Wikipedia edition that fits your storage. Start with a mini or no-pictures edition","Add Wikivoyage, and Khan Academy or iFixit packs if you have room","Turn on Airplane Mode and open an article to prove it works"],
   tip:"Big packs take a while. Keep the phone plugged in, on Wi-Fi, with Kiwix open until they finish."},
- {id:"maps",name:"Organic Maps",role:"Maps",by:"Free, open source, no ads",url:"https://apps.apple.com/app/id1567437057",
+ {id:"maps",name:"Organic Maps",role:"Maps",by:"Free, open source, no ads",url:"https://apps.apple.com/app/id1567437057",play:"https://play.google.com/store/apps/details?id=app.organicmaps",
   what:"Offline maps with search and turn-by-turn routing from OpenStreetMap data. GPS works without a SIM or signal.",
   steps:["Install Organic Maps from the App Store","Download the map for your own region","Download neighbouring regions and anywhere you travel to often","Bookmark home, the nearest hospital, a water source and a family meeting point","In Airplane Mode, search for a place and build a route to it"],
   tip:"GPS still works in Airplane Mode. The first fix can take a minute or two under open sky."},
- {id:"ai",name:"PocketPal AI",role:"AI",by:"Free, open source",url:"https://apps.apple.com/app/id6502579498",
+ {id:"ai",name:"PocketPal AI",role:"AI",by:"Free, open source",url:"https://apps.apple.com/app/id6502579498",play:"https://play.google.com/store/apps/details?id=com.pocketpalai",
   what:"Runs small language models fully on the phone. Slower and less capable than cloud AI, but it answers with no connection.",
   steps:["Install PocketPal AI from the App Store","Download one model that fits your iPhone (see the table below)","Load the model and ask it a test question","In Airplane Mode, ask again to prove it runs offline"],
   tip:"Small models make things up with confidence. For anything medical, check the answer in WikiMed."}
@@ -1044,6 +1044,7 @@ function renderStack(){
     <header><div><div class="eyebrow">${tr(a.role)}</div><h2>${a.name}</h2><p class="sub">${tr(a.by)}</p></div><span class="tag ${d===t?"done":""}" data-tag="${a.id}">${d===t?tr("DONE"):d+" / "+t}</span></header>
     <p>${tr(a.what)}</p>
     <a class="btn" style="text-align:center;text-decoration:none;color:inherit;display:flex;align-items:center;justify-content:center" href="${a.url}" target="_blank" rel="noopener">${tr("Open in the App Store")}</a>
+    <a class="btn" style="text-align:center;text-decoration:none;color:inherit;display:flex;align-items:center;justify-content:center" href="${a.play}" target="_blank" rel="noopener">${tr("Open in Google Play (Android)")}</a>
     <ul class="steps">${a.steps.map((s,i)=>`<li><label><input type="checkbox" id="c-${a.id}-${i}" data-check="${a.id}.${i}" ${S.checks[a.id+"."+i]?"checked":""}><span>${tr(s)}</span></label></li>`).join("")}</ul>
     <p class="tip">${tr(a.tip)}</p>
     ${a.id==="ai"?`<div class="scroll"><table><tr><th>${tr("Phone memory")}</th><th>${tr("Models")}</th><th>${tr("Try")}</th><th>${tr("Size")}</th></tr>${MODELS.map(m=>`<tr><td class="num">${tr(m[0])}</td><td>${tr(m[1])}</td><td>${tr(m[2])}</td><td>${tr(m[3])}</td></tr>`).join("")}</table></div>`:""}
