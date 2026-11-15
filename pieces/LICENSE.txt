@@ -1,3 +1,4 @@
 Chess pieces: "Papercut" by Nikolay Anzarov (https://nikoichu.itch.io/)
 Licensed under CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
-Files taken unmodified from the lichess.org repository (public/piece/papercut).
+Taken from the lichess.org repository (public/piece/papercut).
+Modified for this app: the SVG blur/shadow filter was removed from each piece so they render sharply on iPhone.

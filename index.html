@@ -357,8 +357,8 @@ html[lang="ar"] .tabs button{font-size:10px}
 .board{border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.3)}
 .board.review{outline:3px solid var(--signal);outline-offset:2px}
 /* no CSS filter on the pieces: iPhone Safari draws filtered elements at low resolution, which made them look pixelated.
-   Pieces fill 82% of the square; the small coordinate labels sit in the corners, which the piece artwork does not reach. */
-.pc{display:block;width:100%;height:100%;background:center/82% no-repeat;pointer-events:none;position:relative;z-index:1}
+   Pieces fill 90% of the square; the small coordinate labels sit in the corners, which the piece artwork does not reach. */
+.pc{display:block;width:100%;height:100%;background:center/90% no-repeat;pointer-events:none;position:relative;z-index:1}
 .cp{display:inline-block;width:17px;height:17px;background:center/contain no-repeat;margin-inline-end:-6px;vertical-align:middle}
 .caps{letter-spacing:0;display:flex;align-items:center;gap:0;font-size:12px}
 .caps em{margin-inline-start:9px}
@@ -442,6 +442,7 @@ h3.sect{margin-top:6px}
 .hotcard .otxt small{opacity:1;color:var(--muted)}
 .ava.sidew{background:#ebecd0}.ava.sideb{background:#3a3a3a}.ava .cp{width:26px;height:26px;margin:0}
 .board{-webkit-touch-callout:none}
+body[data-view="games"].inchess .prefs{display:none}
 .sq.astart::before{content:"";position:absolute;inset:6%;border-radius:50%;border:calc(var(--bs)/8*.09) solid rgba(255,170,0,.9);pointer-events:none;z-index:2}
 /* puzzles */
 .puzmode .navrow,.puzmode .revline,.puzmode .coach,.puzmode .caps{display:none}
@@ -1668,7 +1669,7 @@ function modal(html){ const m=$("#modal"); m.innerHTML=`<div class="modal-in" ro
 function closeModal(){ const m=$("#modal"); m.hidden=true; m.innerHTML=""; }
 
 function renderGames(){
-  const v=$("#v-games");
+  const v=$("#v-games"); document.body.classList.toggle("inchess",S.game==="chess");
   if(S.game==="chess") return renderChess(v);
   if(S.game==="chessMenu") return renderChessMenu(v);
   if(S.game==="mpQueue") return renderQueue(v);
