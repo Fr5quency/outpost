@@ -6,7 +6,8 @@ const rnd=n=>Math.floor(Math.random()*n);
 const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
 const fmtT=ms=>{ const s=Math.floor(ms/1000); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); };
 const buzz=p=>{ try{ navigator.vibrate&&navigator.vibrate(p); }catch(e){} };
-const T=(en,ar)=>isAr()?ar:en;          // one-off strings that need a different Arabic sentence shape
+const T=(en,ar)=>isAr()?ar:en;
+const ME=()=>store.get("mpName","")||tr("You");          // one-off strings that need a different Arabic sentence shape
 
 /* shared frame: back button, title area, full-screen button */
 function frame(title,body,mid){
@@ -39,7 +40,7 @@ Object.assign(AR,{
 "No legal moves":"لا توجد حركات ممكنة","Bot has no moves":"لا حركات للكمبيوتر","Tap a checker, then where to move it.":"اضغط قطعة ثم المكان الذي تنقلها إليه.","Next game":"لعبة جديدة",
 "Draw a tile":"اسحب حجرًا","Pass":"تخطَّ","Round over":"انتهت الجولة","Next round":"الجولة التالية","Match won!":"فزت بالمباراة!","Bot won the match":"فاز الكمبيوتر بالمباراة",
 "Tap a tile to play it.":"اضغط حجرًا لتلعبه.","Choose an end":"اختر الطرف","Boneyard":"المخزون","Blocked: lowest hand wins":"مغلقة: الأقل نقاطًا يفوز","Restart":"إعادة البدء","Start over":"ابدأ من جديد",
-"Your current game will be lost.":"ستفقد اللعبة الحالية.","Start a new game?":"بدء لعبة جديدة؟"
+"Your current game will be lost.":"ستفقد اللعبة الحالية.","You'll play the next person who taps Play online. 30 seconds per move.":"ستلعب ضد أول شخص يضغط «العب أونلاين». 30 ثانية لكل نقلة.","Start a new game?":"بدء لعبة جديدة؟"
 });
 
 /* =================== SUDOKU =================== */
@@ -196,15 +197,51 @@ function c4Bot(){
   return best;
 }
 function c4New(diff,keepScore){ const sc=C4&&keepScore?C4.score:[0,0,0], first=C4&&keepScore?3-C4.first:1; C4={b:Array(42).fill(0),diff:diff||(C4&&C4.diff)||"medium",turn:first,first,over:null,win:null,score:sc,last:-1}; store.set("four",C4); }
-function c4Drop(c){
+/* online: you are always yellow (1), your opponent red (2); 30 seconds per move */
+const C4_MOVE=30000; let C4solo=null, c4Tick=null;
+function c4MpStart(role,init,name){
+  if(C4&&!C4.mp) C4solo=C4; const first=(role==="host")===!!init.hostFirst;
+  C4={b:Array(42).fill(0),diff:"medium",turn:first?1:2,first:first?1:2,over:null,win:null,score:[0,0,0],last:-1,mp:{opp:name,tEnd:Date.now()+C4_MOVE,why:""}};
+  closeModal(); S.game="four"; show("games"); toast(T(`Playing ${name}`,`بدأت المباراة ضد ${name}`)); buzz([30,60,30]);
+  clearInterval(c4Tick); c4Tick=setInterval(c4MpTick,250);
+}
+function c4MpTick(){
+  if(!C4||!C4.mp){ clearInterval(c4Tick); return; } if(C4.over) return clearInterval(c4Tick);
+  const left=C4.mp.tEnd-Date.now(), el=$("#c4Stat"), sec=Math.max(0,Math.ceil(left/1000));
+  if(el) el.textContent=(C4.turn===1?tr("Your turn"):T(`${C4.mp.opp}'s turn`,`دور ${C4.mp.opp}`))+" · 0:"+String(sec).padStart(2,"0");
+  if(C4.turn===1&&left<=0){ window.OUTPOST_MP.send({t:"flag"}); c4MpOver("bot","time"); }
+  else if(C4.turn===2&&left<-5000) c4MpOver("you","time");
+}
+function c4MpOver(res,why){
+  if(!C4||!C4.mp||(C4.over&&C4.mp.shown)) return; C4.over=res; C4.mp.shown=true; C4.mp.why=why||""; clearInterval(c4Tick); c4Draw(false);
+  const opp=esc(C4.mp.opp); if(res==="you") confetti();
+  const head=res==="draw"?tr("Draw"):res==="you"?tr("You win!"):T(`${opp} wins`,`فاز ${opp}`);
+  const sub=why==="time"?(res==="you"?T(`${opp} ran out of time.`,`انتهى وقت ${opp}.`):tr("You ran out of time")):why==="left"?T(`${opp} left the game.`,`غادر ${opp} المباراة.`):why==="resign"?(res==="you"?T(`${opp} resigned.`,`استسلم ${opp}.`):tr("You resigned")):"";
+  window.OUTPOST_MP.stopLater(2000);
+  setTimeout(()=>modal(`<div class="result">${res==="you"?"🏆":res==="draw"?"½":"●"}</div><h3>${head}</h3>${sub?`<p class="sub">${sub}</p>`:""}
+    <div class="row"><button class="btn primary grow" data-act="mpPlay" data-g="four">${tr("Find a new opponent")}</button><button class="btn grow" data-act="c4Solo">${tr("Play the computer")}</button></div>
+    <button class="btn ghost" data-act="modalClose">${tr("Look at the board")}</button>`),why?200:700);
+}
+function c4MpData(d){ if(!C4||!C4.mp||C4.over) return;
+  if(d.t==="c4"){ if(C4.turn===2) c4Drop(+d.c,true); }
+  else if(d.t==="flag") c4MpOver("you","time");
+  else if(d.t==="resign") c4MpOver("you","resign");
+  else if(d.t==="bye") c4MpOver("you","left"); }
+function c4Solo(){ closeModal(); if(C4&&C4.mp&&!C4.over&&window.OUTPOST_MP.game()==="four") window.OUTPOST_MP.stop(); clearInterval(c4Tick); C4=C4solo||store.get("four",null); C4solo=null; if(!C4||C4.mp||!Array.isArray(C4.b)){ C4=null; c4New("medium"); } S.game="four"; show("games"); }
+window.OUTPOST_MP.register("four",{title:"Four in a Row",info:"You'll play the next person who taps Play online. 30 seconds per move.",back:"four",icon:()=>'<span class="qc4"><i></i><i></i></span>',
+  busy:()=>!!(C4&&C4.mp&&!C4.over),init:()=>({hostFirst:Math.random()<.5}),start:c4MpStart,data:c4MpData,left:()=>{ if(C4&&C4.mp&&!C4.over) c4MpOver("you","left"); }});
+function c4Drop(c,remote){
   const r=c4Row(C4.b,c); if(r<0||C4.over) return false; const p=C4.turn; C4.b[r*C4W+c]=p; C4.last=r*C4W+c; buzz(10);
+  if(C4.mp){ if(!remote) window.OUTPOST_MP.send({t:"c4",c}); C4.mp.tEnd=Date.now()+C4_MOVE;
+    const w=c4Win(C4.b,p); if(w){ C4.win=w; c4Draw(true); return c4MpOver(p===1?"you":"bot",""); } if(C4.b.every(x=>x)){ c4Draw(true); return c4MpOver("draw",""); }
+    C4.turn=3-p; c4Draw(true); c4MpTick(); return true; }
   const w=c4Win(C4.b,p);
   if(w){ C4.over=p===1?"you":"bot"; C4.win=w; C4.score[p===1?0:1]++; }
   else if(C4.b.every(x=>x)){ C4.over="draw"; C4.score[2]++; }
   else C4.turn=3-p;
   store.set("four",C4); c4Draw(true);
-  if(C4.over){ if(C4.over==="you") confetti(); setTimeout(()=>modal(`<div class="result">${C4.over==="you"?"🏆":C4.over==="bot"?"🤖︎":"½"}</div><h3>${tr(C4.over==="you"?"You win!":C4.over==="bot"?"Bot wins":"Draw")}</h3><p class="sub">${tr("You")} ${C4.score[0]} · ${tr("Bot")} ${C4.score[1]}</p><button class="btn primary" data-act="c4Again">${tr("Play again")}</button><button class="btn ghost" data-act="modalClose">${tr("Look at the board")}</button>`),700); }
-  else if(C4.turn===2) setTimeout(()=>{ if(S.game==="four"&&C4&&!C4.over&&C4.turn===2) c4Drop(c4Bot()); },550);
+  if(C4.over){ if(C4.over==="you") confetti(); setTimeout(()=>modal(`<div class="result">${C4.over==="you"?"🏆":C4.over==="bot"?"🤖︎":"½"}</div><h3>${tr(C4.over==="you"?"You win!":C4.over==="bot"?"Bot wins":"Draw")}</h3><p class="sub">${esc(ME())} ${C4.score[0]} · ${tr("Bot")} ${C4.score[1]}</p><button class="btn primary" data-act="c4Again">${tr("Play again")}</button><button class="btn ghost" data-act="modalClose">${tr("Look at the board")}</button>`),700); }
+  else if(C4.turn===2) setTimeout(()=>{ if(S.game==="four"&&C4&&!C4.mp&&!C4.over&&C4.turn===2) c4Drop(c4Bot()); },550);
   return true;
 }
 function c4Draw(anim){
@@ -212,22 +249,27 @@ function c4Draw(anim){
   for(let row=C4H-1;row>=0;row--) for(let c=0;c<C4W;c++){ const k=row*C4W+c, v=C4.b[k];
     h+=`<div class="c4c" data-act="c4Col" data-c="${c}">${v?`<i class="disc p${v}${anim&&k===C4.last?" drop":""}${C4.win&&C4.win.includes(k)?" winc":""}" style="--fall:${C4H-row}"></i>`:""}</div>`; }
   g.innerHTML=h;
-  $("#c4Stat").textContent=C4.over?"":tr(C4.turn===1?"Your turn":"Bot is thinking…");
-  $("#c4Score").textContent=`${tr("You")} ${C4.score[0]} – ${C4.score[1]} ${tr("Bot")}`;
+  if(!C4.mp) $("#c4Stat").textContent=C4.over?"":tr(C4.turn===1?"Your turn":"Bot is thinking…"); else if(C4.over) $("#c4Stat").textContent="";
+  if(C4.mp) $("#c4Score").innerHTML=`<i class="cdot y"></i> ${esc(ME())} &nbsp;vs&nbsp; <i class="cdot r"></i> ${esc(C4.mp.opp)}`; else $("#c4Score").textContent=`${ME()} ${C4.score[0]} – ${C4.score[1]} ${tr("Bot")}`;
   $$(".c4diff button").forEach(b=>b.classList.toggle("on",b.dataset.d===C4.diff));
 }
 ACT.c4Col=el=>{ if(C4.turn===1&&!C4.over) c4Drop(+el.dataset.c); };
+ACT.c4Solo=()=>c4Solo();
+ACT.c4Leave=()=>{ if(!C4.mp||C4.over) return c4Solo(); modal(`<h3>${tr("Leave this game?")}</h3><p class="sub">${tr("Leaving counts as resigning.")}</p><div class="row"><button class="btn danger grow" data-act="c4LeaveYes">${tr("Leave and resign")}</button><button class="btn grow" data-act="modalClose">${tr("Stay")}</button></div>`); };
+ACT.c4LeaveYes=()=>{ closeModal(); window.OUTPOST_MP.send({t:"resign"}); c4MpOver("bot","resign"); };
 ACT.c4Again=()=>{ closeModal(); c4New(C4.diff,true); GAMES.four.render($("#v-games")); if(C4.turn===2) setTimeout(()=>c4Drop(c4Bot()),500); };
 ACT.c4Diff=el=>{ c4New(el.dataset.d,false); GAMES.four.render($("#v-games")); };
 register("four",{
   card:()=>card("four","fourcard",`<span class="fgicon">${[0,1,2,1,2,1,2,2,1].map(x=>`<i class="d${x}"></i>`).join("")}</span>`,"Four in a Row","Drop discs, connect four to win"),
   open(){ if(!C4){ const s=store.get("four",null); if(s&&Array.isArray(s.b)) C4=s; else c4New("medium"); } },
   render(v){
-    v.innerHTML=frame("",`<div class="gstats"><span class="seg c4diff">${["easy","medium","hard"].map(d=>`<button data-act="c4Diff" data-d="${d}">${tr(d[0].toUpperCase()+d.slice(1))}</button>`).join("")}</span><span id="c4Score"></span></div>
+    const mp=!!C4.mp;
+    v.innerHTML=frame("",`<div class="gstats">${mp?"":`<span class="seg c4diff">${["easy","medium","hard"].map(d=>`<button data-act="c4Diff" data-d="${d}">${tr(d[0].toUpperCase()+d.slice(1))}</button>`).join("")}</span>`}<span id="c4Score"></span></div>
       <div class="c4board" id="c4Board"><div class="c4grid" id="c4Grid" dir="ltr"></div></div>
-      <p class="sub center" id="c4Stat"></p>`,`<b>${tr("Four in a Row")}</b>`);
-    afterRender(); c4Draw(false); this.resize();
-    if(!C4.over&&C4.turn===2) setTimeout(()=>{ if(C4.turn===2&&!C4.over) c4Drop(c4Bot()); },500);
+      <p class="sub center" id="c4Stat"></p>
+      <div class="gctl">${mp?`<button class="btn ${C4.over?"":"danger"}" data-act="c4Leave">${tr(C4.over?"Play the computer":"‹ Leave")}</button>`:`<button class="btn primary" data-act="mpPlay" data-g="four">${tr("Play online")}</button>`}</div>`,`<b>${tr("Four in a Row")}</b>`);
+    afterRender(); c4Draw(false); this.resize(); if(mp) c4MpTick();
+    if(!mp&&!C4.over&&C4.turn===2) setTimeout(()=>{ if(C4&&!C4.mp&&C4.turn===2&&!C4.over) c4Drop(c4Bot()); },500);
   },
   resize(){ const g=$("#c4Board"); if(g) g.style.setProperty("--w",fit(g,520,7/6)+"px"); }
 });
@@ -378,7 +420,7 @@ function dmRoundEnd(w,blocked){
   setTimeout(()=>modal(`<h3>${match?tr(DM.score[0]>=DM.target?"Match won!":"Bot won the match"):tr("Round over")}</h3>
     <p class="sub">${blocked?tr("Blocked: lowest hand wins")+"<br>":""}${w<0?tr("Draw"):(w===0?T(`You get ${pts} points`,`حصلت على ${pts} نقطة`):T(`The bot gets ${pts} points`,`حصل الكمبيوتر على ${pts} نقطة`))}</p>
     <div class="dmhand small">${DM.hands[1].map(t=>tileHtml(t)).join("")}</div>
-    <p><b>${tr("You")} ${DM.score[0]} – ${DM.score[1]} ${tr("Bot")}</b></p>
+    <p><b>${esc(ME())} ${DM.score[0]} – ${DM.score[1]} ${tr("Bot")}</b></p>
     <button class="btn primary" data-act="${match?"dmNew":"dmNext"}">${tr(match?"New game":"Next round")}</button>`),600);
 }
 function dmBot(){
@@ -397,7 +439,7 @@ function dmDraw(){
   $("#dmHand").classList.toggle("many",DM.hands[0].length>8);
   $("#dmHand").innerHTML=DM.hands[0].map((t,i)=>tileHtml(t,(i===DM.sel?"sel ":"")+(myTurn&&!can[i]?"dim":""),`data-act="dmTile" data-i="${i}"`)).join("");
   $("#dmBotHand").innerHTML=DM.hands[1].map(()=>'<div class="dt back"></div>').join("");
-  $("#dmScore").textContent=`${tr("You")} ${DM.score[0]} – ${DM.score[1]} ${tr("Bot")}`; $("#dmBone").textContent=DM.bone.length;
+  $("#dmScore").textContent=`${ME()} ${DM.score[0]} – ${DM.score[1]} ${tr("Bot")}`; $("#dmBone").textContent=DM.bone.length;
   requestAnimationFrame(()=>GAMES.dominoes&&GAMES.dominoes.resize());
   const any=can.some(x=>x), act=$("#dmAct");
   act.innerHTML=!myTurn?`<span class="sub">${DM.roundOver?"":tr("Bot is thinking…")}</span>`:any?(sel&&sides.length>1?`<button class="btn" data-act="dmEnd" data-s="L">◀</button><span class="sub">${tr("Choose an end")}</span><button class="btn" data-act="dmEnd" data-s="R">▶</button>`:`<span class="sub">${tr("Your turn")}</span>`):DM.bone.length?`<button class="btn primary" data-act="dmDrawTile">${tr("Draw a tile")}</button>`:`<button class="btn primary" data-act="dmPassBtn">${tr("Pass")}</button>`;
@@ -481,7 +523,7 @@ function bgCheckWin(){ const I=BI(BG.turn); if(BG.off[I]<15) return false;
   const L=1-I; let mult=1; if(!BG.off[L]){ mult=2; const loser=-BG.turn; let back=BG.bar[L]>0; for(let i=1;i<=24;i++){ const v=BG.p[i]*loser; if(v>0&&(BG.turn>0?i<=6:i>=19)) back=true; } if(back) mult=3; }
   BG.score[I]+=mult; BG.over={w:BG.turn,mult}; BG.phase="over"; store.set("bg",BG); bgDraw();
   if(BG.turn>0) confetti();
-  setTimeout(()=>modal(`<div class="result">${BG.turn>0?"🏆":"🎲︎"}</div><h3>${tr(BG.turn>0?"You win!":"Bot wins")}</h3><p class="sub">${mult===3?T("Backgammon! ×3","فوز ساحق ×3"):mult===2?T("Gammon! ×2","فوز مزدوج ×2"):""}</p><p><b>${tr("You")} ${BG.score[0]} – ${BG.score[1]} ${tr("Bot")}</b></p><button class="btn primary" data-act="bgNext">${tr("Next game")}</button>`),600);
+  setTimeout(()=>modal(`<div class="result">${BG.turn>0?"🏆":"🎲︎"}</div><h3>${tr(BG.turn>0?"You win!":"Bot wins")}</h3><p class="sub">${mult===3?T("Backgammon! ×3","فوز ساحق ×3"):mult===2?T("Gammon! ×2","فوز مزدوج ×2"):""}</p><p><b>${esc(ME())} ${BG.score[0]} – ${BG.score[1]} ${tr("Bot")}</b></p><button class="btn primary" data-act="bgNext">${tr("Next game")}</button>`),600);
   return true; }
 function bgEndTurn(){ if(bgCheckWin()) return; BG.turn=-BG.turn; BG.dice=[]; BG.rem=[]; BG.made=[]; BG.phase="roll"; BG.sel=null; store.set("bg",BG); bgDraw(); if(BG.turn<0) setTimeout(bgBotTurn,600); }
 function bgDoMove(m){ const st=bgApply(bgState(),BG.turn,m); BG.p=st.p; BG.bar=st.bar; BG.off=st.off; BG.rem=without(BG.rem,m.d); BG.made.push(m); buzz(m.hit?[20,30,20]:10); }
@@ -539,7 +581,7 @@ function bgDraw(rolled){
   let dice=""; if(BG.dice.length){ const used=BG.dice.length-BG.rem.length; dice=BG.dice.map((d,i)=>dieHtml(d,i<used)).join(""); }
   h+=`<div class="bgmid" style="left:${cx}px;top:${mid}px">${BG.phase==="roll"&&BG.turn>0?`<button class="btn primary" data-act="bgRoll">🎲︎ ${tr("Roll")}</button>`:`<div class="dice${rolled?" rolling":""}">${dice}</div>`}</div>`;
   B.innerHTML=h;
-  $("#bgScore").textContent=`${tr("You")} ${BG.score[0]} – ${BG.score[1]} ${tr("Bot")}`;
+  $("#bgScore").textContent=`${ME()} ${BG.score[0]} – ${BG.score[1]} ${tr("Bot")}`;
   $("#bgStat").textContent=BG.phase==="over"?"":BG.turn<0?tr("Bot is thinking…"):BG.phase==="roll"?tr("Your turn"):tr("Tap a checker, then where to move it.");
   const u=$("#bgUndoBtn"); if(u) u.disabled=!(BG.phase==="move"&&BG.made.length);
 }
@@ -601,6 +643,8 @@ const css=`
 .msmode{display:grid;grid-template-columns:1fr 1fr}
 /* four in a row */
 .c4board{--w:330px;width:var(--w);align-self:center;background:#1d4ed8;border-radius:14px;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+.cdot{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:middle}.cdot.y{background:#facc15}.cdot.r{background:#ef4444}
+.qc4{display:flex;gap:4px}.qc4 i{width:22px;height:22px;border-radius:50%;background:#facc15}.qc4 i+i{background:#ef4444}
 .c4grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .c4c{aspect-ratio:1;border-radius:50%;background:var(--ground);position:relative;overflow:hidden;cursor:pointer}
 .disc{position:absolute;inset:4%;border-radius:50%;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25)}.disc.p1{background:#facc15}.disc.p2{background:#ef4444}
@@ -665,5 +709,6 @@ document.head.insertAdjacentHTML("beforeend",`<style id="games-more-css">${css}<
 /* read-only handle used by the automated tests */
 /* the games list may already be on screen: draw it again now that these games exist */
 if(S.view==="games"&&!S.game) show("games",true);
+window.OUTPOST_CONFETTI=confetti;
 window.OUTPOST_GAMES_DEBUG={su:()=>SU,ms:()=>MS,c4:()=>C4,mg:()=>MG,so:()=>SO,dm:()=>DM,bg:()=>BG,suSolve,suMake,bgInit,bgSingles,bgApply,bgMax,bgAllowed,bgEval,c4Win,fits:t=>fits(t)};
 })();

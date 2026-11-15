@@ -385,7 +385,7 @@ h3.sect{margin-top:6px}
 /* game review */
 .board{position:relative}
 .arrows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
-.mbadge{position:absolute;top:2%;right:2%;width:40%;height:40%;border-radius:50%;background:var(--bc);color:#fff;display:grid;place-items:center;font:800 calc(var(--bs)/8*.2)/1 -apple-system,BlinkMacSystemFont,sans-serif;z-index:4;box-shadow:0 1px 3px rgba(0,0,0,.4);border:2px solid #fff;animation:bpop .35s cubic-bezier(.3,1.6,.6,1)}
+.mbadge{position:absolute;top:-14%;right:-14%;width:54%;height:54%;min-width:18px;min-height:18px;border-radius:50%;background:var(--bc);color:#fff;display:grid;place-items:center;font:800 calc(var(--bs)/8*.26)/1 -apple-system,BlinkMacSystemFont,sans-serif;z-index:4;box-shadow:0 1px 3px rgba(0,0,0,.4);border:2px solid #fff;animation:bpop .35s cubic-bezier(.3,1.6,.6,1)}
 .mbadge svg,.sbadge svg{width:62%;height:62%}
 @keyframes bpop{from{transform:scale(0)}to{transform:scale(1)}}
 .sbadge{display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:var(--bc);color:#fff;font:800 11px/1 -apple-system,BlinkMacSystemFont,sans-serif}
@@ -412,6 +412,18 @@ h3.sect{margin-top:6px}
 .anspin .pc{width:48px;height:48px}
 @keyframes bob{50%{transform:translateY(-6px) rotate(-8deg)}}
 @media (prefers-reduced-motion:reduce){.srow2{opacity:1;animation:none}.anspin,.mbadge,.rv-star{animation:none}}
+/* chess modes, brilliant flash, coach */
+.vtag{font:700 12px/1 var(--display);padding:6px 9px;border-radius:99px;background:var(--sunk);border:1px solid var(--line);color:var(--signal)}
+.gwrap.fs .vtag{display:none}
+.chkc{font-style:normal;font-size:12px;color:#e0312a;font-weight:700}
+.sq.hill::before{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 3px rgba(255,200,40,.75);pointer-events:none}
+.coach{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px;text-align:start}
+.coach[hidden]{display:none}
+.coach p{flex:1;font-size:14px;line-height:1.4}
+.coachava{flex:none;width:38px;height:38px;border-radius:50%;background:#739552 center/74% no-repeat}
+.btime{font-family:var(--display);font-weight:700}.btime.low{color:#e0312a}
+.bscore small b{color:var(--ink);font:700 13px/1 var(--display)}
+.qblk{display:grid;grid-template-columns:20px 20px;gap:3px}.qblk i{height:20px;border-radius:4px;background:#ffb627}.qblk i:nth-child(2){background:#4cc9f0}.qblk i:nth-child(3){background:#7bd389}.qblk i:nth-child(4){background:#f25f5c}
 /* settings bar: language and theme switches */
 .prefs{display:flex;gap:8px;margin:-4px 0 14px}
 .sw{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:46px;font-weight:600;font-size:14px;text-align:start}
@@ -786,6 +798,14 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Score battle: you both get the same pieces for 3 minutes. The highest score wins.":"معركة نقاط: تحصلان على القطع نفسها لمدة 3 دقائق. الأعلى نقاطًا يفوز.","You lost":"خسرت","Back to solo game":"العودة للعب الفردي",
+"Leave battle":"غادر المعركة","Online battle":"معركة أونلاين","No space left. Waiting for the timer…":"لا توجد مساحة. في انتظار انتهاء الوقت…","Leave this battle?":"مغادرة المعركة؟","Leaving counts as losing.":"المغادرة تُحتسب خسارة.","Leave":"مغادرة",
+
+"Standard":"عادي","Chess960":"شطرنج 960","King of the Hill":"ملك التل","Three-check":"ثلاث كشّات","No castling":"بدون تبييت","Classic chess.":"الشطرنج الكلاسيكي.",
+"A random starting row. To castle, tap your king, then your rook.":"صف بداية عشوائي. للتبييت اضغط الملك ثم الرخ.","Checkmate, or bring your king to one of the four centre squares.":"كش مات، أو أوصل ملكك إلى أحد مربعات الوسط الأربعة.",
+"Checkmate, or give check three times.":"كش مات، أو أعطِ كش ثلاث مرات.","Classic chess, but nobody can castle.":"شطرنج كلاسيكي لكن بدون تبييت.","The king reached the centre.":"وصل الملك إلى الوسط.","Third check.":"الكش الثالث.",
+"BRILLIANT":"عبقرية","Coach voice":"صوت المدرب",
+
 "Brilliant":"عبقرية","Great":"رائعة","Excellent":"ممتازة","Good":"جيدة","Book":"افتتاح معروف","Inaccuracy":"غير دقيقة","Mistake":"خطأ","Miss":"فرصة ضائعة","Blunder":"خطأ فادح",
 "Analyzing your game…":"جارٍ تحليل المباراة…","Game Review":"مراجعة المباراة","Game review":"مراجعة المباراة","Accuracy":"الدقة","Review moves":"راجع النقلات","Close":"إغلاق","Starting position":"وضع البداية",
 
@@ -1381,20 +1401,32 @@ function ChessEngine(scope){
   };
   const pstIdx=(sq,white)=>{ const r=sq>>4,f=sq&7; return white?(7-r)*8+f:r*8+f; };
 
-  let b=new Int8Array(128), side=1, cast=15, ep=-1, half=0, full=1, kW=4, kB=116;
+  let b=new Int8Array(128), side=1, cast=15, ep=-1, half=0, full=1, kW=4, kB=116, frc=false, variant=0, chkW=0, chkB=0;
+  const RS=[7,0,119,112];            // rook start squares for the four castling rights: K, Q, k, q
+  const HILL=new Uint8Array(128); [51,52,67,68].forEach(q=>HILL[q]=1);   // d4 e4 d5 e5
   const stack=[];
 
   function reset(){ setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); }
   function setFen(fen){
     b.fill(0); const [pos,s,c,e,h,fm]=fen.split(/\s+/); let r=7,f=0;
     for(const ch of pos){ if(ch==="/"){r--;f=0;} else if(/\d/.test(ch)) f+=+ch; else { const t="pnbrqk".indexOf(ch.toLowerCase())+1; const sq=r*16+f; b[sq]=ch===ch.toUpperCase()?t:-t; if(t===K){ if(b[sq]>0) kW=sq; else kB=sq; } f++; } }
-    side=s==="b"?-1:1; cast=(c.includes("K")?1:0)|(c.includes("Q")?2:0)|(c.includes("k")?4:0)|(c.includes("q")?8:0);
+    side=s==="b"?-1:1; cast=0; RS[0]=7; RS[1]=0; RS[2]=119; RS[3]=112;
+    for(const ch of (c||"-")){ if(ch==="-") continue; const white=ch===ch.toUpperCase(), base=white?0:112, kf=(white?kW:kB)&7, rook=white?R:-R, l=ch.toLowerCase(); let file=-1;
+      if(l==="k"){ for(let x=7;x>kf;x--) if(b[base+x]===rook){ file=x; break; } }
+      else if(l==="q"){ for(let x=0;x<kf;x++) if(b[base+x]===rook){ file=x; break; } }
+      else { file=l.charCodeAt(0)-97; if(b[base+file]!==rook) file=-1; }
+      if(file<0||(((white?kW:kB)>>4)!==(white?0:7))) continue;
+      const idx=(white?0:2)+(file>kf?0:1); RS[idx]=base+file; cast|=1<<idx; }
+    frc=!!((cast&3)&&kW!==4)||!!((cast&12)&&kB!==116)||!!((cast&1)&&RS[0]!==7)||!!((cast&2)&&RS[1]!==0)||!!((cast&4)&&RS[2]!==119)||!!((cast&8)&&RS[3]!==112);
+    CM.fill(15); if(cast&3) CM[kW]&=12; if(cast&12) CM[kB]&=3; if(cast&1) CM[RS[0]]&=14; if(cast&2) CM[RS[1]]&=13; if(cast&4) CM[RS[2]]&=11; if(cast&8) CM[RS[3]]&=7;
+    const ex=fen.split(/\s+/)[6]; chkW=0; chkB=0; if(ex&&ex.startsWith("c:")){ const q=ex.slice(2).split(","); chkW=+q[0]||0; chkB=+q[1]||0; }
     ep=e&&e!=="-"?(e.charCodeAt(1)-49)*16+(e.charCodeAt(0)-97):-1; half=+(h||0); full=+(fm||1); stack.length=0;
   }
   function fen(){
     let s=""; for(let r=7;r>=0;r--){ let e=0; for(let f=0;f<8;f++){ const p=b[r*16+f]; if(!p){e++;continue;} if(e){s+=e;e=0;} const c="pnbrqk"[Math.abs(p)-1]; s+=p>0?c.toUpperCase():c; } if(e) s+=e; if(r) s+="/"; }
-    const c=(cast&1?"K":"")+(cast&2?"Q":"")+(cast&4?"k":"")+(cast&8?"q":"")||"-";
-    return s+" "+(side>0?"w":"b")+" "+c+" "+(ep<0?"-":"abcdefgh"[ep&7]+((ep>>4)+1))+" "+half+" "+full;
+    const L=i=>"abcdefgh"[RS[i]&7];
+    const c=(frc?(cast&1?L(0).toUpperCase():"")+(cast&2?L(1).toUpperCase():"")+(cast&4?L(2):"")+(cast&8?L(3):""):(cast&1?"K":"")+(cast&2?"Q":"")+(cast&4?"k":"")+(cast&8?"q":""))||"-";
+    return s+" "+(side>0?"w":"b")+" "+c+" "+(ep<0?"-":"abcdefgh"[ep&7]+((ep>>4)+1))+" "+half+" "+full+(variant===2?" c:"+chkW+","+chkB:"");
   }
   function attacked(sq,by){ // is sq attacked by side `by`
     if(by>0){ if(!((sq-15)&0x88)&&b[sq-15]===P) return true; if(!((sq-17)&0x88)&&b[sq-17]===P) return true; }
@@ -1425,10 +1457,11 @@ function ChessEngine(scope){
       } else if(t===N||t===K){
         for(const d of (t===N?ND:KD)){ const to=sq+d; if(to&0x88) continue; const q=b[to]; if(q&&(q>0)===(s>0)) continue; if(capsOnly&&!q) continue; ms.push(mv(sq,to,0,0)); }
         if(t===K&&!capsOnly){
-          if(s>0&&sq===4){ if((cast&1)&&!b[5]&&!b[6]&&b[7]===R&&!attacked(4,-1)&&!attacked(5,-1)&&!attacked(6,-1)) ms.push(mv(4,6,0,4));
-                           if((cast&2)&&!b[3]&&!b[2]&&!b[1]&&b[0]===R&&!attacked(4,-1)&&!attacked(3,-1)&&!attacked(2,-1)) ms.push(mv(4,2,0,4)); }
-          if(s<0&&sq===116){ if((cast&4)&&!b[117]&&!b[118]&&b[119]===-R&&!attacked(116,1)&&!attacked(117,1)&&!attacked(118,1)) ms.push(mv(116,118,0,4));
-                             if((cast&8)&&!b[115]&&!b[114]&&!b[113]&&b[112]===-R&&!attacked(116,1)&&!attacked(115,1)&&!attacked(114,1)) ms.push(mv(116,114,0,4)); }
+          for(let i=s>0?0:2, e=i+2;i<e;i++){ if(!(cast&(1<<i))) continue;
+            const rf=RS[i], base=sq&0x70, ks=!(i&1), kt=base+(ks?6:2), rt=base+(ks?5:3); if(b[rf]!==R*s) continue; let ok=true;
+            for(let x=Math.min(sq,kt);x<=Math.max(sq,kt)&&ok;x++){ if(x!==sq&&x!==rf&&b[x]) ok=false; else if(attacked(x,-s)) ok=false; }
+            for(let x=Math.min(rf,rt);x<=Math.max(rf,rt)&&ok;x++) if(x!==sq&&x!==rf&&b[x]) ok=false;
+            if(ok) ms.push(mv(sq,frc?rf:kt,0,4)); }
         }
       } else {
         for(const d of (t===B?BD:t===R?RD:KD)){ let to=sq+d; while(!(to&0x88)){ const q=b[to]; if(q){ if((q>0)!==(s>0)) ms.push(mv(sq,to,0,0)); break; } if(!capsOnly) ms.push(mv(sq,to,0,0)); to+=d; } }
@@ -1438,24 +1471,33 @@ function ChessEngine(scope){
   }
   function make(m){
     const f=m&127,t=(m>>7)&127,pr=(m>>14)&7,fl=m>>17, p=b[f];
+    if(fl&4){ // castle: lift king and rook, then put them on their final squares (they may swap or overlap in Chess960)
+      const base=f&0x70, ks=frc?(t&7)>(f&7):(t&7)===6, rf=frc?t:base+(ks?7:0), kt=base+(ks?6:2), rt=base+(ks?5:3), rook=b[rf];
+      stack.push([m,0,cast,ep,half,kW,kB,chkW,chkB]);
+      b[f]=0; b[rf]=0; b[kt]=p; b[rt]=rook; if(p>0) kW=kt; else kB=kt;
+      cast&=CM[f]; ep=-1; half++; if(side<0) full++; side=-side;
+      if(attacked(side>0?kB:kW,side)){ unmake(); return false; }
+      if(variant===2&&attacked(side>0?kW:kB,-side)){ if(side>0) chkB++; else chkW++; }
+      return true; }
     let cap=b[t], capSq=t;
     if(fl&2){ capSq=t-16*side; cap=b[capSq]; b[capSq]=0; }
-    stack.push([m,cap,cast,ep,half,kW,kB]);
-    b[t]=pr?pr*side:p; b[f]=0; if(capSq===t) {}
-    if(fl&4){ if(t===6){b[5]=b[7];b[7]=0;} else if(t===2){b[3]=b[0];b[0]=0;} else if(t===118){b[117]=b[119];b[119]=0;} else if(t===114){b[115]=b[112];b[112]=0;} }
+    stack.push([m,cap,cast,ep,half,kW,kB,chkW,chkB]);
+    b[t]=pr?pr*side:p; b[f]=0;
     if(p===K) kW=t; else if(p===-K) kB=t;
     cast&=CM[f]&CM[t]; ep=fl&1?f+16*side:-1;
     half=(Math.abs(p)===P||cap)?0:half+1; if(side<0) full++;
     side=-side;
     if(attacked(side>0?kB:kW,side)){ unmake(); return false; }
+    if(variant===2&&attacked(side>0?kW:kB,-side)){ if(side>0) chkB++; else chkW++; }   // count the check just given
     return true;
   }
   function unmake(){
-    const [m,cap,c,e,h,kw,kb]=stack.pop(); side=-side;
+    const [m,cap,c,e,h,kw,kb,cw,cb]=stack.pop(); side=-side; chkW=cw; chkB=cb;
     const f=m&127,t=(m>>7)&127,pr=(m>>14)&7,fl=m>>17;
+    if(fl&4){ const base=f&0x70, ks=frc?(t&7)>(f&7):(t&7)===6, rf=frc?t:base+(ks?7:0), kt=base+(ks?6:2), rt=base+(ks?5:3), king=b[kt], rook=b[rt];
+      b[kt]=0; b[rt]=0; b[f]=king; b[rf]=rook; cast=c; ep=e; half=h; kW=kw; kB=kb; if(side<0) full--; return; }
     b[f]=pr?P*side:b[t]; b[t]=0;
     if(fl&2) b[t-16*side]=cap; else b[t]=cap;
-    if(fl&4){ if(t===6){b[7]=b[5];b[5]=0;} else if(t===2){b[0]=b[3];b[3]=0;} else if(t===118){b[119]=b[117];b[117]=0;} else if(t===114){b[112]=b[115];b[115]=0;} }
     cast=c; ep=e; half=h; kW=kw; kB=kb; if(side<0) full--;
   }
   function legal(){ const out=[]; for(const m of gen(false)){ if(make(m)){ unmake(); out.push(m); } } return out; }
@@ -1468,23 +1510,28 @@ function ChessEngine(scope){
     for(let sq=0;sq<128;sq++){ if(sq&0x88){sq+=7;continue;} const p=b[sq]; if(!p) continue; const t=Math.abs(p), w=p>0;
       const v=VAL[t]+PST[t===K&&endgame?7:t][pstIdx(sq,w)]; mg+=w?v:-v; }
     if(wB>=2) mg+=30; if(bB>=2) mg-=30;
+    if(variant===1){ const d=q=>Math.max(Math.abs((q&7)-3.5),Math.abs((q>>4)-3.5))-0.5; mg+=(3-d(kW))*45-(3-d(kB))*45; }
+    if(variant===2) mg+=(chkW*chkW-chkB*chkB)*110;
     return mg*side;
   }
   const MATE=100000;
   let nodes=0, deadline=0, stop=false, killers=[];
   function order(ms,ply,best){
     return ms.map(m=>{ const t=(m>>7)&127, f=m&127; let s=0;
-      if(m===best) s=1e6; else { const v=b[t]; if(v) s=10000+10*VAL[Math.abs(v)]-VAL[Math.abs(b[f])]; else if((m>>17)&2) s=10000; if((m>>14)&7) s+=8000; if(killers[ply]&&killers[ply].includes(m)) s+=5000; }
+      if(m===best) s=1e6; else if((m>>17)&4) s=300; else { const v=b[t]; if(v) s=10000+10*VAL[Math.abs(v)]-VAL[Math.abs(b[f])]; else if((m>>17)&2) s=10000; if((m>>14)&7) s+=8000; if(killers[ply]&&killers[ply].includes(m)) s+=5000; }
       return [s,m]; }).sort((a,c)=>c[0]-a[0]).map(x=>x[1]);
   }
+  const lostByVariant=()=>variant===1?HILL[side>0?kB:kW]===1:variant===2?(side>0?chkB:chkW)>=3:false;
   function qs(a,bt,ply){
     if((++nodes&2047)===0&&Date.now()>deadline) stop=true; if(stop) return 0;
+    if(variant&&lostByVariant()) return -MATE+ply;
     const sp=evaluate(); if(sp>=bt) return bt; if(sp>a) a=sp; if(ply>40) return sp;
     for(const m of order(gen(true),ply,0)){ if(!make(m)) continue; const sc=-qs(-bt,-a,ply+1); unmake(); if(stop) return 0; if(sc>=bt) return bt; if(sc>a) a=sc; }
     return a;
   }
   function search(d,a,bt,ply){
     if((++nodes&2047)===0&&Date.now()>deadline) stop=true; if(stop) return 0;
+    if(variant&&lostByVariant()) return -MATE+ply;
     const chk=inCheck(); if(chk) d++;
     if(d<=0) return qs(a,bt,ply);
     if(ply&&half>=100) return 0;
@@ -1492,7 +1539,7 @@ function ChessEngine(scope){
     for(const m of order(gen(false),ply,0)){
       if(!make(m)) continue; any=true;
       const sc=-search(d-1,-bt,-a,ply+1); unmake(); if(stop) return 0;
-      if(sc>=bt){ if(!b[(m>>7)&127]){ const k=killers[ply]||(killers[ply]=[]); if(k[0]!==m){k[1]=k[0];k[0]=m;} } return bt; }
+      if(sc>=bt){ if(!b[(m>>7)&127]||((m>>17)&4)){ const k=killers[ply]||(killers[ply]=[]); if(k[0]!==m){k[1]=k[0];k[0]=m;} } return bt; }
       if(sc>a) a=sc;
     }
     if(!any) return chk?-MATE+ply:0;
@@ -1548,11 +1595,11 @@ function ChessEngine(scope){
     for(let i=0;i<fens.length;i++){ setFen(fens[i]); rows.push(analyzePos(opts,played[i])); if(progress) progress(i+1,fens.length); }
     return rows;
   }
-  const api={reset,setFen,fen,legal,make,unmake,perft,think,rootSearch,analyzeGame,inCheck,attacked,board:()=>b,turn:()=>side,half:()=>half,
+  const api={reset,setFen,fen,legal,make,unmake,perft,think,rootSearch,analyzeGame,analyzePos,setVariant:v=>{variant=v|0;},variant:()=>variant,checks:()=>[chkW,chkB],kings:()=>[kW,kB],isFrc:()=>frc,onHill:q=>HILL[q]===1,inCheck,attacked,board:()=>b,turn:()=>side,half:()=>half,
     moveStr:m=>"abcdefgh"[m&7]+(((m>>4)&7)+1)+"abcdefgh"[(m>>7)&7]+((((m>>7)&127)>>4)+1)+(((m>>14)&7)?"nbrq"[((m>>14)&7)-2]:"")};
   if(scope&&scope.postMessage){ // running as a Web Worker
-    scope.onmessage=e=>{ const d=e.data;
-      if(d.type==="analyze"){ const rows=analyzeGame(d.fens,d.played,d.opts,(k,n)=>scope.postMessage({id:d.id,type:"progress",k,n})); scope.postMessage({id:d.id,type:"analysis",rows}); return; }
+    scope.onmessage=e=>{ const d=e.data; variant=d.variant|0;
+      if(d.type==="analyze"){ const rows=analyzeGame(d.fens,d.played,d.opts,(k,n)=>scope.postMessage({id:d.id,type:"progress",k,n})); scope.postMessage({id:d.id,type:"analysis",rows,tag:d.tag}); return; }
       setFen(d.fen); const m=think(d.opts); scope.postMessage({id:d.id,move:m}); };
   }
   return api;
@@ -1615,13 +1662,120 @@ const botName=i=>NAMES[botNames()[i]][GL()?1:0];
 const pcFile=p=>(p>0?"w":"b")+"PNBRQK"[Math.abs(p)-1];
 const pcImg=(p,cls)=>`<i class="${cls||"pc"}" style="background-image:url(pieces/${pcFile(p)}.svg)"></i>`;
 const MP_TIME=15*60*1000;
-let CE=null, CW=null, CH=null, chessReq=0, CLK=null;
+let CE=null, CW=null, AW=null, CH=null, chessReq=0, CLK=null, gameSeq=0;
+const meName=()=>myName()||tr("You");          // your online name, shown in offline games too; "You" when none is set
+/* ---- chess modes (bots only) ---- */
+const STD_FEN="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const VARIANTS=[["std","Standard","Classic chess."],["960","Chess960","A random starting row. To castle, tap your king, then your rook."],
+  ["koth","King of the Hill","Checkmate, or bring your king to one of the four centre squares."],["3check","Three-check","Checkmate, or give check three times."],["nocastle","No castling","Classic chess, but nobody can castle."]];
+const vName=v=>(VARIANTS.find(x=>x[0]===v)||VARIANTS[0])[1];
+const vcode=v=>v==="koth"?1:v==="3check"?2:0;
+function fen960(){
+  const a=Array(8).fill(""), r=n=>Math.floor(Math.random()*n), free=()=>a.map((x,i)=>x?-1:i).filter(i=>i>=0);
+  a[2*r(4)]="b"; a[2*r(4)+1]="b"; let f=free(); a[f[r(f.length)]]="q"; f=free(); a[f[r(f.length)]]="n"; f=free(); a[f[r(f.length)]]="n"; f=free(); a[f[0]]="r"; a[f[1]]="k"; a[f[2]]="r";
+  const row=a.join(""), L=i=>"abcdefgh"[i];
+  return row+"/pppppppp/8/8/8/8/PPPPPPPP/"+row.toUpperCase()+" w "+L(f[2]).toUpperCase()+L(f[0]).toUpperCase()+L(f[2])+L(f[0])+" - 0 1";
+}
+const variantFen=v=>v==="960"?fen960():v==="nocastle"?STD_FEN.replace("KQkq","-"):STD_FEN;
+function setupEngine(E){ E.setVariant(vcode(CH?CH.variant:"std")); E.setFen((CH&&CH.start)||STD_FEN); }
+/* ---- sound ---- */
+let AC=null;
+function ensureAudio(){ try{ if(!AC){ const C=window.AudioContext||window.webkitAudioContext; if(C) AC=new C(); } if(AC&&AC.state==="suspended") AC.resume(); }catch(e){} }
+function ding(){ if(!AC) return; try{ const t=AC.currentTime; [[1318.5,0],[1975.5,0.09],[2637,0.19]].forEach(([f,dt])=>{ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine"; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t+dt); g.gain.exponentialRampToValueAtTime(0.28,t+dt+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dt+0.95); o.connect(g); g.connect(AC.destination); o.start(t+dt); o.stop(t+dt+1); }); }catch(e){} }
+/* ---- background analysis: every move is analysed while the game is being played ---- */
+const AN_OPTS={depth:6,ms:450};
+function aworker(){ if(AW===null){ try{ AW=new Worker(URL.createObjectURL(new Blob(["("+ChessEngine.toString()+")(self);"],{type:"text/javascript"}))); AW.onmessage=e=>onAnalysis(e.data); AW.onerror=()=>{AW=false;}; }catch(e){ AW=false; } } return AW; }
+function queueAn(i){ // ply i = the position before move i plus the move played there; i === moves.length is the final position
+  if(!CH||CH.rows[i]!==undefined||CH.asked[i]||!CH.fens[i]) return; CH.asked[i]=1;
+  const msg={id:0,type:"analyze",fens:[CH.fens[i]],played:[CH.moves[i]||null],opts:AN_OPTS,variant:vcode(CH.variant),tag:{g:CH.gid,i}};
+  const w=aworker(); if(w) w.postMessage(msg);
+  else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(msg.variant); onAnalysis({type:"analysis",rows:T.analyzeGame(msg.fens,msg.played,msg.opts),tag:msg.tag}); },30);
+}
+function onAnalysis(d){
+  if(!CH||!d||d.type!=="analysis"||!d.tag||d.tag.g!==CH.gid) return;
+  const i=d.tag.i; CH.rows[i]=d.rows[0];
+  if(i<CH.moves.length) liveClass(i);
+  if(CH.anWait) CH.anWait();
+  fillAn();
+}
+function fillAn(){ // when idle, analyse one earlier move that is still missing (new moves always go first)
+  if(!CH) return; for(let k=0;k<CH.moves.length;k++){ if(CH.rows[k]===undefined){ if(CH.asked[k]) return; return queueAn(k); } } }
+function liveClass(i){ // rate the move as soon as its analysis arrives; a brilliant move by you dings and keeps its badge until the next move
+  if(CH.liveC[i]) return; const V=ChessEngine(null); chessReplay(CH.moves.slice(0,i),V);
+  const P=classifyPly(V,CH.rows[i],CH.moves[i],i,CH.liveC[i-1],null); if(!P) return; CH.liveC[i]=P.c;
+  if(P.c==="brilliant"&&P.color===CH.color&&i===CH.moves.length-1){ CH.live={ply:i,t:Date.now(),san:P.san}; ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){}
+    drawBoard(); }
+}
+/* ---- coach: short spoken comments in the review ---- */
+const COACH={
+ en:{me:{
+  brilliant:["{m}!! Are you kidding me? You gave up material and it is completely winning. Take a screenshot.","{m}!! That is the kind of move people post online. Absolutely brilliant."],
+  great:["{m}! The only move that holds everything together, and you found it.","{m}! Everything else was worse. Great find."],
+  best:["{m}. The top engine move. Nothing to add.","{m}. Exactly right.","{m}. That is what I would play."],
+  excellent:["{m}. Not the very best, but a really good move.","{m} works nicely. Clean."],
+  good:["{m} is fine. A normal, solid move.","{m}. Okay, nothing wrong with that."],
+  book:["{m}. Opening theory. People have played this for a hundred years.","{m}. Straight from the book."],
+  inaccuracy:["{m} is a little sloppy. {b} was more accurate.","Hmm, {m}. Not terrible, but {b} was the better idea."],
+  mistake:["Ooh. {m} is a mistake. You needed {b} here.","{m}? That lets them back into the game. {b} was the move."],
+  miss:["You had a big chance here, and {m} lets it go. {b} was right there!","No! {b}! You missed it. {m} lets them off the hook."],
+  blunder:["Oh no. Oh no no no. {m} is a blunder. {b} was the move.","{m}?! That just gives everything away. {b}, please."]},
+ opp:{
+  brilliant:["Wow. {m}!! Your opponent found a brilliant sacrifice. Respect."],
+  great:["{m}! They found the only move. Annoying."],
+  best:["{m}. They played the best move.","{m}. No complaints about that one."],
+  excellent:["{m}. A very good move from them."],
+  good:["{m}. A decent move."],
+  book:["{m}. Still theory.","{m}. They know their openings."],
+  inaccuracy:["{m} is slightly off. {b} was better for them."],
+  mistake:["{m} is a mistake! This is your chance."],
+  miss:["They missed {b}. You got lucky there."],
+  blunder:["{m}?? They blundered! Go punish it."]},
+ sum:["What a game. You played like a machine.","Solid game. A couple of slips, but good chess.","Some good ideas, some chaos. That is chess.","Okay. We need to talk about what happened here."]},
+ ar:{me:{
+  brilliant:["{m}!! هل تمزح؟ ضحّيت بقطعة والوضع رابح تمامًا. خذ لقطة شاشة.","{m}!! هذه نقلة تُنشر على الإنترنت. عبقرية."],
+  great:["{m}! النقلة الوحيدة التي تحافظ على كل شيء، وقد وجدتها.","{m}! كل النقلات الأخرى أسوأ. اكتشاف رائع."],
+  best:["{m}. أفضل نقلة عند المحرك. لا تعليق.","{m}. صحيحة تمامًا."],
+  excellent:["{m}. ليست الأفضل تمامًا، لكنها نقلة ممتازة.","{m} نقلة نظيفة."],
+  good:["{m} نقلة جيدة وعادية.","{m}. لا بأس بها."],
+  book:["{m}. من نظريات الافتتاح المعروفة منذ مئة عام.","{m}. مباشرة من الكتاب."],
+  inaccuracy:["{m} غير دقيقة قليلًا. {b} كانت أدق.","همم، {m}. ليست سيئة، لكن {b} كانت أفضل."],
+  mistake:["أوه. {m} خطأ. كنت تحتاج {b} هنا.","{m}؟ هذا يعيد الخصم إلى المباراة. {b} كانت النقلة."],
+  miss:["كانت لديك فرصة كبيرة هنا، و{m} تضيّعها. {b} كانت أمامك!","لا! {b}! لقد فاتتك. {m} تنقذ الخصم."],
+  blunder:["يا إلهي. لا لا لا. {m} خطأ فادح. {b} كانت النقلة.","{m}؟! هذا يخسر كل شيء. {b} من فضلك."]},
+ opp:{
+  brilliant:["واو. {m}!! خصمك وجد تضحية عبقرية. احترام."],
+  great:["{m}! وجدوا النقلة الوحيدة. مزعج."],
+  best:["{m}. لعبوا أفضل نقلة.","{m}. لا اعتراض على هذه."],
+  excellent:["{m}. نقلة ممتازة منهم."],
+  good:["{m}. نقلة معقولة."],
+  book:["{m}. ما زلنا في النظرية.","{m}. يعرفون افتتاحاتهم."],
+  inaccuracy:["{m} غير دقيقة. {b} كانت أفضل لهم."],
+  mistake:["{m} خطأ! هذه فرصتك."],
+  miss:["فاتتهم {b}. كنت محظوظًا هنا."],
+  blunder:["{m}؟؟ خطأ فادح منهم! عاقبهم."]},
+ sum:["يا لها من مباراة. لعبت كالآلة.","مباراة قوية. بعض الهفوات، لكن شطرنج جيد.","أفكار جيدة وبعض الفوضى. هذا هو الشطرنج.","حسنًا. نحتاج أن نتحدث عما حدث هنا."]}
+};
+function sanWords(s){ // turn "Nxf7+" into words a voice can read
+  if(!s) return ""; const ar=GL();
+  if(s.startsWith("O-O-O")) return ar?"تبييت طويل":"castles queenside"; if(s.startsWith("O-O")) return ar?"تبييت قصير":"castles kingside";
+  const m=s.match(/^([KQRBN])?([a-h])?([1-8])?(x)?([a-h])([1-8])(?:=([QRBN]))?([+#])?$/); if(!m) return s;
+  const PN=ar?{K:"الملك",Q:"الوزير",R:"الرخ",B:"الفيل",N:"الحصان"}:{K:"king",Q:"queen",R:"rook",B:"bishop",N:"knight"};
+  let out=m[1]?PN[m[1]]+" ":""; if(m[4]) out+=(m[1]?"":(ar?"بيدق "+m[2]+" ":m[2]+" "))+(ar?"يأخذ ":"takes "); out+=m[5]+" "+m[6];
+  if(m[7]) out+=(ar?" ويترقى إلى ":" promotes to ")+PN[m[7]]; if(m[8]==="+") out+=ar?"، كش":", check"; if(m[8]==="#") out+=ar?"، كش مات":", checkmate";
+  return out;
+}
+function coachText(P,i,spoken){ const T=COACH[GL()?"ar":"en"][P.color===CH.color?"me":"opp"][P.c], t=T[i%T.length]; return t.replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan); }
+const voiceOn=()=>store.get("coachVoice",true)!==false;
+function coachSay(text){ try{ const sy=window.speechSynthesis; if(!sy) return; sy.cancel(); if(!voiceOn()||!text) return; const u=new SpeechSynthesisUtterance(text); u.lang=GL()?"ar-SA":"en-US"; u.rate=1.06; u.pitch=1.08; sy.speak(u); }catch(e){} }
+function coachSayMove(){ if(!CH||!CH.an) return; const k=CH.view===null?CH.moves.length:CH.view, P=CH.an.plies[k-1]; if(P) coachSay(coachText(P,k-1,true)); else coachSay(""); }
+const coachSum=()=>{ const a=CH.color>0?CH.an.acc.w:CH.an.acc.b; return COACH[GL()?"ar":"en"].sum[a>=90?0:a>=75?1:a>=50?2:3]; };
 function engine(){ if(!CE) CE=ChessEngine(null); return CE; }
 function worker(){ if(CW===null){ try{ CW=new Worker(URL.createObjectURL(new Blob(["("+ChessEngine.toString()+")(self);"],{type:"text/javascript"}))); CW.onmessage=e=>{ if(e.data&&e.data.type) onAnalysis(e.data); else onBotMove(e.data); }; CW.onerror=()=>{CW=false;}; }catch(e){ CW=false; } } return CW; }
-function chessReplay(moves,E){ E=E||engine(); E.reset(); const keys=[E.fen().split(" ").slice(0,4).join(" ")]; for(const s of moves){ const m=E.legal().find(x=>E.moveStr(x)===s); if(!m) break; E.make(m); keys.push(E.fen().split(" ").slice(0,4).join(" ")); } return keys; }
+function chessReplay(moves,E){ E=E||engine(); setupEngine(E); const keys=[E.fen().split(" ").slice(0,4).join(" ")]; for(const s of moves){ const m=E.legal().find(x=>E.moveStr(x)===s); if(!m) break; E.make(m); keys.push(E.fen().split(" ").slice(0,4).join(" ")); } return keys; }
 const posKey=()=>engine().fen().split(" ").slice(0,4).join(" ");
 const strSq=s=>(s.charCodeAt(1)-49)*16+(s.charCodeAt(0)-97);
-function saveChess(){ if(CH&&CH.mode==="bot") store.set("chess",{lvl:CH.lvl,color:CH.color,moves:CH.moves,over:CH.over||null}); }
+function saveChess(){ if(CH&&CH.mode==="bot") store.set("chess",{lvl:CH.lvl,color:CH.color,moves:CH.moves,over:CH.over||null,variant:CH.variant,start:CH.start}); }
 const oppName=()=>CH.mode==="mp"?CH.opp:botName(CH.lvl);
 function openChess(){
   if(CH&&CH.mode==="mp"&&!CH.over){ S.game="chess"; return show("games"); }
@@ -1641,27 +1795,31 @@ function renderChessMenu(v){
     ${nameChip()}
     <h3 class="sect">${tr("Play the computer")}</h3>
     <p class="sub">${tr("Ratings are approximate. The bot plays fully offline.")}</p>
+    <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
+    <p class="sub">${tr((VARIANTS.find(x=>x[0]===(S.chessVariant||"std"))||VARIANTS[0])[2])}</p>
     <div class="seg seg3"><button data-act="chessColor" data-c="w" class="${col==="w"?"on":""}">${tr("White")}</button><button data-act="chessColor" data-c="r" class="${col==="r"?"on":""}">${tr("Random")}</button><button data-act="chessColor" data-c="b" class="${col==="b"?"on":""}">${tr("Black")}</button></div>
     <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
     <p class="foot">${tr("Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.")}</p>`;
 }
-function newCH(o){ return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null},o); }
+function newCH(o){ return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null,variant:"std",start:STD_FEN,fens:[],rows:[],asked:[],liveC:[],live:null,why:null,gid:++gameSeq},o); }
+function rebuildFens(){ const V=ChessEngine(null); setupEngine(V); const out=[V.fen()]; for(const s of CH.moves){ const m=V.legal().find(x=>V.moveStr(x)===s); if(m===undefined) break; V.make(m); out.push(V.fen()); } CH.fens=out; }
 function startChess(lvl,colorPref){
   chessReq++; const color=colorPref==="b"?-1:colorPref==="r"?(Math.random()<.5?1:-1):1;
-  CH=newCH({lvl,color,flip:color<0}); CH.keys=chessReplay([]); saveChess(); S.game="chess"; show("games");
+  const variant=S.chessVariant||"std"; CH=newCH({lvl,color,flip:color<0,variant,start:variantFen(variant)}); CH.keys=chessReplay([]); CH.fens=[engine().fen()]; saveChess(); S.game="chess"; show("games");
   maybeBot();
 }
-function resumeChess(){ const cs=store.get("chess",null); chessReq++; CH=newCH({lvl:cs.lvl,color:cs.color,moves:cs.moves.slice(),flip:cs.color<0}); CH.keys=chessReplay(CH.moves); CH.moves=CH.moves.slice(0,CH.keys.length-1); if(CH.moves.length){ const s=CH.moves[CH.moves.length-1]; CH.last=[strSq(s),strSq(s.slice(2))]; } S.game="chess"; show("games"); if(!chessEnd()) maybeBot(); }
+function resumeChess(){ const cs=store.get("chess",null); chessReq++; CH=newCH({lvl:cs.lvl,color:cs.color,moves:cs.moves.slice(),flip:cs.color<0,variant:cs.variant||"std",start:cs.start||STD_FEN}); CH.keys=chessReplay(CH.moves); CH.moves=CH.moves.slice(0,CH.keys.length-1); rebuildFens(); fillAn(); if(CH.moves.length){ const s=CH.moves[CH.moves.length-1]; CH.last=[strSq(s),strSq(s.slice(2))]; } S.game="chess"; show("games"); if(!chessEnd()) maybeBot(); }
 const NAV='<svg viewBox="0 0 24 24">';
 function renderChess(v){
   if(!CH){ S.game=null; return renderGames(); }
   const mp=CH.mode==="mp", on=oppName();
   v.innerHTML=`<div class="gwrap" id="gameRoot">
-    <div class="gtop"><button class="btn small gback" data-act="chessMenu">${tr(mp?"‹ Leave":"‹ Opponents")}</button>${fsButton()}</div>
-    <div class="pbar"><span class="ava" style="background:${mp?"#5b7bd5":AVC[CH.lvl]}">${esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${tr("Online")}</em>`:`<em>${LEVELS[CH.lvl].elo}</em>`}</b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
+    <div class="gtop"><button class="btn small gback" data-act="chessMenu">${tr(mp?"‹ Leave":"‹ Opponents")}</button>${CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
+    <div class="pbar"><span class="ava" style="background:${mp?"#5b7bd5":AVC[CH.lvl]}">${esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${tr("Online")}</em>`:`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
-    <div class="pbar"><span class="ava you">${esc(mp&&myName()?myName():tr("You")).slice(0,1)}</span><span class="pinfo"><b>${mp&&myName()?esc(myName()):tr("You")}</b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mp?`<span class="clock" id="clkYou"></span>`:""}</div>
+    <div class="pbar"><span class="ava you">${esc(meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(meName())} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mp?`<span class="clock" id="clkYou"></span>`:""}</div>
     <div class="revline" id="revLine"></div>
+    <div class="coach" id="coachBox" hidden></div>
     <div class="navrow" dir="ltr">
       <button class="btn" data-act="nav" data-n="first" aria-label="${tr("First move")}">${NAV}<path d="M6 5v14M18 6l-8 6 8 6z"/></svg></button>
       <button class="btn" data-act="nav" data-n="prev" aria-label="${tr("Previous move")}">${NAV}<path d="M16 6l-8 6 8 6z"/></svg></button>
@@ -1691,7 +1849,7 @@ function drawBoard(){
   let h="";
   for(let i=0;i<8;i++) for(let j=0;j<8;j++){
     const r=CH.flip?i:7-i, f=CH.flip?7-j:j, sq=r*16+f, p=bd[sq], t=targets.find(m=>((m>>7)&127)===sq);
-    const cls=["sq",(r+f)%2?"lt":"dk"]; if(sq===CH.sel) cls.push("sel"); if(last.includes(sq)) cls.push("last"); if(sq===kSq) cls.push("chk"); if(t!==undefined) cls.push(p?"cap":"dot");
+    const cls=["sq",(r+f)%2?"lt":"dk"]; if(sq===CH.sel) cls.push("sel"); if(last.includes(sq)) cls.push("last"); if(sq===kSq) cls.push("chk"); if(t!==undefined) cls.push(p?"cap":"dot"); if(CH.variant==="koth"&&E.onHill(sq)) cls.push("hill");
     h+=`<div class="${cls.join(" ")}" data-sq="${sq}">${j===0?`<i class="cr">${r+1}</i>`:""}${i===7?`<i class="cf">${"abcdefgh"[f]}</i>`:""}${p?pcImg(p):""}</div>`;
   }
   const B=$("#board"); B.innerHTML=h; B.classList.toggle("review",!live);
@@ -1704,6 +1862,7 @@ function drawBoard(){
   const yourTurn=engine().turn()===CH.color, inChk=engine().inCheck();
   $("#botStatus").textContent=CH.over?"":CH.thinking?tr("Thinking…"):(!yourTurn&&inChk?tr("Check!"):"");
   $("#youStatus").textContent=!live?(GL()?`مراجعة: النقلة ${AD(CH.view)} من ${AD(CH.moves.length)}`:`Reviewing move ${CH.view} of ${CH.moves.length}`):CH.over?"":yourTurn?(inChk?tr("Check! Your move"):tr("Your move")):"";
+  if(CH.variant==="3check"){ const c=E.checks(), yi=CH.color>0?0:1; $("#chkYou").textContent="✚ "+c[yi]+"/3"; $("#chkBot").textContent="✚ "+c[1-yi]+"/3"; }
   const n=CH.moves.length, at=live?n:CH.view;
   $$(".navrow .btn").forEach(b=>{ const k=b.dataset.n; b.disabled=(k==="first"||k==="prev")?at===0:at===n; });
   const g=$("#gctl"), want=CH.over?(CH.moves.length?"review":"flip"):"play";
@@ -1712,7 +1871,7 @@ function drawBoard(){
 }
 function navTo(k){ const n=CH.moves.length; CH.view=(k===null||k>=n)?null:Math.max(0,k); CH.sel=-1; drawBoard(); }
 function chessTap(sq){
-  if(!CH) return; if(CH.view!==null) return navTo(null);   // tapping the board while reviewing jumps back to the game
+  if(!CH) return; ensureAudio(); if(CH.view!==null) return navTo(null);   // tapping the board while reviewing jumps back to the game
   if(CH.over||CH.thinking) return; const E=engine(); if(E.turn()!==CH.color) return;
   const p=E.board()[sq];
   if(CH.sel>=0){
@@ -1727,7 +1886,7 @@ function chessTap(sq){
 }
 function playMove(m,remote){
   const E=engine(), f=m&127, t=(m>>7)&127, mover=E.turn(); if(!E.make(m)) return false;
-  const s=E.moveStr(m); CH.moves.push(s); CH.keys.push(posKey()); CH.last=[f,t]; CH.sel=-1; CH.view=null;
+  const s=E.moveStr(m); CH.moves.push(s); CH.keys.push(posKey()); CH.fens.push(E.fen()); CH.last=[f,t]; CH.sel=-1; CH.view=null; CH.moveT=Date.now(); CH.an=null; queueAn(CH.moves.length-1);
   if(CH.mode==="mp"){ const k=mover>0?"w":"b"; if(!remote){ CH.clock[k]-=Date.now()-CH.tStart; mpSend({t:"move",m:s,left:CH.clock[k]}); } CH.tStart=Date.now(); }
   try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){}
   saveChess(); drawBoard(); if(!chessEnd()&&CH.mode==="bot") maybeBot(); return true;
@@ -1737,19 +1896,26 @@ function maybeBot(){
   CH.thinking=true; drawBoard(); const id=++chessReq, t0=Date.now(), L=LEVELS[CH.lvl];
   const opts=Object.assign({},L.o); if(CH.moves.length<8&&!opts.noise) opts.noise=12;
   const w=worker(); CH.pending={id,t0};
-  if(w) w.postMessage({id,fen:E.fen(),opts}); else setTimeout(()=>{ const T=ChessEngine(null); T.setFen(E.fen()); onBotMove({id,move:T.think(opts)}); },60);
+  const vc=vcode(CH.variant);
+  if(w) w.postMessage({id,fen:E.fen(),opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(E.fen()); onBotMove({id,move:T.think(opts)}); },60);
 }
 function onBotMove(d){
   if(!CH||d.id!==chessReq) return;
   const wait=CH.pending&&CH.pending.id===d.id?Math.max(0,450-(Date.now()-CH.pending.t0)):0;
-  setTimeout(()=>{ if(!CH||d.id!==chessReq) return; CH.thinking=false; CH.pending=null; if(d.move) playMove(d.move); else drawBoard(); },wait);
+  const go=()=>{ if(!CH||d.id!==chessReq) return; const lp=CH.moves.length-1;
+    if(lp>=0&&CH.rows[lp]===undefined&&Date.now()-CH.moveT<2200) return setTimeout(go,100);
+    const hold=CH.live&&CH.live.ply===lp?Math.max(0,1500-(Date.now()-CH.live.t)):0;
+    setTimeout(()=>{ if(!CH||d.id!==chessReq) return; CH.thinking=false; CH.pending=null; if(d.move) playMove(d.move); else drawBoard(); },hold); };
+  setTimeout(go,wait);
 }
 function chessEnd(){
-  const E=engine(), lm=E.legal(); let res=null;
-  if(!lm.length) res=E.inCheck()?(E.turn()===CH.color?"lose":"win"):"stalemate";
+  const E=engine(), lm=E.legal(); let res=null; const mover=-E.turn(), mi=mover>0?0:1;
+  if(CH.variant==="koth"&&E.onHill(E.kings()[mi])){ CH.why="hill"; res=mover===CH.color?"win":"lose"; }
+  else if(CH.variant==="3check"&&E.checks()[mi]>=3){ CH.why="3check"; res=mover===CH.color?"win":"lose"; }
+  else if(!lm.length) res=E.inCheck()?(E.turn()===CH.color?"lose":"win"):"stalemate";
   else if(E.half()>=100) res="fifty";
   else if(CH.keys.filter(k=>k===CH.keys[CH.keys.length-1]).length>=3) res="repetition";
-  else { const bd=E.board(); const pcs=[]; for(let s=0;s<128;s++){ if(s&0x88){s+=7;continue;} const p=Math.abs(bd[s]); if(p&&p!==6) pcs.push(p); } if(!pcs.length||(pcs.length===1&&(pcs[0]===2||pcs[0]===3))) res="material"; }
+  else { const bd=E.board(); const pcs=[]; for(let s=0;s<128;s++){ if(s&0x88){s+=7;continue;} const p=Math.abs(bd[s]); if(p&&p!==6) pcs.push(p); } if(CH.variant!=="koth"&&CH.variant!=="3check"&&(!pcs.length||(pcs.length===1&&(pcs[0]===2||pcs[0]===3)))) res="material"; }
   if(!res) return false;
   finishChess(res); return true;
 }
@@ -1761,8 +1927,9 @@ function finishChess(res){
   const head={win:tr("You won!"),lose:GL()?`فاز ${name}`:`${name} wins`,resign:tr("You resigned"),oppResign:GL()?`استسلم ${name}، فزت!`:`${name} resigned. You won!`,
     timeWin:tr("You won on time!"),timeLose:tr("You ran out of time"),left:GL()?`غادر ${name} المباراة، فزت!`:`${name} left the game. You won!`}[res]||tr("Draw");
   const why={win:tr("Checkmate."),lose:tr("Checkmate."),stalemate:tr("Stalemate: no legal moves, but not in check."),fifty:tr("50 moves without a capture or pawn move."),repetition:tr("The same position happened three times."),material:tr("Not enough pieces left to checkmate.")}[res]||"";
+  const why2=CH.why==="hill"?tr("The king reached the centre."):CH.why==="3check"?tr("Third check."):why;
   if(mp){ const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },2500); }
-  setTimeout(()=>modal(`<div class="result">${WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${head}</h3>${why?`<p class="sub">${why}</p>`:""}
+  setTimeout(()=>modal(`<div class="result">${WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${head}</h3>${why2?`<p class="sub">${why2}</p>`:""}
     ${CH.moves.length?`<button class="btn primary reviewbtn" data-act="review">★ ${tr("Game review")}</button>`:""}
     <div class="row">${mp?`<button class="btn grow" data-act="mpPlay">${tr("Find a new opponent")}</button>`:`<button class="btn grow" data-act="chessRematch">${tr("Rematch")}</button>`}<button class="btn grow" data-act="chessMenu">${tr(mp?"Back to chess":"Other opponent")}</button></div>
     <button class="btn ghost" data-act="modalClose">${tr("Look at the board")}</button>`),350);
@@ -1824,46 +1991,41 @@ function isSacrifice(E,m){ // gives up material on the destination square
   const defended=E.attacked(t,me); E.unmake();
   return low<99&&V[moved]-got>=2&&(low<V[moved]||!defended);
 }
+function classifyPly(E,r,mvStr,i,prevC,nxt){ // E = position before the move; it is advanced by the move
+  const mv=E.legal().find(x=>E.moveStr(x)===mvStr); if(mv===undefined||!r) return null;
+  const s=san(E,mv), bestSan=r.best?san(E,r.best):"", sac=isSacrifice(E,mv);
+  const wb=winPct(r.bs), wp=winPct(r.ps===null?r.bs:r.ps), loss=Math.max(0,wb-wp), isBest=E.moveStr(r.best)===mvStr||loss<0.3;
+  E.make(mv); const key=E.fen().split(" ").slice(0,3).join(" ");
+  let c;
+  if(i<30&&CH.variant==="std"&&book().has(key)) c="book";
+  else if(r.n<=1) c="best";
+  else if(isBest&&sac&&wp>=45&&wb<97) c="brilliant";
+  else if(isBest&&r.only&&wb<97) c="great";
+  else if(isBest) c="best";
+  else if(loss<=2) c="excellent"; else if(loss<=5) c="good"; else if(loss<=10) c="inaccuracy"; else if(loss<=20) c="mistake"; else c="blunder";
+  if((c==="mistake"||c==="blunder"||c==="inaccuracy")&&loss>=8&&["mistake","blunder","miss"].includes(prevC)&&wb>=60) c="miss";
+  if(c!=="book"&&!isBest&&r.ps!==null&&r.ps<-90000&&r.bs>-90000) c="blunder";              // walked into a forced mate that could be avoided
+  if(c!=="book"&&!isBest&&r.bs>90000&&(r.ps===null||r.ps<90000)&&c!=="blunder") c="miss";   // had a forced mate and did not play it
+  const acc=c==="book"?100:Math.max(0,Math.min(100,103.1668*Math.exp(-0.04354*loss)-3.1669));
+  return {c,san:s,best:isBest?0:r.best,bestSan,threat:(["mistake","blunder","miss","inaccuracy"].includes(c)&&nxt&&nxt.best)?nxt.best:0,acc,color:i%2?-1:1};
+}
 function classifyGame(rows,moves){
-  const E=ChessEngine(null); E.reset(); const B=book(), out=[];
-  for(let i=0;i<moves.length;i++){
-    const r=rows[i], mv=E.legal().find(x=>E.moveStr(x)===moves[i]); if(mv===undefined) break;
-    const s=san(E,mv), bestSan=r.best?san(E,r.best):"", sac=isSacrifice(E,mv);
-    const wb=winPct(r.bs), wp=winPct(r.ps===null?r.bs:r.ps), loss=Math.max(0,wb-wp), isBest=E.moveStr(r.best)===moves[i]||loss<0.3;
-    E.make(mv); const key=E.fen().split(" ").slice(0,3).join(" ");
-    let c;
-    if(i<30&&B.has(key)) c="book";
-    else if(r.n<=1) c="best";
-    else if(isBest&&sac&&wp>=45&&wb<97) c="brilliant";
-    else if(isBest&&r.only&&wb<97) c="great";
-    else if(isBest) c="best";
-    else if(loss<=2) c="excellent"; else if(loss<=5) c="good"; else if(loss<=10) c="inaccuracy"; else if(loss<=20) c="mistake"; else c="blunder";
-    const prev=out[i-1]; if((c==="mistake"||c==="blunder"||c==="inaccuracy")&&loss>=8&&prev&&["mistake","blunder","miss"].includes(prev.c)&&wb>=60) c="miss";
-    if(c!=="book"&&!isBest&&r.ps!==null&&r.ps<-90000&&r.bs>-90000) c="blunder";              // walked into a forced mate that could be avoided
-    if(c!=="book"&&!isBest&&r.bs>90000&&(r.ps===null||r.ps<90000)&&c!=="blunder") c="miss";   // had a forced mate and did not play it
-    const acc=c==="book"?100:Math.max(0,Math.min(100,103.1668*Math.exp(-0.04354*loss)-3.1669));
-    const nxt=rows[i+1];
-    out.push({c,san:s,best:isBest?0:r.best,bestSan,threat:(["mistake","blunder","miss","inaccuracy"].includes(c)&&nxt&&nxt.best)?nxt.best:0,acc,color:i%2?-1:1});
-  }
+  const E=ChessEngine(null); setupEngine(E); const out=[];
+  for(let i=0;i<moves.length;i++){ const P=classifyPly(E,rows[i],moves[i],i,out[i-1]&&out[i-1].c,rows[i+1]); if(!P) break; out.push(P); }
   const avg=col=>{ const a=out.filter(x=>x.color===col); return a.length?a.reduce((t,x)=>t+x.acc,0)/a.length:0; };
   return {plies:out,acc:{w:avg(1),b:avg(-1)}};
 }
-let anReq=0;
-function startReview(){
-  if(!CH||!CH.moves.length) return;
+function startReview(){ // most moves were already analysed during the game, so this normally opens at once
+  if(!CH||!CH.moves.length) return; try{ window.speechSynthesis&&window.speechSynthesis.speak(new SpeechSynthesisUtterance("")); }catch(e){}
   if(CH.an) return showSummary();
-  const id=++anReq, E=ChessEngine(null); E.reset(); const fens=[E.fen()];
-  for(const s of CH.moves){ const m=E.legal().find(x=>E.moveStr(x)===s); E.make(m); fens.push(E.fen()); }
-  const played=CH.moves.concat([null]), opts={depth:6,ms:450};
+  const n=CH.moves.length; for(let i=0;i<=n;i++) queueAn(i);
+  const have=()=>{ let k=0; for(let i=0;i<=n;i++) if(CH.rows[i]!==undefined) k++; return k; };
+  const finish=()=>{ CH.anWait=null; CH.an=classifyGame(CH.rows,CH.moves); CH.live=null; drawBoard(); showSummary(); };
+  if(have()===n+1) return finish();
   modal(`<div class="anwrap"><div class="anspin">${pcImg(3)}</div><h3>${tr("Analyzing your game…")}</h3><div class="meter"><b id="anBar" style="width:0%"></b></div><p class="sub" id="anTxt">0%</p></div>`);
-  const done=rows=>{ if(id!==anReq||!CH) return; CH.an=classifyGame(rows,CH.moves); drawBoard(); showSummary(); };
-  const prog=(k,n)=>{ const bar=$("#anBar"), t=$("#anTxt"); if(bar){ bar.style.width=(100*k/n)+"%"; t.textContent=Math.round(100*k/n)+"%"; } };
-  const w=worker();
-  if(w){ CH.anId=id; w.postMessage({id,type:"analyze",fens,played,opts}); }
-  else { const T=ChessEngine(null), rows=[]; let i=0; (function step(){ if(id!==anReq) return; rows.push(T.analyzeGame([fens[i]],[played[i]],opts)[0]); i++; prog(i,fens.length); if(i<fens.length) setTimeout(step,0); else done(rows); })(); }
-  CH.anDone=done; CH.anProg=prog;
+  CH.anWait=()=>{ const k=have(), bar=$("#anBar"), t=$("#anTxt"); if(bar){ bar.style.width=(100*k/(n+1))+"%"; t.textContent=Math.round(100*k/(n+1))+"%"; } if(k===n+1) finish(); };
+  CH.anWait();
 }
-function onAnalysis(d){ if(!CH||d.id!==anReq) return; if(d.type==="progress") CH.anProg&&CH.anProg(d.k,d.n); else if(d.type==="analysis") CH.anDone&&CH.anDone(d.rows); }
 function showSummary(){
   const A=CH.an, me=CH.color, cnt=(col,k)=>A.plies.filter(p=>p.color===col&&p.c===k).length;
   const meAcc=me>0?A.acc.w:A.acc.b, opAcc=me>0?A.acc.b:A.acc.w, mp=CH.mode==="mp";
@@ -1871,14 +2033,15 @@ function showSummary(){
   const $m=$("#modal"); $m.innerHTML=`<div class="modal-in review-in" role="dialog">
     <div class="rv-head"><span class="rv-star">★</span><h3>${tr("Game Review")}</h3></div>
     <div class="rv-players">
-      <div class="rvp"><span class="ava you">${esc((mp&&myName())||tr("You")).slice(0,1)}</span><small>${mp&&myName()?esc(myName()):tr("You")}</small><b class="accn" data-count="${meAcc.toFixed(1)}" data-dec="1">0</b></div>
+      <div class="rvp"><span class="ava you">${esc(meName()).slice(0,1)}</span><small>${esc(meName())}</small><b class="accn" data-count="${meAcc.toFixed(1)}" data-dec="1">0</b></div>
       <div class="rv-acc">${tr("Accuracy")}</div>
       <div class="rvp"><span class="ava" style="background:${mp?"#5b7bd5":AVC[CH.lvl]}">${esc(oppName()).slice(0,1)}</span><small>${esc(oppName())}</small><b class="accn" data-count="${opAcc.toFixed(1)}" data-dec="1">0</b></div>
     </div>
+    <div class="coach"><i class="coachava" style="background-image:url(pieces/wN.svg)"></i><p>${esc(coachSum())}</p><button class="btn small ghost" data-act="coachMute" aria-label="${tr("Coach voice")}">${voiceOn()?"🔊":"🔇"}</button></div>
     <div class="rv-rows">${rows}</div>
     <button class="btn primary" data-act="reviewMoves">${tr("Review moves")}</button>
     <button class="btn ghost" data-act="modalClose">${tr("Close")}</button></div>`;
-  $m.hidden=false;
+  $m.hidden=false; coachSay(coachSum());
   const t0=performance.now(), els=$$("#modal [data-count]");
   (function tick(now){ const k=Math.min(1,(now-t0)/1300), e=1-Math.pow(1-k,3);
     els.forEach(el=>{ const v=+el.dataset.count; el.textContent=el.dataset.dec?(v*e).toFixed(1):Math.round(v*e); });
@@ -1894,9 +2057,14 @@ function arrow(from,to,color){
 function reviewOverlay(){ // badge, arrows and label for the move being shown
   const B=$("#board"), line=$("#revLine"); if(!B) return;
   const old=B.querySelector(".arrows"); if(old) old.remove();
-  if(!CH.an){ if(line) line.innerHTML=""; return; }
+  const cb=$("#coachBox"); if(cb) cb.hidden=true;
+  if(!CH.an){ if(line) line.innerHTML="";
+    if(CH.live&&CH.view===null&&CH.live.ply===CH.moves.length-1){ const to=strSq(CH.moves[CH.live.ply].slice(2)), cell=B.querySelector(`.sq[data-sq="${to}"]`); if(cell) cell.insertAdjacentHTML("beforeend",badge("brilliant"));
+      if(line) line.innerHTML=`${badge("brilliant","sbadge")}<bdi dir="ltr"><b>${esc(CH.live.san)}</b></bdi><span style="color:${CLS.brilliant.c}">${tr("Brilliant")}</span>`; }
+    return; }
   const k=CH.view===null?CH.moves.length:CH.view, P=CH.an.plies[k-1];
   if(!P){ if(line) line.innerHTML=k===0?`<span class="sub">${tr("Starting position")}</span>`:""; return; }
+  if(cb){ cb.hidden=false; cb.innerHTML=`<i class="coachava" style="background-image:url(pieces/wN.svg)"></i><p>${esc(coachText(P,k-1,false))}</p><button class="btn small ghost" data-act="coachMute" aria-label="${tr("Coach voice")}">${voiceOn()?"🔊":"🔇"}</button>`; }
   const s=CH.moves[k-1], to=strSq(s.slice(2)); const cell=B.querySelector(`.sq[data-sq="${to}"]`); if(cell) cell.insertAdjacentHTML("beforeend",badge(P.c));
   let svg=""; if(P.best) svg+=arrow(P.best&127,(P.best>>7)&127,"rgba(129,182,76,.85)"); if(P.threat) svg+=arrow(P.threat&127,(P.threat>>7)&127,"rgba(220,60,50,.8)");
   if(svg) B.insertAdjacentHTML("beforeend",`<svg class="arrows" viewBox="0 0 8 8" preserveAspectRatio="none">${svg}</svg>`);
@@ -1906,6 +2074,13 @@ function reviewOverlay(){ // badge, arrows and label for the move being shown
 /* ===== ONLINE (PeerJS: free public broker, then a direct WebRTC link between the two phones) ===== */
 const LOBBY="outpost-pocketkit-chess-lobby-v1";
 let MP=null;
+/* each online game registers: title, info, back (screen to return to), init() -> data the host sends, start(role, init, opponentName), data(msg), left() */
+const MPG={};
+const cleanName=n=>String(n||"").replace(/\s+/g," ").trim().slice(0,20)||tr("Opponent");
+window.OUTPOST_MP={register:(id,h)=>{ MPG[id]=h; },play:g=>mpPlay(g),send:o=>mpSend(o),stop:()=>mpStop(),stopLater:ms=>{ const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },ms); },name:()=>myName(),game:()=>MP?MP.game:null};
+MPG.chess={title:"Chess",info:"You'll play the next person who taps Play online in Outpost. 15 minutes each, no extra time.",back:"chessMenu",icon:()=>pcImg(5),
+  busy:()=>!!(CH&&CH.mode==="mp"&&!CH.over),init:()=>({hostColor:Math.random()<.5?1:-1}),
+  start:(role,init,name)=>startMp(role==="host"?init.hostColor:-init.hostColor,name),data:d=>mpOnData(MP,d),left:()=>{ if(CH&&CH.mode==="mp"&&!CH.over) finishChess("left"); }};
 function loadPeer(){ return window.Peer?Promise.resolve():new Promise((ok,no)=>{ const s=document.createElement("script"); s.src="peerjs.min.js"; s.onload=()=>window.Peer?ok():no(); s.onerror=no; document.head.appendChild(s); }); }
 function askName(thenPlay){
   modal(`<h3>${tr(thenPlay?"Choose a name for online games":"Change your online name")}</h3><p class="sub">${tr("Your opponent will see this name.")}</p>
@@ -1917,21 +2092,21 @@ function saveName(thenPlay){
   const v=($("#mpNameIn").value||"").replace(/\s+/g," ").trim().slice(0,20);
   if(!v){ toast(tr("Enter a name first")); return; }
   store.set("mpName",v); closeModal();
-  if(thenPlay) mpPlay(); else show("games",true);
+  if(thenPlay) mpPlay(S.mpWant); else show("games",true);
 }
-function mpPlay(){
-  closeModal();
+function mpPlay(game){
+  game=MPG[game]?game:"chess"; S.mpWant=game; closeModal();
   if(navigator.onLine===false) return modal(`<h3>${tr("You are offline")}</h3><p class="sub">${tr("Online games need an internet connection. The computer opponents work offline.")}</p><button class="btn primary" data-act="modalClose">${tr("OK")}</button>`);
   if(!myName()) return askName(true);
-  if(CH&&CH.mode==="mp"&&!CH.over) return;
-  S.game="mpQueue"; show("games"); mpQueue();
+  if(MPG[game].busy&&MPG[game].busy()) return;
+  S.game="mpQueue"; show("games"); mpQueue(game);
 }
 function mpStatus(st){ if(MP) MP.status=st; const el=$("#qStatus"); if(el) el.textContent=tr(st); }
 function mpStop(){ const m=MP; MP=null; if(!m) return; clearTimeout(m.retry); clearInterval(m.tick);
   try{ m.lob&&m.lob.destroy(); }catch(e){} try{ m.conn&&m.conn.close(); }catch(e){} try{ m.me&&m.me.destroy(); }catch(e){} }
-function mpFail(msg){ mpStop(); if(S.game==="mpQueue"){ S.game="chessMenu"; show("games"); } modal(`<h3>${tr("Could not connect")}</h3><p class="sub">${tr(msg)}</p><div class="row"><button class="btn primary grow" data-act="mpPlay">${tr("Try again")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); }
-async function mpQueue(){
-  mpStop(); const my={t0:Date.now(),status:"Connecting…"}; MP=my;
+function mpFail(msg){ const g=MP?MP.game:"chess"; mpStop(); if(S.game==="mpQueue"){ S.game=MPG[g].back; show("games"); } modal(`<h3>${tr("Could not connect")}</h3><p class="sub">${tr(msg)}</p><div class="row"><button class="btn primary grow" data-act="mpPlay" data-g="${g}">${tr("Try again")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); }
+async function mpQueue(game){
+  mpStop(); const my={t0:Date.now(),status:"Connecting…",game,lobby:LOBBY+(game==="chess"?"":"-"+game)}; MP=my; if(S.game==="mpQueue") renderGames();
   my.tick=setInterval(()=>{ const el=$("#qTime"); if(el){ const s=Math.floor((Date.now()-my.t0)/1000); el.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); } },500);
   try{ await loadPeer(); }catch(e){ if(MP===my) mpFail("The online service could not load. Check your internet connection."); return; }
   if(MP!==my) return;
@@ -1944,7 +2119,7 @@ async function mpQueue(){
 function retryLater(my,ms){ if(MP!==my||my.conn) return; if(my.lob){ try{ my.lob.destroy(); }catch(e){} my.lob=null; } clearTimeout(my.retry); my.retry=setTimeout(()=>tryLobby(my),(ms||2000)+Math.random()*1500); }
 function tryLobby(my){ // whoever holds the lobby name is the waiting player
   if(MP!==my||my.conn) return;
-  const lob=new Peer(LOBBY,{debug:0}); my.lob=lob;
+  const lob=new Peer(my.lobby,{debug:0}); my.lob=lob;
   lob.on("open",()=>{ if(MP===my) mpStatus("Waiting for an opponent…"); });
   lob.on("connection",c=>{ c.on("open",()=>{ if(MP===my&&!my.conn) c.send({t:"host",id:my.me.id}); setTimeout(()=>{ try{c.close();}catch(e){} },1500); }); });
   lob.on("error",e=>{ if(MP!==my) return;
@@ -1953,7 +2128,7 @@ function tryLobby(my){ // whoever holds the lobby name is the waiting player
 }
 function joinWaiting(my){ // someone is waiting: ask the lobby for their address
   if(MP!==my||my.conn) return; mpStatus("Opponent found, connecting…");
-  const c=my.me.connect(LOBBY,{reliable:true}); let done=false;
+  const c=my.me.connect(my.lobby,{reliable:true}); let done=false;
   const to=setTimeout(()=>{ if(!done){ done=true; try{c.close();}catch(e){} mpStatus("Looking for another player…"); retryLater(my); } },8000);
   c.on("data",d=>{ if(d&&d.t==="host"&&!done&&d.id!==my.me.id){ done=true; clearTimeout(to); try{c.close();}catch(e){} connectHost(my,d.id); } });
 }
@@ -1961,27 +2136,27 @@ function connectHost(my,id){
   if(MP!==my||my.conn) return;
   const c=my.me.connect(id,{reliable:true}); let done=false;
   const to=setTimeout(()=>{ if(!done){ done=true; try{c.close();}catch(e){} mpStatus("Looking for another player…"); retryLater(my); } },10000);
-  c.on("open",()=>c.send({t:"hello",name:myName(),v:1}));
+  c.on("open",()=>c.send({t:"hello",name:myName(),game:my.game,v:2}));
   c.on("data",d=>{ if(!d||done) return;
     if(d.t==="busy"){ done=true; clearTimeout(to); try{c.close();}catch(e){} retryLater(my,300); }
-    else if(d.t==="start"){ done=true; clearTimeout(to); my.conn=c; bindConn(my,c); startMp(d.you==="w"?1:-1,d.name); } });
+    else if(d.t==="start"){ done=true; clearTimeout(to); my.conn=c; bindConn(my,c); MPG[my.game].start("guest",d.init||{},cleanName(d.name)); } });
 }
 function onIncoming(my,c){
   c.on("data",d=>{ if(!d||d.t!=="hello"||c._seen) return; c._seen=1;
-    if(MP!==my||my.conn){ c.send({t:"busy"}); setTimeout(()=>{ try{c.close();}catch(e){} },300); return; }
+    if(MP!==my||my.conn||(d.game||"chess")!==my.game){ c.send({t:"busy"}); setTimeout(()=>{ try{c.close();}catch(e){} },300); return; }
     my.conn=c; if(my.lob){ try{ my.lob.destroy(); }catch(e){} my.lob=null; }
-    const mine=Math.random()<.5?1:-1; c.send({t:"start",you:mine>0?"b":"w",name:myName()});
-    bindConn(my,c); startMp(mine,d.name); });
+    const init=MPG[my.game].init(); c.send({t:"start",init,name:myName()});
+    bindConn(my,c); MPG[my.game].start("host",init,cleanName(d.name)); });
 }
 function bindConn(my,c){
   clearTimeout(my.retry); clearInterval(my.tick);
-  c.on("data",d=>mpOnData(my,d));
-  c.on("close",()=>{ if(MP===my&&CH&&CH.mode==="mp"&&!CH.over) finishChess("left"); });
+  c.on("data",d=>{ if(MP===my&&d) MPG[my.game].data(d); });
+  c.on("close",()=>{ if(MP===my) MPG[my.game].left(); });
 }
 const mpSend=o=>{ try{ MP&&MP.conn&&MP.conn.send(o); }catch(e){} };
 function startMp(color,opp){
   chessReq++; CH=newCH({mode:"mp",color,flip:color<0,opp:String(opp||"").replace(/\s+/g," ").trim().slice(0,20)||tr("Opponent"),clock:{w:MP_TIME,b:MP_TIME},tStart:Date.now()});
-  CH.keys=chessReplay([]); closeModal(); S.game="chess"; show("games");
+  CH.keys=chessReplay([]); CH.fens=[engine().fen()]; closeModal(); S.game="chess"; show("games");
   toast(GL()?`بدأت المباراة ضد ${CH.opp}`:`Playing ${CH.opp}`); try{ navigator.vibrate&&navigator.vibrate([30,60,30]); }catch(e){}
   clearInterval(CLK); CLK=setInterval(tickClock,200);
 }
@@ -2008,13 +2183,13 @@ function tickClock(){
 }
 function renderQueue(v){
   v.innerHTML=`<div class="row"><button class="btn small" data-act="mpLeave">${tr("‹ Leave queue")}</button></div>
-    <div class="card queue"><div class="radar"><i></i><i></i><i></i><b>${pcImg(5)}</b></div>
-      <h2>${tr("Finding an opponent")}</h2><p class="sub" id="qStatus">${tr(MP?MP.status:"Connecting…")}</p><div class="big" id="qTime">0:00</div>
-      <p class="sub">${tr("You'll play the next person who taps Play online in Outpost. 15 minutes each, no extra time.")}</p>
+    <div class="card queue"><div class="radar"><i></i><i></i><i></i><b>${MPG[(MP&&MP.game)||"chess"].icon()}</b></div>
+      <div class="eyebrow">${tr(MPG[(MP&&MP.game)||"chess"].title)}</div><h2>${tr("Finding an opponent")}</h2><p class="sub" id="qStatus">${tr(MP?MP.status:"Connecting…")}</p><div class="big" id="qTime">0:00</div>
+      <p class="sub">${tr(MPG[(MP&&MP.game)||"chess"].info)}</p>
       <p>${tr("Playing as")} <b>${esc(myName())}</b></p>
       <button class="btn" data-act="mpLeave">${tr("Leave queue")}</button></div>`;
 }
-window.addEventListener("pagehide",()=>{ if(CH&&CH.mode==="mp"&&!CH.over) mpSend({t:"bye"}); });
+window.addEventListener("pagehide",()=>{ if(MP&&MP.conn) mpSend({t:"bye"}); });
 
 /* ===== BLOCK PUZZLE ===== */
 const SHAPES=[ // [cells as "rc" pairs, weight]
@@ -2029,23 +2204,53 @@ let BL=null, drag=null;
 function newPiece(){ const tot=SHAPES.reduce((t,s)=>t+s.w,0); let r=Math.random()*tot; const s=SHAPES.find(x=>(r-=x.w)<0)||SHAPES[0]; return {c:s.c,col:Math.floor(Math.random()*BCOL.length)}; }
 const fits=(g,p,r,c)=>p.c.every(([y,x])=>{ const R=r+y,C=c+x; return R>=0&&R<8&&C>=0&&C<8&&!g[R*8+C]; });
 const fitsAny=(g,p)=>{ for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(fits(g,p,r,c)) return true; return false; };
-function newTray(){ for(let k=0;k<20;k++){ const t=[newPiece(),newPiece(),newPiece()], cols=BCOL.map((_,i)=>i).sort(()=>Math.random()-.5); t.forEach((p,i)=>p.col=cols[i]); if(t.some(p=>fitsAny(BL.grid,p))||k===19) return t; } }
-function saveBlocks(){ store.set("blocks",BL); }
-function openBlocks(){ const s=store.get("blocks",null); BL=(s&&Array.isArray(s.grid)&&s.grid.length===64&&!s.over)?s:null; if(!BL) newBlocks(false); S.game="blocks"; show("games"); }
+/* online score battle: both players get the same trays from a shared seed, 3 minutes, highest score wins */
+const B_TIME=180000; let BLsolo=null, bTick=null;
+function mulberry(a){ return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function seededTray(seed,k){ const r=mulberry(seed+k*7919), tot=SHAPES.reduce((t,s)=>t+s.w,0), cols=BCOL.map((_,i)=>i); for(let i=cols.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [cols[i],cols[j]]=[cols[j],cols[i]]; }
+  return [0,1,2].map(i=>{ let x=r()*tot; const s=SHAPES.find(q=>(x-=q.w)<0)||SHAPES[0]; return {c:s.c,col:cols[i]}; }); }
+function blocksMpStart(role,init,name){
+  if(BL&&!BL.mp) BLsolo=BL; BL={grid:Array(64).fill(0),tray:[],score:0,combo:0,over:false,mp:{seed:init.seed|0,k:0,opp:name,oppScore:0,oppDone:false,done:false,result:null,tEnd:Date.now()+B_TIME}};
+  BL.tray=newTray(); closeModal(); S.game="blocks"; show("games"); toast(GL()?`بدأت المعركة ضد ${name}`:`Battle against ${name}`);
+  clearInterval(bTick); bTick=setInterval(blocksMpTick,250);
+}
+function blocksMpTick(){
+  if(!BL||!BL.mp){ clearInterval(bTick); return; } const M=BL.mp, left=Math.max(0,M.tEnd-Date.now()), el=$("#bTime");
+  if(el){ const s=Math.ceil(left/1000); el.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); el.classList.toggle("low",left<20000); }
+  if(!M.result&&left<=0){ if(!M.done){ M.done=true; BL.over=true; mpSend({t:"bs",s:BL.score,done:true}); } if(M.oppDone||Date.now()-M.tEnd>2500) blocksMpEnd(); }
+}
+function blocksMpEnd(how){
+  const M=BL&&BL.mp; if(!M||M.result) return; clearInterval(bTick); BL.over=true;
+  M.result=how==="left"?"win":BL.score>M.oppScore?"win":BL.score<M.oppScore?"lose":"draw"; if(drag){ drag.el.remove(); drag=null; }
+  const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },2000); if(M.result==="win") try{ window.OUTPOST_CONFETTI&&window.OUTPOST_CONFETTI(); }catch(e){}
+  modal(`<div class="result">${M.result==="win"?"🏆":M.result==="lose"?"▦":"½"}</div><h3>${tr(M.result==="win"?"You won!":M.result==="lose"?"You lost":"Draw")}</h3>
+    <p class="sub">${how==="left"?(GL()?`غادر ${esc(M.opp)} المعركة.`:`${esc(M.opp)} left the battle.`)+"<br>":""}<b>${esc(meName())} ${BL.score} – ${M.oppScore} ${esc(M.opp)}</b></p>
+    <div class="row"><button class="btn primary grow" data-act="mpPlay" data-g="blocks">${tr("Find a new opponent")}</button><button class="btn grow" data-act="blocksSolo">${tr("Back to solo game")}</button></div>`);
+}
+function blocksMpData(d){ const M=BL&&BL.mp; if(!M||M.result) return;
+  if(d.t==="bs"){ M.oppScore=+d.s||0; if(d.done) M.oppDone=true; const o=$("#bOpp"); if(o) o.textContent=M.oppScore; if(M.done&&M.oppDone) blocksMpEnd(); }
+  else if(d.t==="bye") blocksMpEnd("left"); }
+function blocksSolo(){ closeModal(); const my=MP; if(my&&my.game==="blocks") mpStop(); clearInterval(bTick); BL=BLsolo; BLsolo=null; if(BL) { S.game="blocks"; show("games"); } else openBlocks(); }
+MPG.blocks={title:"Block Puzzle",info:"Score battle: you both get the same pieces for 3 minutes. The highest score wins.",back:"blocks",icon:()=>'<span class="qblk"><i></i><i></i><i></i><i></i></span>',
+  busy:()=>!!(BL&&BL.mp&&!BL.mp.result),init:()=>({seed:Math.floor(Math.random()*2147483647)}),start:blocksMpStart,data:blocksMpData,left:()=>blocksMpEnd("left")};
+function newTray(){ if(BL.mp) return seededTray(BL.mp.seed,BL.mp.k++); for(let k=0;k<20;k++){ const t=[newPiece(),newPiece(),newPiece()], cols=BCOL.map((_,i)=>i).sort(()=>Math.random()-.5); t.forEach((p,i)=>p.col=cols[i]); if(t.some(p=>fitsAny(BL.grid,p))||k===19) return t; } }
+function saveBlocks(){ if(BL&&!BL.mp) store.set("blocks",BL); }
+function openBlocks(){ if(BL&&BL.mp&&!BL.mp.result){ S.game="blocks"; return show("games"); } if(BL&&BL.mp){ BL=BLsolo; BLsolo=null; } const s=store.get("blocks",null); BL=(s&&Array.isArray(s.grid)&&s.grid.length===64&&!s.over)?s:null; if(!BL) newBlocks(false); S.game="blocks"; show("games"); }
 function newBlocks(render){ BL={grid:Array(64).fill(0),tray:[],score:0,combo:0,over:false}; BL.tray=newTray(); saveBlocks(); if(render){ closeModal(); renderBlocks($("#v-games")); } }
 function pieceHtml(p,cell){ const h=Math.max(...p.c.map(x=>x[0]))+1, w=Math.max(...p.c.map(x=>x[1]))+1;
   return `<div class="bp" style="--cs:${cell}px;grid-template-columns:repeat(${w},var(--cs));grid-template-rows:repeat(${h},var(--cs))">${p.c.map(([y,x])=>`<i style="grid-row:${y+1};grid-column:${x+1};--bc:${BCOL[p.col]}"></i>`).join("")}</div>`; }
 function renderBlocks(v){
-  const best=store.get("blocksBest",0);
+  if(!BL) return openBlocks();
+  const best=store.get("blocksBest",0), M=BL.mp;
   v.innerHTML=`<div class="gwrap" id="gameRoot">
     <div class="gtop"><button class="btn small gback" data-act="gHome">${tr("‹ Games")}</button>
-      <div class="bscore"><b id="bScore">${BL.score}</b><small>${tr("Best")}: <span id="bBest">${Math.max(best,BL.score)}</span></small></div>${fsButton()}</div>
+      <div class="bscore"><b id="bScore">${BL.score}</b>${M?`<small>${esc(M.opp)}: <b id="bOpp">${M.oppScore}</b> · <span class="btime" id="bTime">3:00</span></small>`:`<small>${tr("Best")}: <span id="bBest">${Math.max(best,BL.score)}</span></small>`}</div>${fsButton()}</div>
     <div class="bgrid" id="bgrid" dir="ltr">${BL.grid.map((c,i)=>`<div class="bc${c?" on":""}" data-i="${i}" ${c?`style="--bc:${BCOL[c-1]}"`:""}></div>`).join("")}<div class="bfx" id="bfx"></div></div>
     <div class="btray" id="btray" dir="ltr">${BL.tray.map((p,i)=>`<div class="bslot" data-slot="${i}">${p?pieceHtml(p,18):""}</div>`).join("")}</div>
-    <div class="gctl"><button class="btn" data-act="blocksNew">${tr("New game")}</button></div>
+    <div class="gctl">${M?`<button class="btn danger" data-act="blocksLeave">${tr("Leave battle")}</button>`:`<button class="btn" data-act="blocksNew">${tr("New game")}</button><button class="btn primary" data-act="mpPlay" data-g="blocks">${tr("Online battle")}</button>`}</div>
   </div>`;
   if(S.gfs) $("#gameRoot").classList.add("fs");
-  sizeBlocks();
+  sizeBlocks(); if(M) blocksMpTick();
 }
 function sizeBlocks(){ const root=$("#gameRoot"), g=$("#bgrid"); if(!root||!g) return;
   let w=Math.min(root.clientWidth,520); const other=[...root.children].filter(c=>c!==g&&(!S.gfs||!c.classList.contains("gtop"))).reduce((t,c)=>t+c.offsetHeight+10,0);
@@ -2080,7 +2285,7 @@ function bPointerMove(e){
 }
 function bPointerUp(){
   if(!drag) return; const d=drag; drag=null; d.el.remove(); d.slot.classList.remove("lifted");
-  if(!d.at){ drawGrid(); return; }
+  if(!d.at||(BL.mp&&(BL.mp.done||BL.mp.result))){ drawGrid(); return; }
   const [r,c]=d.at; d.p.c.forEach(([y,x])=>{ BL.grid[(r+y)*8+c+x]=d.p.col+1; });
   BL.tray[d.i]=null; let gain=d.p.c.length;
   const L=linesIf(BL.grid), n=L.rows.length+L.cols.length, clr=new Set();
@@ -2094,13 +2299,15 @@ function bPointerUp(){
   BL.score+=gain;
   if(BL.tray.every(x=>!x)) BL.tray=newTray();
   if(!BL.tray.some(p=>p&&fitsAny(BL.grid,p))) BL.over=true;
-  const best=Math.max(store.get("blocksBest",0),BL.score); store.set("blocksBest",best); saveBlocks();
+  const M=BL.mp, best=M?0:Math.max(store.get("blocksBest",0),BL.score); if(!M){ store.set("blocksBest",best); saveBlocks(); }
+  if(M){ if(BL.over) M.done=true; mpSend({t:"bs",s:BL.score,done:M.done}); }
   // redraw with a short flash on cleared cells
   $$("#bgrid .bc").forEach((el,i)=>{ if(clr.has(i)){ el.className="bc on clearing"; } });
-  setTimeout(()=>{ if(!$("#bgrid")) return; drawGrid(); $("#bScore").textContent=BL.score; $("#bBest").textContent=best;
+  setTimeout(()=>{ if(!$("#bgrid")) return; drawGrid(); $("#bScore").textContent=BL.score; if($("#bBest")) $("#bBest").textContent=best;
     $("#btray").innerHTML=BL.tray.map((p,i)=>`<div class="bslot" data-slot="${i}">${p?pieceHtml(p,18):""}</div>`).join("");
     $$("#btray .bslot").forEach((s,i)=>{ if(BL.tray[i]&&!fitsAny(BL.grid,BL.tray[i])) s.classList.add("nofit"); });
-    if(BL.over) setTimeout(()=>modal(`<div class="result">▦</div><h3>${tr("No space left")}</h3><p class="sub">${tr("Score")}: <b>${BL.score}</b> · ${tr("Best")}: <b>${best}</b>${BL.score>=best&&BL.score>0?"<br>"+tr("New best score!"):""}</p><button class="btn primary" data-act="blocksNew">${tr("Play again")}</button>`),400);
+    if(BL.over&&M){ if(M.oppDone) blocksMpEnd(); else if(!M.result) toast(tr("No space left. Waiting for the timer…")); }
+    else if(BL.over) setTimeout(()=>modal(`<div class="result">▦</div><h3>${tr("No space left")}</h3><p class="sub">${tr("Score")}: <b>${BL.score}</b> · ${tr("Best")}: <b>${best}</b>${BL.score>=best&&BL.score>0?"<br>"+tr("New best score!"):""}</p><button class="btn primary" data-act="blocksNew">${tr("Play again")}</button>`),400);
   }, clr.size?260:0);
   const fx=$("#bfx"); if(fx){ fx.innerHTML=`<span>+${gain}${msg?"<br><small>"+esc(msg)+"</small>":""}</span>`; fx.classList.remove("go"); void fx.offsetWidth; fx.classList.add("go"); }
 }
@@ -2131,21 +2338,25 @@ document.addEventListener("click",e=>{
   if(ga==="chessNew"){ closeModal(); S.game="chessMenu"; return show("games"); }
   if(ga==="chessMenu"){ if(CH&&CH.mode==="mp"&&!CH.over&&S.game==="chess") return modal(`<h3>${tr("Leave this game?")}</h3><p class="sub">${tr("Leaving counts as resigning.")}</p><div class="row"><button class="btn danger grow" data-act="mpQuit">${tr("Leave and resign")}</button><button class="btn grow" data-act="modalClose">${tr("Stay")}</button></div>`);
     closeModal(); chessReq++; if(CH) CH.thinking=false; if(CH&&CH.mode==="mp"){ mpStop(); CH=null; } S.game="chessMenu"; return show("games"); }
-  if(ga==="nav"){ const n=CH.moves.length, at=CH.view===null?n:CH.view, k=gel.dataset.n; return navTo(k==="first"?0:k==="prev"?at-1:k==="next"?at+1:null); }
+  if(ga==="nav"){ const n=CH.moves.length, at=CH.view===null?n:CH.view, k=gel.dataset.n; navTo(k==="first"?0:k==="prev"?at-1:k==="next"?at+1:null); return coachSayMove(); }
+  if(ga==="coachMute"){ store.set("coachVoice",!voiceOn()); coachSay(""); $$("[data-act=coachMute]").forEach(b=>b.textContent=voiceOn()?"🔊":"🔇"); if(voiceOn()) coachSayMove(); return; }
+  if(ga==="chessVar"){ S.chessVariant=gel.dataset.v; return renderGames(); }
   if(ga==="review") return startReview();
-  if(ga==="reviewMoves"){ closeModal(); return navTo(1); }
-  if(ga==="mpPlay") return mpPlay();
+  if(ga==="reviewMoves"){ closeModal(); navTo(1); sizeBoard(); return coachSayMove(); }
+  if(ga==="mpPlay") return mpPlay(gel.dataset.g||"chess");
   if(ga==="mpName") return askName(false);
   if(ga==="mpNameSave") return saveName(gel.dataset.q==="1");
-  if(ga==="mpLeave"){ mpStop(); S.game="chessMenu"; return show("games"); }
+  if(ga==="mpLeave"){ const g=MP?MP.game:(S.mpWant||"chess"); mpStop(); S.game=MPG[g].back; return show("games"); }
   if(ga==="mpQuit"){ closeModal(); mpSend({t:"resign"}); return finishChess("resign"); }
   if(ga==="chessFlip"){ CH.flip=!CH.flip; return drawBoard(); }
   if(ga==="chessResign"){ if(!CH||CH.over) return; return modal(`<h3>${tr("Resign this game?")}</h3><div class="row"><button class="btn danger grow" data-act="chessResignYes">${tr("Yes, resign")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); }
   if(ga==="chessResignYes"){ closeModal(); if(CH&&CH.mode==="mp") mpSend({t:"resign"}); return finishChess("resign"); }
-  if(ga==="chessRematch"){ closeModal(); return startChess(CH.lvl,CH.color>0?"w":"b"); }
+  if(ga==="chessRematch"){ closeModal(); S.chessVariant=CH.variant; return startChess(CH.lvl,CH.color>0?"w":"b"); }
   if(ga==="promo"){ closeModal(); return playMove(+gel.dataset.m); }
   if(ga==="blocksNew"){ if(BL&&!BL.over&&BL.score>0&&!$("#modal").innerHTML) return modal(`<h3>${tr("Start a new game?")}</h3><p class="sub">${tr("Your current score will be lost.")}</p><div class="row"><button class="btn primary grow" data-act="blocksNewYes">${tr("Start over")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); return newBlocks(true); }
   if(ga==="blocksNewYes") return newBlocks(true);
+  if(ga==="blocksSolo") return blocksSolo();
+  if(ga==="blocksLeave") return modal(`<h3>${tr("Leave this battle?")}</h3><p class="sub">${tr("Leaving counts as losing.")}</p><div class="row"><button class="btn danger grow" data-act="blocksSolo">${tr("Leave")}</button><button class="btn grow" data-act="modalClose">${tr("Stay")}</button></div>`);
   const el=e.target.closest("[data-go],[data-tool],[data-cat],[data-act],[data-note],#beacon"); if(!el) return;
   const qa=el.dataset.act;
   if(qa==="qIndex") return openQIndex();
