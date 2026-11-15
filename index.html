@@ -1916,8 +1916,8 @@ function drawBoard(){
   reviewOverlay();
   userArrows();
 }
-/* your own arrows: hold a square for 2 seconds to start one, hold another for 1 second to finish it; a tap on the board clears them */
-const ARROW_START_MS=2000, ARROW_END_MS=1000;
+/* your own arrows: hold a square for 1 second to start one, hold another for 1 second to finish it; a tap on the board clears them */
+const ARROW_START_MS=1000, ARROW_END_MS=1000;
 let arrowT=null, arrowSkipTap=false, arrowDown=null;
 function userArrows(){
   const B=$("#board"); if(!B||!CH) return; const old=B.querySelector(".uarrows"); if(old) old.remove();
