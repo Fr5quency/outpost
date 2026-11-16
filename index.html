@@ -1980,7 +1980,7 @@ const oppName=()=>CH.arch&&CH.mode!=="hot"?CH.arch.on:CH.mode==="puz"?tr("Puzzle
 const youLabel=()=>CH&&(CH.mode==="hot"||CH.mode==="puz")?tr(CH.color>0?"White":"Black"):CH&&CH.arch&&CH.arch.me?CH.arch.me:meName();
 /* ===== PUZZLES: 100 positions in puzzles.json, each with one correct line. f = position, m = moves (yours, reply, yours...), t = type, r = rating ===== */
 let PZ=null, PZp=null;
-const PZ_TYPE={m1:"Mate in 1",m2:"Mate in 2",m3:"Mate in 3",m4:"Mate in 4",win:"Win material",brill:"Brilliant move"}, PZ_N=100;
+const PZ_TYPE={m1:"Mate in 1",m2:"Mate in 2",m3:"Mate in 3",m4:"Mate in 4",win:"Win material",brill:"Brilliant move"}, PZ_N=150;
 const puzState=()=>{ const st=store.get("puz",null); return st&&st.done?st:{done:{}}; };
 const puzCount=()=>Object.keys(puzState().done).length;
 function loadPuzzles(){ return PZ?Promise.resolve(PZ):(PZp||(PZp=getJSON("puzzles.json").then(d=>{ PZ=d; return d; }).catch(e=>{ PZp=null; throw e; }))); }
@@ -2836,8 +2836,10 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
- {at:"2026-11-16T19:48:00Z",en:["Update notices: this window shows what changed and when, and a bar appears when an update arrives while the app is open. Tap \"What's new\" on Home to see every update.","A brilliant move in a puzzle now dings and shows the !! badge.","50 new puzzles are coming in the next update."],
-  ar:["إشعارات التحديث: هذه النافذة تعرض ما تغيّر ومتى، ويظهر شريط عند وصول تحديث والتطبيق مفتوح. اضغط \"ما الجديد\" في الرئيسية لرؤية كل التحديثات.","النقلة الرائعة في الألغاز تُصدر صوتًا وتظهر علامة !!.","٥٠ لغزًا جديدًا في التحديث القادم."]},
+ {at:"2026-11-16T20:10:00Z",en:["50 new chess puzzles (150 in total): 17 brilliant sacrifices, 17 mate in 4 and 16 mate in 3. Every move you need to find is the only one that works, checked by Stockfish.","Brilliant-move puzzles have a teal tag, mate in 4 a pink one. Solving a sacrifice plays the brilliant ding."],
+  ar:["٥٠ لغز شطرنج جديد (١٥٠ لغزًا): ١٧ تضحية رائعة، ١٧ كش مات في ٤، و١٦ كش مات في ٣. كل نقلة عليك إيجادها هي الوحيدة الصحيحة، وتحقق منها Stockfish.","ألغاز النقلة الرائعة لها علامة فيروزية، وكش مات في ٤ علامة وردية. حل التضحية يُصدر صوت النقلة الرائعة."]},
+ {at:"2026-11-16T19:48:00Z",en:["Update notices: this window shows what changed and when, and a bar appears when an update arrives while the app is open. Tap \"What's new\" on Home to see every update.","A brilliant move in a puzzle now dings and shows the !! badge.","50 new puzzles were added in the next update."],
+  ar:["إشعارات التحديث: هذه النافذة تعرض ما تغيّر ومتى، ويظهر شريط عند وصول تحديث والتطبيق مفتوح. اضغط \"ما الجديد\" في الرئيسية لرؤية كل التحديثات.","النقلة الرائعة في الألغاز تُصدر صوتًا وتظهر علامة !!.","أُضيف ٥٠ لغزًا جديدًا في التحديث التالي."]},
  {at:"2026-11-16T18:18:00Z",en:["New Grandmaster bot (2600), powered by Stockfish.","Game review: corrects itself using the whole game, shows forced mates (M7) and the evaluation after every move, better Miss / Blunder / Great labels."],
   ar:["بوت جديد: أستاذ كبير (٢٦٠٠) يعمل بـ Stockfish.","مراجعة المباراة: تصحّح نفسها باستخدام المباراة كاملة، وتعرض الكش مات الإجباري (M7) والتقييم بعد كل نقلة، وتصنيفات أدق."]},
  {at:"2026-11-16T17:51:00Z",en:["The review shows which engine analysed the game: Stockfish 18 or Outpost Chess.","The coach's comments no longer make the board smaller."],
