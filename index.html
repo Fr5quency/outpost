@@ -464,6 +464,15 @@ body[data-view="games"].inchess .prefs{display:none}
 .evchip{font:800 12px/1 var(--display);padding:4px 7px;border-radius:6px;background:var(--sunk);color:var(--ink);border:1px solid var(--line)}.evchip.w{background:#f0f0ea;color:#222}.evchip.b{background:#2b2b2b;color:#fff}
 .mtag{font-style:normal;font-weight:800;color:#ca3431;margin-inline-start:2px}
 .rv-eng{margin:-6px 0 0;font-size:13px;color:var(--muted)}.rv-eng b{color:var(--ink)}
+/* bot vs bot */
+.bvbicon{gap:2px}.bvbicon .pc{width:24px;height:30px}.bvbicon b{font:800 11px/1 var(--display);color:#fff}
+.bvbgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bvbcol{display:flex;flex-direction:column;gap:6px;min-width:0}.bvbcol .sect{margin:0}
+.botrow.small{padding:8px;gap:8px}.botrow.small .ava{width:30px;height:30px;font-size:14px}.botrow.small .bname b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.botrow.on{outline:2px solid var(--signal);background:color-mix(in srgb,var(--signal) 14%,var(--panel))}
+.pbar{position:relative}
+.wowbubble{position:absolute;inset-inline-start:52px;top:-34px;z-index:6;background:#fff;color:#111;font:700 13px/1.2 var(--body);padding:7px 11px;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.3);white-space:nowrap;animation:bpop .35s cubic-bezier(.3,1.6,.6,1)}
+.wowbubble::after{content:"";position:absolute;inset-inline-start:14px;bottom:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
 /* game history */
 .hicon{background:#5b7bd5;color:#fff}.hicon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -890,7 +899,8 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
-"Brilliant Mover":"صائد الروائع","Hunts for brilliant sacrifices":"يبحث عن التضحيات الرائعة",
+"Bot vs bot":"بوت ضد بوت","Pick two bots and watch them play. Brilliant moves get the !! badge and the ding.":"اختر بوتين وشاهدهما يلعبان. النقلات الرائعة تحصل على علامة !! والصوت.","Stop the match":"أوقف المباراة","Other bots":"بوتات أخرى","Wow! You're such a clever bot!":"واو! أنت بوت ذكي جدًا!",
+"Brilliant Mover":"صائد الروائع","Never misses a brilliant sacrifice: expect frequent !! moves":"لا تفوته أي تضحية رائعة: توقّع نقلات !! كثيرة",
 "What's new":"ما الجديد","Updated":"تم التحديث","Got it":"حسنًا","All updates":"كل التحديثات","Outpost was updated. Tap to reload.":"تم تحديث Outpost. اضغط لإعادة التحميل.",
 "Mate in 4":"كش مات في ٤","Brilliant move":"نقلة رائعة",
 "Grandmaster":"أستاذ كبير (Grandmaster)","Grandmaster · Stockfish":"أستاذ كبير · Stockfish","You had checkmate in {n} with {b}! {m} lets it slip.":"كان لديك كش مات في {n} بـ {b}! و{m} تضيّعه.","They had checkmate in {n} with {b} and missed it. Lucky!":"كان لديهم كش مات في {n} بـ {b} وفاتهم. كنت محظوظًا!","{m}! Forced checkmate in {n}.":"{m}! كش مات إجباري في {n}.","{m}. They have a forced checkmate in {n}.":"{m}. لديهم كش مات إجباري في {n}.",
@@ -1757,6 +1767,7 @@ function renderGames(){
   if(S.game==="mpQueue") return renderQueue(v);
   if(S.game==="puzList") return renderPuzList(v);
   if(S.game==="chessHist") return renderChessHist(v);
+  if(S.game==="bvbSetup") return renderBvb(v);
   if(S.game==="blocks") return renderBlocks(v);
   const XG=window.OUTPOST_GAMES||{}; if(XG[S.game]) return XG[S.game].render(v);
   const best=store.get("blocksBest",0), cs=store.get("chess",null);
@@ -1784,7 +1795,7 @@ const LEVELS=[
  {elo:1800,rank:"Expert",              o:{depth:5,noise:8,ms:1200}},
  {elo:2000,rank:"Candidate master",    o:{depth:10,ms:2500}},
  {elo:2600,rank:"Grandmaster",         o:{depth:10,ms:3000}, sf:2600},  // Stockfish limited to 2600 Elo (Outpost Chess at full strength when Stockfish cannot run)
- {elo:1500,rank:"Hunts for brilliant sacrifices", o:{depth:3,noise:45,blunder:.04,ms:600}, brill:1, name:"Brilliant Mover"}   // plays like a 1500 player, but always plays a brilliant sacrifice when one exists
+ {elo:1500,rank:"Never misses a brilliant sacrifice: expect frequent !! moves", o:{depth:3,noise:45,blunder:.04,ms:600}, brill:1, name:"Brilliant Mover"}   // plays like a 1500 player, but always plays a brilliant sacrifice when one exists
 ];
 const NAMES=[["Omar","عمر"],["Lina","لينا"],["Youssef","يوسف"],["Sara","سارة"],["Karim","كريم"],["Nour","نور"],["Adam","آدم"],["Mariam","مريم"],["Hassan","حسن"],["Layla","ليلى"],["Ziad","زياد"],["Hana","هنا"],["Tarek","طارق"],["Salma","سلمى"],["Ali","علي"],["Farida","فريدة"],["Mostafa","مصطفى"],["Jana","جنى"],["Khaled","خالد"],["Malak","ملك"]];
 const AVC=["#e07a5f","#3d8bd4","#81b29a","#c77dff","#f2a541","#4ecdc4","#ef476f","#8d99ae","#b5838d","#c9a227","#1baaa6"];
@@ -1905,7 +1916,14 @@ function liveClass(i){ // rate the move as soon as its analysis arrives; a brill
   const P=classifyPly(V,CH.rows[i],CH.moves[i],i,CH.liveC[i-1],null); if(!P) return; CH.liveC[i]=P.c;
   /* anyone's brilliant move: yours, the bot's, the online opponent's, both players in 1v1 */
   if(P.c==="brilliant"&&i===CH.moves.length-1){ CH.live={ply:i,t:Date.now(),san:P.san}; ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){}
-    drawBoard(); }
+    drawBoard(); bvbWow(i); }
+}
+/* bot vs bot: after a brilliant move, the bot it was played against reacts */
+function bvbWow(i){
+  if(!CH||CH.mode!=="bvb"||CH.view!==null) return; const fen=CH.fens[i]; if(!fen) return; const mover=fen.split(" ")[1]==="w"?1:-1, victim=-mover;
+  const bars=$$("#gameRoot .pbar"), bar=bars[victim===CH.color?1:0]; if(!bar) return; const old=$("#wowBubble"); if(old) old.remove();
+  const txt=tr("Wow! You're such a clever bot!"); bar.insertAdjacentHTML("beforeend",`<span class="wowbubble" id="wowBubble">${esc(txt)}</span>`);
+  if(voiceOn()) coachSay(txt); const el=$("#wowBubble"); setTimeout(()=>{ if(el&&el.isConnected) el.remove(); },3200);
 }
 /* ---- coach: short spoken comments in the review ---- */
 const COACH={
@@ -1966,22 +1984,23 @@ function sanWords(s){ // turn "Nxf7+" into words a voice can read
   return out;
 }
 function coachText(P,i,spoken){
-  const mine=CH.mode!=="hot"&&P.color===CH.color||CH.mode==="hot", fill=t=>tr(t).replace(/\{n\}/g,GL()?AD(Math.abs(P.mate||P.pmate)):Math.abs(P.mate||P.pmate)).replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan);
+  const mine=CH.mode==="bvb"?false:CH.mode!=="hot"&&P.color===CH.color||CH.mode==="hot", fill=t=>tr(t).replace(/\{n\}/g,GL()?AD(Math.abs(P.mate||P.pmate)):Math.abs(P.mate||P.pmate)).replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan);
   if(P.c==="miss"&&P.mate>0) return fill(mine?"You had checkmate in {n} with {b}! {m} lets it slip.":"They had checkmate in {n} with {b} and missed it. Lucky!");
   if(P.mate>0&&!P.best&&P.pmate>0) return fill(mine?"{m}! Forced checkmate in {n}.":"{m}. They have a forced checkmate in {n}.");
-  const T=COACH[GL()?"ar":"en"][CH.mode!=="hot"&&P.color===CH.color?"me":"opp"][P.c], t=T[i%T.length]; return t.replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan); }
+  const T=COACH[GL()?"ar":"en"][CH.mode!=="hot"&&CH.mode!=="bvb"&&P.color===CH.color?"me":"opp"][P.c], t=T[i%T.length]; return t.replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan); }
 const voiceOn=()=>store.get("coachVoice",true)!==false;
 function coachSay(text){ try{ const sy=window.speechSynthesis; if(!sy) return; sy.cancel(); if(!voiceOn()||!text) return; const u=new SpeechSynthesisUtterance(text); u.lang=GL()?"ar-SA":"en-US"; u.rate=1.06; u.pitch=1.08; sy.speak(u); }catch(e){} }
 function coachSayMove(){ if(!CH||!CH.an) return; const k=CH.view===null?CH.moves.length:CH.view, P=CH.an.plies[k-1]; if(P) coachSay(coachText(P,k-1,true)); else coachSay(""); }
-const coachSum=()=>{ if(CH.mode==="hot") return ""; const a=CH.color>0?CH.an.acc.w:CH.an.acc.b; return COACH[GL()?"ar":"en"].sum[a>=90?0:a>=75?1:a>=50?2:3]; };
+const coachSum=()=>{ if(CH.mode==="hot"||CH.mode==="bvb") return ""; const a=CH.color>0?CH.an.acc.w:CH.an.acc.b; return COACH[GL()?"ar":"en"].sum[a>=90?0:a>=75?1:a>=50?2:3]; };
 function engine(){ if(!CE) CE=ChessEngine(null); return CE; }
 function worker(){ if(CW===null){ try{ CW=new Worker(URL.createObjectURL(new Blob(["("+ChessEngine.toString()+")(self);"],{type:"text/javascript"}))); CW.onmessage=e=>{ if(e.data&&e.data.type) onAnalysis(e.data); else if(e.data&&e.data.roots) onRoots(e.data); else onBotMove(e.data); }; CW.onerror=()=>{CW=false;}; }catch(e){ CW=false; } } return CW; }
 function chessReplay(moves,E){ E=E||engine(); setupEngine(E); const keys=[E.fen().split(" ").slice(0,4).join(" ")]; for(const s of moves){ const m=E.legal().find(x=>E.moveStr(x)===s); if(!m) break; E.make(m); keys.push(E.fen().split(" ").slice(0,4).join(" ")); } return keys; }
 const posKey=()=>engine().fen().split(" ").slice(0,4).join(" ");
 const strSq=s=>(s.charCodeAt(1)-49)*16+(s.charCodeAt(0)-97);
 function saveChess(){ if(CH&&CH.mode==="bot") store.set("chess",{lvl:CH.lvl,color:CH.color,moves:CH.moves,over:CH.over||null,variant:CH.variant,start:CH.start}); }
-const oppName=()=>CH.arch&&CH.mode!=="hot"?CH.arch.on:CH.mode==="puz"?tr("Puzzle")+" "+(CH.puz.i+1):CH.mode==="mp"?CH.opp:CH.mode==="hot"?tr(CH.color>0?"Black":"White"):botName(CH.lvl);
-const youLabel=()=>CH&&(CH.mode==="hot"||CH.mode==="puz")?tr(CH.color>0?"White":"Black"):CH&&CH.arch&&CH.arch.me?CH.arch.me:meName();
+const bvbLvl=c=>c>0?CH.lvlW:CH.lvlB;
+const oppName=()=>CH.mode==="bvb"?botName(bvbLvl(-CH.color)):CH.arch&&CH.mode!=="hot"?CH.arch.on:CH.mode==="puz"?tr("Puzzle")+" "+(CH.puz.i+1):CH.mode==="mp"?CH.opp:CH.mode==="hot"?tr(CH.color>0?"Black":"White"):botName(CH.lvl);
+const youLabel=()=>CH&&CH.mode==="bvb"?botName(bvbLvl(CH.color)):CH&&(CH.mode==="hot"||CH.mode==="puz")?tr(CH.color>0?"White":"Black"):CH&&CH.arch&&CH.arch.me?CH.arch.me:meName();
 /* ===== PUZZLES: 100 positions in puzzles.json, each with one correct line. f = position, m = moves (yours, reply, yours...), t = type, r = rating ===== */
 let PZ=null, PZp=null;
 const PZ_TYPE={m1:"Mate in 1",m2:"Mate in 2",m3:"Mate in 3",m4:"Mate in 4",win:"Win material",brill:"Brilliant move"}, PZ_N=150;
@@ -2029,6 +2048,20 @@ function puzSolution(){ // show the rest of the line, one move at a time
     const m=E.legal().find(x=>E.moveStr(x)===P.m[CH.puz.step]); if(m===undefined) return; puzApply(m); if(!CH.puz.done) puzReply(()=>setTimeout(step,350)); };
   step();
 }
+function renderBvb(v){
+  const order=LEVELS.map((L,i)=>[L,i]).sort((a,b)=>a[0].elo-b[0].elo||a[1]-b[1]), w=S.bvbW??5, b=S.bvbB??10;
+  const pick=(side,cur)=>`<div class="bvbcol"><h3 class="sect">${tr(side>0?"White":"Black")}</h3>${order.map(([L,i])=>`<button class="botrow small${cur===i?" on":""}" data-act="bvbPick" data-s="${side}" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${L.elo}</small></span></button>`).join("")}</div>`;
+  v.innerHTML=`<div class="row"><button class="btn small" data-act="chessMenu">${tr("‹ Chess")}</button></div>
+    <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Bot vs bot")}</h2><p class="sub">${tr("Pick two bots and watch them play. Brilliant moves get the !! badge and the ding.")}</p></div>
+    <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
+    <button class="btn primary" data-act="bvbStart">${GL()?`ابدأ: ${esc(botName(w))} ضد ${esc(botName(b))}`:`Start: ${esc(botName(w))} vs ${esc(botName(b))}`}</button>
+    <div class="bvbgrid">${pick(1,w)}${pick(-1,b)}</div>`;
+}
+function startBvb(w,b){
+  chessReq++; const variant=S.chessVariant||"std"; S.bvbW=w; S.bvbB=b;
+  CH=newCH({mode:"bvb",lvlW:w,lvlB:b,lvl:b,color:1,flip:false,variant,start:variantFen(variant)});
+  CH.keys=chessReplay([]); CH.fens=[engine().fen()]; closeModal(); S.game="chess"; show("games"); maybeBot();
+}
 function startHot(){
   chessReq++; const variant=S.chessVariant||"std"; CH=newCH({mode:"hot",lvl:0,color:1,flip:false,variant,start:variantFen(variant)});
   CH.keys=chessReplay([]); CH.fens=[engine().fen()]; closeModal(); S.game="chess"; show("games");
@@ -2054,6 +2087,7 @@ function renderChessMenu(v){
     <p class="sub">${tr("Ratings are approximate. The bot plays fully offline.")}</p>
     <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
     <p class="sub">${tr((VARIANTS.find(x=>x[0]===(S.chessVariant||"std"))||VARIANTS[0])[2])}</p>
+    <button class="hotcard bvbcard" data-act="bvbOpen"><span class="hoticon bvbicon">${pcImg(2)}<b>vs</b>${pcImg(-2)}</span><span class="otxt"><b>${tr("Bot vs bot")}</b><small>${tr("Pick two bots and watch them play. Brilliant moves get the !! badge and the ding.")}</small></span></button>
     <button class="hotcard histcard" data-act="chessHist"><span class="hoticon hicon"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4M12 7v5l3 2"/></svg></span><span class="otxt"><b>${tr("Game history")}</b><small>${GL()?`كل مبارياتك مع النقلات والمراجعة · ${AD(archList().length)} مباراة`:`All your games with moves and review · ${archList().length} saved`}</small></span></button>
     <button class="hotcard puzcard" data-act="puzOpen"><span class="hoticon pzicon">?</span><span class="otxt"><b>${tr("Puzzles")}</b><small>${GL()?`${AD(PZ_N)} لغز: كش مات وتكتيكات ونقلات رائعة · حللت ${AD(puzCount())}`:`${PZ_N} puzzles: checkmates, tactics and brilliant moves · ${puzCount()} solved`}</small></span></button>
     <button class="hotcard" data-act="chessHot"><span class="hoticon">${pcImg(6)}${pcImg(-6)}</span><span class="otxt"><b>${tr("1v1 on this phone")}</b><small>${tr("Two players pass the phone. The board flips after every move. Uses the mode chosen above.")}</small></span></button>
@@ -2072,12 +2106,12 @@ function resumeChess(){ const cs=store.get("chess",null); chessReq++; CH=newCH({
 const NAV='<svg viewBox="0 0 24 24">';
 function renderChess(v){
   if(!CH){ S.game=null; return renderGames(); }
-  const AR_=CH.arch, mp=CH.mode==="mp", mpl=mp&&!AR_, puz=CH.mode==="puz", hot=CH.mode==="hot"||puz, on=oppName();
+  const AR_=CH.arch, mp=CH.mode==="mp", mpl=mp&&!AR_, puz=CH.mode==="puz", hot=CH.mode==="hot"||puz, bvb=CH.mode==="bvb", on=oppName();
   v.innerHTML=`<div class="gwrap${puz?" puzmode":""}" id="gameRoot">
-    <div class="gtop"><button class="btn small gback" data-act="${AR_?"chessHist":puz?"puzList":"chessMenu"}">${tr(AR_?"‹ History":puz?"‹ Puzzles":mp?"‹ Leave":"‹ Opponents")}</button>${AR_?`<span class="vtag">${archDate(AR_.t)}</span>`:CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
+    <div class="gtop"><button class="btn small gback" data-act="${AR_?"chessHist":puz?"puzList":"chessMenu"}">${tr(AR_?"‹ History":puz?"‹ Puzzles":mp?"‹ Leave":bvb?"‹ Chess":"‹ Opponents")}</button>${AR_?`<span class="vtag">${archDate(AR_.t)}</span>`:CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
     <div class="pbar"><span class="ava${hot?(CH.color>0?" sideb":" sidew"):""}" style="${hot?"":`background:${mp?"#5b7bd5":AVC[CH.lvl]}`}">${hot?pcImg(-6*CH.color,"cp"):esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:puz?`<em>${tr(PZ_TYPE[PZ[CH.puz.i].t])} · ${PZ[CH.puz.i].r}</em>`:hot?"":`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mpl?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
-    <div class="pbar"><span class="ava ${hot?(CH.color>0?"sidew":"sideb"):"you"}">${hot?pcImg(6*CH.color,"cp"):esc(meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(youLabel())} ${AR_?(AR_.mb!=null?`<em>${AR_.mb}</em>`:""):mp?`<em>${eloOn()}</em>`:(!hot&&CH.variant==="std")?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mpl?`<span class="clock" id="clkYou"></span>`:""}</div>
+    <div class="pbar"><span class="ava ${hot?(CH.color>0?"sidew":"sideb"):bvb?"":"you"}" style="${bvb?`background:${AVC[bvbLvl(CH.color)]}`:""}">${hot?pcImg(6*CH.color,"cp"):esc(bvb?youLabel():meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(youLabel())} ${bvb?`<em>${LEVELS[bvbLvl(CH.color)].elo}</em>`:AR_?(AR_.mb!=null?`<em>${AR_.mb}</em>`:""):mp?`<em>${eloOn()}</em>`:(!hot&&CH.variant==="std")?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mpl?`<span class="clock" id="clkYou"></span>`:""}</div>
     <div class="revline" id="revLine"></div>
     <div class="coach" id="coachBox" hidden></div>
     <div class="navrow" dir="ltr">
@@ -2121,7 +2155,8 @@ function drawBoard(){
   $("#capsYou").innerHTML=byYou.map(p=>pcImg(p,"cp")).join("")+(diff>0?` <em>+${diff}</em>`:"");
   $("#capsBot").innerHTML=byBot.map(p=>pcImg(p,"cp")).join("")+(diff<0?` <em>+${-diff}</em>`:"");
   const yourTurn=engine().turn()===CH.color, inChk=engine().inCheck();
-  $("#botStatus").textContent=CH.over?"":CH.thinking?tr("Thinking…"):(!yourTurn&&inChk?tr("Check!"):"");
+  $("#botStatus").textContent=CH.over?"":CH.mode==="bvb"?(CH.thinking&&!yourTurn?tr("Thinking…"):""):CH.thinking?tr("Thinking…"):(!yourTurn&&inChk?tr("Check!"):"");
+  if(CH.mode==="bvb") $("#youStatus").textContent=!live?(GL()?`مراجعة: النقلة ${AD(CH.view)} من ${AD(CH.moves.length)}`:`Reviewing move ${CH.view} of ${CH.moves.length}`):CH.over?"":CH.thinking&&yourTurn?tr("Thinking…"):""; else
   if(CH.mode==="puz") $("#youStatus").textContent=CH.puz.done?(CH.puz.fail?tr("Solved"):tr("Solved on the first try!")):(engine().turn()===CH.color?tr(CH.color>0?"White to move":"Black to move"):"…"); else
   if(CH.mode==="hot"&&live&&!CH.over) $("#youStatus").textContent=(inChk?tr("Check!")+" ":"")+tr(engine().turn()>0?"White to move":"Black to move"); else
   $("#youStatus").textContent=!live?(GL()?`مراجعة: النقلة ${AD(CH.view)} من ${AD(CH.moves.length)}`:`Reviewing move ${CH.view} of ${CH.moves.length}`):CH.over?"":yourTurn?(inChk?tr("Check! Your move"):tr("Your move")):"";
@@ -2130,7 +2165,7 @@ function drawBoard(){
   $$(".navrow .btn").forEach(b=>{ const k=b.dataset.n; b.disabled=(k==="first"||k==="prev")?at===0:at===n; });
   const g=$("#gctl"), want=CH.mode==="puz"?(CH.puz.done?"pd":"pp"):CH.over?(CH.moves.length?"review":"flip"):"play";
   if(g&&g.dataset.s!==want&&CH.mode==="puz"){ g.dataset.s=want; g.innerHTML=want==="pd"?`<button class="btn" data-act="puzRetry">${tr("Retry")}</button><button class="btn primary" data-act="puzNext">${tr("Next puzzle")}</button>`:`<button class="btn" data-act="puzHint">${tr("Hint")}</button><button class="btn" data-act="puzSol">${tr("Show solution")}</button>`; }
-  else if(g&&g.dataset.s!==want){ g.dataset.s=want; g.innerHTML=`<button class="btn" data-act="chessFlip">${tr("Flip board")}</button>`+(want==="review"?`<button class="btn primary" data-act="review">★ ${tr("Game review")}</button>`:want==="play"?`<button class="btn danger" data-act="chessResign">${tr("Resign")}</button>`:""); }
+  else if(g&&g.dataset.s!==want){ g.dataset.s=want; g.innerHTML=`<button class="btn" data-act="chessFlip">${tr("Flip board")}</button>`+(want==="review"?`<button class="btn primary" data-act="review">★ ${tr("Game review")}</button>`:want==="play"?(CH.mode==="bvb"?`<button class="btn danger" data-act="bvbStop">${tr("Stop the match")}</button>`:`<button class="btn danger" data-act="chessResign">${tr("Resign")}</button>`):""); }
   reviewOverlay();
   userArrows();
   moveList();
@@ -2163,7 +2198,7 @@ function boardTap(sq){
 function navTo(k){ const n=CH.moves.length; CH.view=(k===null||k>=n)?null:Math.max(0,k); CH.sel=-1; drawBoard(); }
 function chessTap(sq){
   if(!CH) return; ensureAudio(); if(CH.view!==null) return navTo(null);   // tapping the board while reviewing jumps back to the game
-  if(CH.over||CH.thinking) return; const E=engine(); if(E.turn()!==CH.color) return;
+  if(CH.over||CH.thinking||CH.mode==="bvb") return; const E=engine(); if(E.turn()!==CH.color) return;
   const p=E.board()[sq];
   if(CH.sel>=0){
     const ms=E.legal().filter(m=>(m&127)===CH.sel&&((m>>7)&127)===sq);
@@ -2182,13 +2217,13 @@ function playMove(m,remote){
   if(CH.mode==="mp"){ const k=mover>0?"w":"b"; if(!remote){ CH.clock[k]-=Date.now()-CH.tStart; mpSend({t:"move",m:s,left:CH.clock[k]}); } CH.tStart=Date.now(); }
   try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){}
   if(CH.mode==="hot") CH.color=E.turn();
-  saveChess(); drawBoard(); const ended=chessEnd(); if(!ended&&CH.mode==="bot") maybeBot();
+  saveChess(); drawBoard(); const ended=chessEnd(); if(!ended&&(CH.mode==="bot"||CH.mode==="bvb")) maybeBot();
   if(!ended&&CH.mode==="hot"){ const g=CH.gid; setTimeout(()=>{ if(!CH||CH.gid!==g||CH.over||CH.mode!=="hot") return; CH.flip=engine().turn()<0; if(S.view==="games"&&S.game==="chess") renderChess($("#v-games")); },550); }
   return true;
 }
 function maybeBot(){
-  const E=engine(); if(!CH||CH.mode!=="bot"||CH.over||E.turn()===CH.color) return;
-  CH.thinking=true; drawBoard(); const id=++chessReq, t0=Date.now(), L=LEVELS[CH.lvl];
+  const E=engine(); if(!CH||CH.over) return; const bvb=CH.mode==="bvb"; if(!bvb&&(CH.mode!=="bot"||E.turn()===CH.color)) return;
+  CH.thinking=true; drawBoard(); const id=++chessReq, t0=Date.now(), L=LEVELS[bvb?bvbLvl(E.turn()):CH.lvl];
   const opts=Object.assign({},L.o); if(CH.moves.length<8&&!opts.noise&&!L.sf) opts.noise=12;
   CH.pending={id,t0};
   const vc=vcode(CH.variant), fen=E.fen();
@@ -2233,12 +2268,12 @@ function brillPick(E,list){
 function onRoots(d){ if(!CH||!CH.rootsCb||CH.rootsCb.id!==d.id) return; const f=CH.rootsCb.f; CH.rootsCb=null; f(d.roots.map(([s,m])=>({s,m}))); }
 function onBotMove(d){
   if(!CH||d.id!==chessReq) return;
-  const wait=CH.pending&&CH.pending.id===d.id?Math.max(0,450-(Date.now()-CH.pending.t0)):0;
+  const wait=CH.pending&&CH.pending.id===d.id?Math.max(0,(CH.mode==="bvb"?1000:450)-(Date.now()-CH.pending.t0)):0;   // bot vs bot: about a second a move, so you can follow it
   const go=()=>{ if(!CH||d.id!==chessReq) return; const lp=CH.moves.length-1;
     if(lp>=0&&CH.rows[lp]===undefined&&Date.now()-CH.moveT<2200) return setTimeout(go,100);
-    const hold=CH.live&&CH.live.ply===lp?Math.max(0,1500-(Date.now()-CH.live.t)):0;
+    const hold=CH.live&&CH.live.ply===lp?Math.max(0,(CH.mode==="bvb"?3000:1500)-(Date.now()-CH.live.t)):0;
     setTimeout(()=>{ if(!CH||d.id!==chessReq) return; CH.thinking=false; CH.pending=null;
-      if(d.move){ const sn=d.brill?san(engine(),d.move):""; playMove(d.move); if(d.brill&&CH){ const i=CH.moves.length-1; if(!CH.liveC[i]){ CH.liveC[i]="brilliant"; CH.live={ply:i,t:Date.now(),san:sn}; ensureAudio(); ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){} drawBoard(); } } } else drawBoard(); },hold); };
+      if(d.move){ const sn=d.brill?san(engine(),d.move):""; playMove(d.move); if(d.brill&&CH){ const i=CH.moves.length-1; if(!CH.liveC[i]){ CH.liveC[i]="brilliant"; CH.live={ply:i,t:Date.now(),san:sn}; ensureAudio(); ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){} drawBoard(); bvbWow(i); } } } else drawBoard(); },hold); };
   setTimeout(go,wait);
 }
 function chessEnd(){
@@ -2255,13 +2290,13 @@ function chessEnd(){
 function finishChess(res){
   if(!CH||CH.over) return;
   CH.over=res; CH.thinking=false; chessReq++; saveChess(); drawBoard(); tickClock();
-  const mp=CH.mode==="mp", hot=CH.mode==="hot"; let hotWin=0;
-  if(hot){ hotWin=res==="win"?CH.color:(res==="lose"||res==="resign")?-CH.color:0; CH.color=1; CH.flip=false; if(S.view==="games"&&S.game==="chess") renderChess($("#v-games")); }
+  const mp=CH.mode==="mp", bvb=CH.mode==="bvb", hot=CH.mode==="hot"||bvb; let hotWin=0;
+  if(hot){ hotWin=res==="win"?CH.color:(res==="lose"||res==="resign")?-CH.color:0; if(!bvb){ CH.color=1; CH.flip=false; } if(S.view==="games"&&S.game==="chess") renderChess($("#v-games")); }
   const name=esc(oppName());
   const WIN=["win","oppResign","timeWin","left"], LOSE=["lose","resign","timeLose"];
   const head={win:tr("You won!"),lose:GL()?`فاز ${name}`:`${name} wins`,resign:tr("You resigned"),oppResign:GL()?`استسلم ${name}، فزت!`:`${name} resigned. You won!`,
     timeWin:tr("You won on time!"),timeLose:tr("You ran out of time"),left:GL()?`غادر ${name} المباراة، فزت!`:`${name} left the game. You won!`}[res]||tr("Draw");
-  const hotHead=hotWin?tr(hotWin>0?"White wins":"Black wins"):tr("Draw"), hotSub=res==="resign"?tr(hotWin>0?"Black resigned.":"White resigned."):"";
+  const hotHead=hotWin?(bvb?(GL()?`فاز ${esc(botName(bvbLvl(hotWin)))}`:`${esc(botName(bvbLvl(hotWin)))} wins`):tr(hotWin>0?"White wins":"Black wins")):tr("Draw"), hotSub=res==="resign"?tr(hotWin>0?"Black resigned.":"White resigned."):"";
   const why={win:tr("Checkmate."),lose:tr("Checkmate."),stalemate:tr("Stalemate: no legal moves, but not in check."),fifty:tr("50 moves without a capture or pawn move."),repetition:tr("The same position happened three times."),material:tr("Not enough pieces left to checkmate.")}[res]||"";
   const why2=CH.why==="hill"?tr("The king reached the centre."):CH.why==="3check"?tr("Third check."):why;
   if(mp){ const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },2500); }
@@ -2269,7 +2304,7 @@ function finishChess(res){
   const eloLine=R?`<p class="eloline"><span>${tr(R.kind)}</span> <b>${R.from}</b> → <b>${R.to}</b> <em class="${d>0?"up":d<0?"down":""}">${d>0?"+"+d:d<0?d:"±0"}</em></p>`:"";
   setTimeout(()=>modal(`<div class="result">${hot?(hotWin?pcImg(6*hotWin,"pcbig"):"½"):WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${hot?hotHead:head}</h3>${(hot?(hotSub||why2):why2)?`<p class="sub">${hot?(hotSub||why2):why2}</p>`:""}${eloLine}
     ${CH.moves.length?`<button class="btn primary reviewbtn" data-act="review">★ ${tr("Game review")}</button>`:""}
-    <div class="row">${mp?`<button class="btn grow" data-act="mpPlay">${tr("Find a new opponent")}</button>`:`<button class="btn grow" data-act="chessRematch">${tr("Rematch")}</button>`}<button class="btn grow" data-act="chessMenu">${tr(mp||hot?"Back to chess":"Other opponent")}</button></div>
+    <div class="row">${mp?`<button class="btn grow" data-act="mpPlay">${tr("Find a new opponent")}</button>`:`<button class="btn grow" data-act="chessRematch">${tr("Rematch")}</button>`}<button class="btn grow" data-act="${bvb?"bvbOpen":"chessMenu"}">${tr(bvb?"Other bots":mp||hot?"Back to chess":"Other opponent")}</button></div>
     <button class="btn ghost" data-act="modalClose">${tr("Look at the board")}</button>`),350);
 }
 
@@ -2283,10 +2318,10 @@ function engineName(rows){ // "Stockfish 18", "Built-in engine", both, or "" if 
   const a=r.some(x=>x.sf===1), b=r.some(x=>x.sf===0); return a&&b?"Stockfish 18 + Outpost Chess":a?"Stockfish 18":"Outpost Chess"; }
 function archRecord(res,R,hotWin){ // called once when a game ends
   if(!CH||CH.arch||CH.mode==="puz"||(!CH.moves.length&&!R)) return;
-  const WIN=["win","oppResign","timeWin","left"], LOSE=["lose","resign","timeLose"], hot=CH.mode==="hot";
+  const WIN=["win","oppResign","timeWin","left"], LOSE=["lose","resign","timeLose"], hot=CH.mode==="hot"||CH.mode==="bvb";
   const g={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),t:Date.now(),mode:CH.mode,v:CH.variant,c:hot?1:CH.color,m:CH.moves.join(" "),r:res,w:CH.why||"",
     o:hot?hotWin:(WIN.includes(res)?1:LOSE.includes(res)?0:0.5),
-    on:hot?"":oppName(),oe:CH.mode==="mp"?CH.oppElo:CH.mode==="bot"?LEVELS[CH.lvl].elo:null,lvl:CH.lvl|0,me:hot?"":meName(),
+    on:CH.mode==="bvb"?botName(CH.lvlW)+" — "+botName(CH.lvlB):hot?"":oppName(),lw:CH.lvlW,lb:CH.lvlB,oe:CH.mode==="mp"?CH.oppElo:CH.mode==="bot"?LEVELS[CH.lvl].elo:null,lvl:CH.lvl|0,me:hot?"":meName(),
     mb:R?R.from:null,ma:R?R.to:null,k:R?(CH.mode==="mp"?"on":"off"):""};
   if(CH.start&&CH.start!==STD_FEN) g.s=CH.start;
   CH.archId=g.id; const a=archList(); a.unshift(g); store.set("chessGames",a.slice(0,ARCH_MAX)); archRows();
@@ -2299,7 +2334,7 @@ function archRows(){ // keep the analysis with the saved game, so its review ope
 }
 function openArch(id){
   const g=archList().find(x=>x.id===id); if(!g) return; chessReq++; closeModal();
-  CH=newCH({mode:g.mode,lvl:g.lvl|0,color:g.c,flip:g.c<0,variant:g.v||"std",start:g.s||STD_FEN,oppElo:g.oe,opp:g.on,arch:g,archId:g.id,over:g.r,rated:true,why:g.w||null});
+  CH=newCH({mode:g.mode,lvlW:g.lw|0,lvlB:g.lb|0,lvl:g.mode==="bvb"?(g.lb|0):g.lvl|0,color:g.c,flip:g.c<0,variant:g.v||"std",start:g.s||STD_FEN,oppElo:g.oe,opp:g.on,arch:g,archId:g.id,over:g.r,rated:true,why:g.w||null});
   CH.moves=g.m?g.m.split(" "):[]; CH.keys=chessReplay(CH.moves); CH.moves=CH.moves.slice(0,CH.keys.length-1); rebuildFens();
   (g.a||[]).forEach((x,i)=>{ const r=unpackRow(x); if(r) CH.rows[i]=r; });
   if(CH.moves.length){ const s=CH.moves[CH.moves.length-1]; CH.last=[strSq(s),strSq(s.slice(2))]; }
@@ -2308,19 +2343,19 @@ function openArch(id){
 const archWhy=g=>{ const k=g.w==="hill"?"hill":g.w==="3check"?"3check":g.r;
   return tr({win:"Checkmate",lose:"Checkmate",resign:"Resignation",oppResign:"Resignation",timeWin:"Time",timeLose:"Time",left:"Abandoned",stalemate:"Stalemate",fifty:"50-move rule",repetition:"Repetition",material:"Insufficient material",hill:"King of the Hill",
     "3check":"Three-check"}[k]||"Draw"); };
-const archMode=g=>tr(g.mode==="mp"?"Online":g.mode==="hot"?"1v1":"Bot")+(g.v&&g.v!=="std"?SEP()+tr(vName(g.v)):"");
+const archMode=g=>tr(g.mode==="mp"?"Online":g.mode==="hot"?"1v1":g.mode==="bvb"?"Bot vs bot":"Bot")+(g.v&&g.v!=="std"?SEP()+tr(vName(g.v)):"");
 const archDate=t=>{ const d=new Date(t), L=GL()?"ar-EG":undefined; return d.toLocaleDateString(L,{day:"numeric",month:"short",year:d.getFullYear()===new Date().getFullYear()?undefined:"numeric"})+SEP()+d.toLocaleTimeString(L,{hour:"2-digit",minute:"2-digit"}); };
 const N=n=>GL()?AD(n):String(n), SEP=()=>GL()?"، ":" · ";   // "·" looks like the Arabic zero
 function archOutcome(g){ // from your side: "w" / "l" / "d"; 1v1 games say who won
-  if(g.mode==="hot") return g.o===1?"W":g.o===-1?"B":"d"; return g.o===1?"w":g.o===0?"l":"d"; }
+  if(g.mode==="hot"||g.mode==="bvb") return g.o===1?"W":g.o===-1?"B":"d"; return g.o===1?"w":g.o===0?"l":"d"; }
 function renderChessHist(v){
   const all=archList(), f=S.histF||"all", list=all.filter(g=>f==="all"||g.mode===f);
-  const mine=all.filter(g=>g.mode!=="hot"), W=mine.filter(g=>g.o===1).length, L=mine.filter(g=>g.o===0).length, D=mine.length-W-L;
+  const mine=all.filter(g=>g.mode!=="hot"&&g.mode!=="bvb"), W=mine.filter(g=>g.o===1).length, L=mine.filter(g=>g.o===0).length, D=mine.length-W-L;
   const chip=(k,l)=>`<button class="chip ${f===k?"on":""}" data-act="histF" data-f="${k}">${tr(l)}</button>`;
   v.innerHTML=`<div class="row"><button class="btn small" data-act="chessMenu">${tr("‹ Chess")}</button></div>
     <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Game history")}</h2></div>
     <div class="hstats"><span class="hw"><b>${N(W)}</b><small>${tr("Won")}</small></span><span class="hd"><b>${N(D)}</b><small>${tr("Drawn")}</small></span><span class="hl"><b>${N(L)}</b><small>${tr("Lost")}</small></span></div>
-    <div class="chips">${chip("all","All")}${chip("mp","Online")}${chip("bot","Bots")}${chip("hot","1v1")}</div>
+    <div class="chips">${chip("all","All")}${chip("mp","Online")}${chip("bot","Bots")}${chip("hot","1v1")}${chip("bvb","Bot vs bot")}</div>
     ${list.length?`<div class="hlist">${list.map(g=>{ const oc=archOutcome(g), n=Math.ceil((g.m?g.m.split(" ").length:0)/2), d=g.ma!=null&&g.mb!=null?g.ma-g.mb:null, acc=g.acc?(g.c>0?g.acc[0]:g.acc[1]):null;
       const who=g.mode==="hot"?tr("White")+" — "+tr("Black"):esc(g.on);
       const icon=oc==="w"?"+":oc==="l"?"−":oc==="d"?"=":"";
@@ -2857,6 +2892,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-16T21:27:00Z",en:["New: Bot vs bot. Pick any two bots and watch them play; brilliant moves get the !! badge and the ding, and the bot on the receiving end reacts.","Brilliant Mover now explains what it does under its name."],
+  ar:["جديد: بوت ضد بوت. اختر أي بوتين وشاهدهما يلعبان؛ النقلات الرائعة تحصل على علامة !! والصوت، والبوت الآخر يعلّق.","صائد الروائع يشرح أسلوبه الآن تحت اسمه."]},
  {at:"2026-11-16T21:24:00Z",en:["New bot: Brilliant Mover (1500). It makes normal mistakes, but whenever a brilliant sacrifice exists it plays it at once, with the !! badge and the ding."],
   ar:["بوت جديد: صائد الروائع (١٥٠٠). يخطئ مثل أي لاعب، لكن كلما وُجدت تضحية رائعة يلعبها فورًا، مع علامة !! والصوت."]},
  {at:"2026-11-16T21:17:00Z",en:["Brilliant moves by bots and online opponents now get the !! badge and the brilliant ding too, like in 1v1."],
@@ -2929,10 +2966,14 @@ document.addEventListener("click",e=>{
   if(ga==="mpNameSave") return saveName(gel.dataset.q==="1");
   if(ga==="mpLeave"){ const g=MP?MP.game:(S.mpWant||"chess"); mpStop(); S.game=MPG[g].back; return show("games"); }
   if(ga==="mpQuit"){ closeModal(); mpSend({t:"resign"}); return finishChess("resign"); }
-  if(ga==="chessFlip"){ CH.flip=!CH.flip; return drawBoard(); }
+  if(ga==="chessFlip"){ CH.flip=!CH.flip; if(CH.mode==="bvb"){ CH.color=-CH.color; CH.lvl=bvbLvl(-CH.color); return renderChess($("#v-games")); } return drawBoard(); }
+  if(ga==="bvbOpen"){ closeModal(); chessReq++; if(CH&&CH.mode==="bvb") CH.thinking=false; S.game="bvbSetup"; return show("games"); }
+  if(ga==="bvbPick"){ if(gel.dataset.s==="1") S.bvbW=+gel.dataset.l; else S.bvbB=+gel.dataset.l; return renderBvb($("#v-games")); }
+  if(ga==="bvbStart") return startBvb(S.bvbW??5,S.bvbB??10);
+  if(ga==="bvbStop"){ if(!CH||CH.over) return; chessReq++; CH.thinking=false; CH.over="stopped"; return drawBoard(); }
   if(ga==="chessResign"){ if(!CH||CH.over) return; return modal(`<h3>${tr("Resign this game?")}</h3><div class="row"><button class="btn danger grow" data-act="chessResignYes">${tr("Yes, resign")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); }
   if(ga==="chessResignYes"){ closeModal(); if(CH&&CH.mode==="mp") mpSend({t:"resign"}); return finishChess("resign"); }
-  if(ga==="chessRematch"){ closeModal(); S.chessVariant=CH.variant; return CH.mode==="hot"?startHot():startChess(CH.lvl,CH.color>0?"w":"b"); }
+  if(ga==="chessRematch"){ closeModal(); S.chessVariant=CH.variant; return CH.mode==="bvb"?startBvb(CH.lvlW,CH.lvlB):CH.mode==="hot"?startHot():startChess(CH.lvl,CH.color>0?"w":"b"); }
   if(ga==="chessHot") return startHot();
   if(ga==="puzOpen"||ga==="puzList") return openPuzzles();
   if(ga==="chessHist"){ closeModal(); chessReq++; if(CH&&CH.arch) CH=null; S.game="chessHist"; return show("games"); }
