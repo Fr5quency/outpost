@@ -461,6 +461,25 @@ body[data-view="games"].inchess .prefs{display:none}
 .pz.star::after{content:"★";position:absolute;top:2px;right:5px;font-size:11px;color:#eab308}
 .sq.hintsq{box-shadow:inset 0 0 0 calc(var(--bs)/8*.09) #3b82f6}
 .sq.wrongsq{background:#e5584f!important}
+/* account */
+.acctbtn{flex:none;display:flex;align-items:center;gap:6px;height:36px;padding:0 12px 0 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 13px/1 var(--body);margin-inline-start:auto}
+.acctbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}
+.acctbtn.in{padding:0;width:38px;height:38px;justify-content:center;overflow:hidden}
+.top .brand{min-width:0}.top{gap:8px}
+.abav{width:100%;height:100%;border-radius:50%;object-fit:cover;display:grid;place-items:center;font-weight:800;background:#5b7bd5;color:#fff}
+.acctpage{position:fixed;inset:0;z-index:45;background:var(--ground);overflow-y:auto;padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 20px)}
+.acctpage[hidden]{display:none}
+.acctin{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.acctcard{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:18px 0 6px}
+.bigav{width:84px;height:84px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:var(--sunk);border:1px solid var(--line);color:var(--muted);font:800 34px/1 var(--body)}
+.bigav svg{width:46px;height:46px;fill:none;stroke:currentColor;stroke-width:1.5}
+.bigav.ini:not(:has(svg)){background:#5b7bd5;color:#fff}
+.sbtn{display:flex;align-items:center;justify-content:center;gap:12px;min-height:52px;border-radius:12px;font:600 16px/1 var(--body);border:1px solid var(--line);position:relative}
+.sbtn svg{width:22px;height:22px}
+.sbtn.google{background:#fff;color:#1f1f1f;border-color:#dadce0}
+.sbtn.apple{background:#000;color:#fff;border-color:#000}
+.sbtn:disabled{opacity:.55}
+.sbtn em{font-style:normal;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(255,255,255,.18)}
 /* settings bar: language and theme switches */
 .prefs{display:flex;gap:8px;margin:-4px 0 14px}
 .sw{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:46px;font-weight:600;font-size:14px;text-align:start}
@@ -488,6 +507,7 @@ html[lang="ar"] .tabs button{font-size:11px;letter-spacing:0}
       <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--signal)"/><path d="M8 29 L20 9 L32 29 Z" fill="none" stroke="var(--signal-ink)" stroke-width="3" stroke-linejoin="round"/><path d="M20 29 V20" stroke="var(--signal-ink)" stroke-width="3" stroke-linecap="round"/></svg>
       <div><b>OUTPOST</b><span data-en="offline pocket kit">offline pocket kit</span></div>
     </div>
+    <button class="acctbtn" id="acctBtn" data-act="acctOpen" aria-label="Sign in"></button>
     <div class="pill" id="net"><i></i><span>ONLINE</span></div>
   </div>
   <div class="prefs">
@@ -530,7 +550,7 @@ const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelect
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const store={mem:{},
   get(k,d){ if(k in this.mem) return this.mem[k]; try{const v=localStorage.getItem("outpost."+k); if(v!=null){this.mem[k]=JSON.parse(v); return this.mem[k];}}catch(e){} return d; },
-  set(k,v){ this.mem[k]=v; try{localStorage.setItem("outpost."+k,JSON.stringify(v)); return true;}catch(e){return false;} }
+  set(k,v){ this.mem[k]=v; try{localStorage.setItem("outpost."+k,JSON.stringify(v)); if(window.__syncHook) window.__syncHook(k); return true;}catch(e){return false;} }
 };
 let toastT; function toast(m){const t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),1900);}
 async function copy(text){ try{ await navigator.clipboard.writeText(text); toast(tr("Copied")); }catch(e){ toast(tr("Copy blocked here. Select the text and copy it.")); } }
@@ -835,6 +855,17 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Sign in":"تسجيل الدخول","Account":"الحساب","‹ Back":"› رجوع","Continue with Google":"المتابعة باستخدام Google","Continue with Apple":"المتابعة باستخدام Apple","Coming soon":"قريبًا","Loading…":"جارٍ التحميل…",
+"Save your notes, checklists, game progress and ratings to your account, and get them back on any phone.":"احفظ ملاحظاتك وقوائمك وتقدمك في الألعاب وتصنيفاتك في حسابك، واستعدها على أي هاتف.",
+"Outpost works fully without an account. Signing in needs internet; after that, your data syncs whenever you're online.":"يعمل Outpost بالكامل بدون حساب. تسجيل الدخول يحتاج إنترنت، وبعدها تتم مزامنة بياناتك كلما اتصلت.",
+"Sync now":"زامن الآن","Log out":"تسجيل الخروج","Log out?":"تسجيل الخروج؟","Logged out":"تم تسجيل الخروج","Your data stays on this phone and in your account.":"تبقى بياناتك على هذا الهاتف وفي حسابك.",
+"Your notes, checklists, game progress, ratings and settings are saved to your account automatically whenever you're online. Logging out keeps them on this phone too.":"تُحفظ ملاحظاتك وقوائمك وتقدمك في الألعاب وتصنيفاتك وإعداداتك في حسابك تلقائيًا كلما اتصلت بالإنترنت. وتبقى على هذا الهاتف بعد تسجيل الخروج.",
+"Syncing…":"جارٍ المزامنة…","Not synced yet":"لم تتم المزامنة بعد","Synced":"تمت المزامنة","Could not sync. Try again later.":"تعذّرت المزامنة. حاول لاحقًا.","No internet. Your data will sync when you're back online.":"لا يوجد إنترنت. ستتم المزامنة عند عودة الاتصال.",
+"Updated from your account":"تم التحديث من حسابك","Your data is now saved to your account":"بياناتك محفوظة الآن في حسابك","Your data was restored from your account":"تمت استعادة بياناتك من حسابك",
+"This account already has saved data":"هذا الحساب فيه بيانات محفوظة","Choose which data to keep. The other copy is replaced.":"اختر البيانات التي تريد إبقاءها. سيتم استبدال النسخة الأخرى.",
+"Use my account's data":"استخدم بيانات حسابي","Keep this phone's data":"احتفظ ببيانات هذا الهاتف","Could not sign in":"تعذّر تسجيل الدخول","Check your internet connection and try again.":"تحقق من اتصالك بالإنترنت وحاول مرة أخرى.",
+"Signing in needs an internet connection.":"تسجيل الدخول يحتاج اتصالًا بالإنترنت.",
+
 "Puzzles":"الألغاز","Puzzle":"لغز","Mate in 1":"كش مات في نقلة","Mate in 2":"كش مات في نقلتين","Mate in 3":"كش مات في 3 نقلات","Win material":"اكسب قطعة","Loading puzzles…":"جارٍ تحميل الألغاز…",
 "‹ Chess":"› الشطرنج","‹ Puzzles":"› الألغاز","Could not load the puzzles":"تعذّر تحميل الألغاز","Open Outpost once while online so the puzzles are saved on this phone.":"افتح Outpost مرة وأنت متصل لتُحفظ الألغاز على الهاتف.",
 "Play again from the start":"العب من البداية","Start":"ابدأ","Green: solved. Gold star: solved on the first try, with no hint.":"الأخضر: تم الحل. النجمة الذهبية: الحل من أول محاولة بدون تلميح.",
@@ -892,7 +923,7 @@ function applyStatic(){
   $("#swLang").setAttribute("aria-checked",isAr()?"true":"false");
   $("#swTheme").setAttribute("aria-checked",S.theme==="light"?"true":"false");
 }
-function setLang(l){ S.lang=l; store.set("lang",l); applyStatic(); net(); show(S.view,true); }
+function setLang(l){ S.lang=l; store.set("lang",l); applyStatic(); net(); drawAcctBits(); renderAcct(); show(S.view,true); }
 function setTheme(t){ S.theme=t; store.set("theme",t); document.documentElement.setAttribute("data-theme",t); applyStatic(); }
 
 /* ---------- data: the app stack ---------- */
@@ -2475,6 +2506,105 @@ document.addEventListener("pointerdown",e=>{ if(e.target.closest("#btray")) bPoi
 document.addEventListener("pointermove",e=>{ if(drag) bPointerMove(e); },{passive:false});
 document.addEventListener("pointerup",bPointerUp); document.addEventListener("pointercancel",bPointerUp);
 
+/* ===== ACCOUNT: sign in with Google (Firebase Auth); your data is saved as one document per person in Firestore,
+   through Firestore's REST API (no database SDK needed). Security rules allow each person to read/write only users/{their id}. ===== */
+const FB_CFG={apiKey:"AIzaSyDHquGPLCgu7izwzVTGrp5N73QZvKiZmEY",authDomain:"outpost-f3a72.firebaseapp.com",projectId:"outpost-f3a72",storageBucket:"outpost-f3a72.firebasestorage.app",messagingSenderId:"545267681659",appId:"1:545267681659:web:7b96f6baf3093d25a915de"};
+const SYNC_META=new Set(["probe","eloPending","acct","syncAt","syncDirtyAt","syncUid"]);   // never uploaded
+let FBA=null, FBp=null, ACC=store.get("acct",null), syncT=null, syncBusy=false;
+const rawGet=k=>{ try{ return +localStorage.getItem("outpost."+k)||0; }catch(e){ return 0; } }, rawSet=(k,v)=>{ try{ localStorage.setItem("outpost."+k,String(v)); }catch(e){} };
+function loadScript(src){ return new Promise((ok,no)=>{ const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
+function fbAuth(){
+  if(FBA) return Promise.resolve(FBA);
+  return FBp||(FBp=loadScript("firebase/firebase-app-compat.js").then(()=>loadScript("firebase/firebase-auth-compat.js")).then(()=>{
+    if(!firebase.apps.length) firebase.initializeApp(FB_CFG); FBA=firebase.auth(); FBA.useDeviceLanguage();
+    FBA.getRedirectResult().catch(e=>signInError(e)); FBA.onAuthStateChanged(onAuth); return FBA; }).catch(e=>{ FBp=null; throw e; }));
+}
+/* every change saved on the phone is marked, and uploaded a few seconds later */
+window.__syncHook=k=>{ if(SYNC_META.has(k)) return; rawSet("syncDirtyAt",Date.now()); if(ACC){ clearTimeout(syncT); syncT=setTimeout(()=>syncNow(false),4000); } };
+function localData(){ const d={}; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!k||!k.startsWith("outpost.")) continue; const key=k.slice(8); if(!SYNC_META.has(key)) d[key]=localStorage.getItem(k); } }catch(e){} return d; }
+function applyData(d){ // replace this phone's data with the account's
+  try{ Object.keys(localStorage).forEach(k=>{ if(k.startsWith("outpost.")&&!SYNC_META.has(k.slice(8))) localStorage.removeItem(k); }); for(const k in d) localStorage.setItem("outpost."+k,d[k]); }catch(e){}
+}
+const FS_DOC=uid=>`https://firestore.googleapis.com/v1/projects/${FB_CFG.projectId}/databases/(default)/documents/users/${encodeURIComponent(uid)}`;
+async function token(){ if(!FBA||!FBA.currentUser) throw new Error("signed-out"); return FBA.currentUser.getIdToken(); }
+async function cloudGet(){
+  const r=await fetch(FS_DOC(ACC.uid),{headers:{Authorization:"Bearer "+await token()},cache:"no-store"});
+  if(r.status===404) return null; if(!r.ok) throw new Error("download failed ("+r.status+")");
+  const f=(await r.json()).fields||{}; return {data:JSON.parse((f.data&&f.data.stringValue)||"{}"),at:+((f.updatedAt&&f.updatedAt.integerValue)||0)};
+}
+async function cloudPut(data,at){
+  const r=await fetch(FS_DOC(ACC.uid),{method:"PATCH",headers:{Authorization:"Bearer "+await token(),"Content-Type":"application/json"},cache:"no-store",
+    body:JSON.stringify({fields:{data:{stringValue:JSON.stringify(data)},updatedAt:{integerValue:String(at)},app:{stringValue:"outpost"}}})});
+  if(!r.ok) throw new Error("upload failed ("+r.status+")");
+}
+function reloadWith(msg){ try{ sessionStorage.setItem("outpost.toast",msg); }catch(e){} location.reload(); }
+async function syncNow(manual){
+  if(!ACC||syncBusy) return; if(navigator.onLine===false){ if(manual) toast(tr("No internet. Your data will sync when you're back online.")); return; }
+  syncBusy=true; drawAcctBits();
+  try{
+    await fbAuth(); if(!FBA.currentUser){ syncBusy=false; return; }
+    if(localStorage.getItem("outpost.syncUid")!==ACC.uid){ syncBusy=false; return firstSync(); }
+    const cloud=await cloudGet(), at=rawGet("syncAt"), dirty=rawGet("syncDirtyAt"), cloudNew=cloud&&cloud.at>at, localNew=dirty>at;
+    if(cloudNew&&(!localNew||cloud.at>dirty)){ applyData(cloud.data); rawSet("syncAt",cloud.at); rawSet("syncDirtyAt",cloud.at); return reloadWith(tr("Updated from your account")); }
+    if(localNew||!cloud){ const t=Date.now(); await cloudPut(localData(),t); rawSet("syncAt",t); }
+    if(manual) toast(tr("Synced"));
+  }catch(e){ if(manual) toast(tr("Could not sync. Try again later.")); }
+  syncBusy=false; drawAcctBits();
+}
+async function firstSync(){ // the first time this account is used on this phone
+  try{
+    const cloud=await cloudGet(), mine=localData(), meaningful=Object.keys(mine).filter(k=>!["lang","theme","botNames","arrowTip2","coachVoice","mpName"].includes(k)).length>0;   // settings alone do not count as "this phone has its own data"
+    const done=t=>{ localStorage.setItem("outpost.syncUid",ACC.uid); rawSet("syncAt",t); rawSet("syncDirtyAt",t); };
+    if(!cloud||!Object.keys(cloud.data).length){ const t=Date.now(); await cloudPut(mine,t); done(t); drawAcctBits(); return toast(tr("Your data is now saved to your account")); }
+    if(!meaningful){ applyData(cloud.data); done(cloud.at); return reloadWith(tr("Your data was restored from your account")); }
+    modal(`<h3>${tr("This account already has saved data")}</h3><p class="sub">${tr("Choose which data to keep. The other copy is replaced.")}</p>
+      <button class="btn primary" data-act="syncUseCloud">${tr("Use my account's data")}</button>
+      <button class="btn" data-act="syncUsePhone">${tr("Keep this phone's data")}</button>`);
+    S.pendingCloud=cloud;
+  }catch(e){ toast(tr("Could not sync. Try again later.")); }
+}
+function onAuth(u){
+  if(u){ ACC={uid:u.uid,name:u.displayName||u.email||"",email:u.email||"",photo:u.photoURL||""}; store.set("acct",ACC);
+    if(!myName()&&ACC.name) store.set("mpName",ACC.name.split(" ")[0].slice(0,20));
+    drawAcctBits(); if($("#acctPage")&&!$("#acctPage").hidden) renderAcct(); syncNow(false); }
+  else if(ACC){ ACC=null; try{ localStorage.removeItem("outpost.acct"); }catch(e){} store.mem.acct=null; drawAcctBits(); if($("#acctPage")&&!$("#acctPage").hidden) renderAcct(); }
+}
+function signInError(e){ const c=(e&&e.code)||""; if(!c||c==="auth/popup-closed-by-user"||c==="auth/cancelled-popup-request"||c==="auth/user-cancelled") return;
+  modal(`<h3>${tr("Could not sign in")}</h3><p class="sub">${c==="auth/network-request-failed"?tr("Check your internet connection and try again."):esc(c)}</p><button class="btn primary" data-act="modalClose">${tr("OK")}</button>`); }
+async function signInGoogle(){
+  if(navigator.onLine===false) return toast(tr("Signing in needs an internet connection."));
+  if(!FBA){ toast(tr("Loading…")); return; }
+  const p=new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:"select_account"});
+  try{ await FBA.signInWithPopup(p); }
+  catch(e){ if(["auth/popup-blocked","auth/operation-not-supported-in-this-environment","auth/web-storage-unsupported"].includes(e.code)){ try{ await FBA.signInWithRedirect(p); }catch(x){ signInError(x); } } else signInError(e); }
+}
+const ICON_USER='<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
+const avatar=(cls)=>ACC&&ACC.photo?`<img class="${cls}" src="${esc(ACC.photo)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'${cls} ini',textContent:'${esc((ACC.name||"?").slice(0,1)).replace(/'/g,"")}'}))">`:`<span class="${cls} ini">${ACC?esc((ACC.name||"?").slice(0,1)):ICON_USER}</span>`;
+function drawAcctBits(){ const b=$("#acctBtn"); if(!b) return; b.classList.toggle("in",!!ACC); b.innerHTML=ACC?avatar("abav"):`${ICON_USER}<span>${tr("Sign in")}</span>`; b.setAttribute("aria-label",ACC?tr("Account"):tr("Sign in")); const s=$("#syncState"); if(s) s.textContent=syncText(); }
+function syncText(){ if(syncBusy) return tr("Syncing…"); const at=rawGet("syncAt"); if(!at||localStorage.getItem("outpost.syncUid")!==(ACC&&ACC.uid)) return tr("Not synced yet"); const d=new Date(at); return (GL()?"آخر مزامنة: ":"Last synced: ")+d.toLocaleDateString(GL()?"ar-EG":undefined,{day:"numeric",month:"short"})+" "+d.toLocaleTimeString(GL()?"ar-EG":undefined,{hour:"2-digit",minute:"2-digit"}); }
+const GOOGLE_G='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+const APPLE='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.86-.76-1.47.02-2.83.86-3.59 2.17-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.04 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.32-3.5zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.68-.92 2.67.97.08 1.96-.49 2.56-1.22z"/></svg>';
+function openAcct(){ let p=$("#acctPage"); if(!p){ document.body.insertAdjacentHTML("beforeend",'<div class="acctpage" id="acctPage" hidden></div>'); p=$("#acctPage"); } p.hidden=false; document.body.classList.add("noscroll"); renderAcct(); fbAuth().then(()=>renderAcct()).catch(()=>renderAcct()); }
+function closeAcct(){ const p=$("#acctPage"); if(p) p.hidden=true; document.body.classList.remove("noscroll"); }
+function renderAcct(){
+  const p=$("#acctPage"); if(!p||p.hidden) return; const ready=!!FBA;
+  p.innerHTML=`<div class="acctin"><div class="row"><button class="btn small" data-act="acctClose">${tr("‹ Back")}</button></div>
+  ${ACC?`<div class="acctcard">${avatar("bigav")}<h2>${esc(ACC.name)}</h2><p class="sub">${esc(ACC.email)}</p><p class="sub" id="syncState">${syncText()}</p></div>
+      <button class="btn primary" data-act="syncNow">${tr("Sync now")}</button>
+      <button class="btn" data-act="acctLogout">${tr("Log out")}</button>
+      <p class="sub">${tr("Your notes, checklists, game progress, ratings and settings are saved to your account automatically whenever you're online. Logging out keeps them on this phone too.")}</p>`
+   :`<div class="acctcard"><span class="bigav ini">${ICON_USER}</span><h2>${tr("Sign in")}</h2><p class="sub">${tr("Save your notes, checklists, game progress and ratings to your account, and get them back on any phone.")}</p></div>
+      <button class="sbtn google" data-act="signGoogle" ${ready?"":"disabled"}>${GOOGLE_G}<span>${ready?tr("Continue with Google"):tr("Loading…")}</span></button>
+      <button class="sbtn apple" disabled>${APPLE}<span>${tr("Continue with Apple")}</span><em>${tr("Coming soon")}</em></button>
+      <p class="sub">${tr("Outpost works fully without an account. Signing in needs internet; after that, your data syncs whenever you're online.")}</p>`}
+  </div>`;
+}
+/* start: restore a signed-in session quietly; sync again when the app comes back online or to the front */
+if(ACC) fbAuth().catch(()=>{});
+window.addEventListener("online",()=>{ if(ACC) syncNow(false); });
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&ACC) syncNow(false); });
+try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.removeItem("outpost.toast"); setTimeout(()=>toast(m),400); } }catch(e){}
+
 /* ---------- router & events ---------- */
 const VIEWS={home:renderHome,stack:renderStack,tools:renderTools,notes:renderNotes,field:renderField,quran:renderQuran,duas:renderDuas,games:renderGames};
 function show(v,keepScroll){ if(!VIEWS[v]||((v==="quran"||v==="duas")&&!isAr())) v="home"; if(v!=="quran"&&qObs){qObs.disconnect();qObs=null;} closeSheet(); if(v!=="games"&&S.gfs){ S.gfs=false; document.body.classList.remove("gamefs"); try{ document.fullscreenElement&&document.exitFullscreen(); }catch(e){} } S.view=v; document.body.dataset.view=v; $$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v)); $$(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.go===v)); VIEWS[v](); if(!keepScroll) window.scrollTo(0,0); }
@@ -2484,6 +2614,15 @@ window.addEventListener("hashchange",()=>{const v=location.hash.slice(1); if(v!=
 document.addEventListener("click",e=>{
   if(e.target.id==="sheet") return closeSheet();
   if(e.target.id==="modal") return closeModal();
+  const aa=(e.target.closest("[data-act]")||{dataset:{}}).dataset.act;
+  if(aa==="acctOpen") return openAcct();
+  if(aa==="acctClose") return closeAcct();
+  if(aa==="signGoogle") return signInGoogle();
+  if(aa==="syncNow") return syncNow(true);
+  if(aa==="acctLogout") return modal(`<h3>${tr("Log out?")}</h3><p class="sub">${tr("Your data stays on this phone and in your account.")}</p><div class="row"><button class="btn danger grow" data-act="acctLogoutYes">${tr("Log out")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`);
+  if(aa==="acctLogoutYes"){ closeModal(); clearTimeout(syncT); const go=()=>FBA.signOut().then(()=>toast(tr("Logged out"))); return (ACC&&rawGet("syncDirtyAt")>rawGet("syncAt")?syncNow(false).then(go):go()); }
+  if(aa==="syncUseCloud"){ closeModal(); const c=S.pendingCloud; if(!c) return; applyData(c.data); localStorage.setItem("outpost.syncUid",ACC.uid); rawSet("syncAt",c.at); rawSet("syncDirtyAt",c.at); return reloadWith(tr("Your data was restored from your account")); }
+  if(aa==="syncUsePhone"){ closeModal(); const t=Date.now(); return cloudPut(localData(),t).then(()=>{ localStorage.setItem("outpost.syncUid",ACC.uid); rawSet("syncAt",t); rawSet("syncDirtyAt",t); drawAcctBits(); toast(tr("Your data is now saved to your account")); }).catch(()=>toast(tr("Could not sync. Try again later."))); }
   const sqEl=e.target.closest("#board .sq"); if(sqEl) return boardTap(+sqEl.dataset.sq);
   const ga=(e.target.closest("[data-act]")||{dataset:{}}).dataset.act, gel=e.target.closest("[data-act]");
   if(ga&&window.OUTPOST_ACT&&OUTPOST_ACT[ga]) return OUTPOST_ACT[ga](gel,e);
@@ -2591,7 +2730,7 @@ document.addEventListener("change",e=>{
 function net(){const on=navigator.onLine!==false, p=$("#net"); p.classList.toggle("off",!on); p.lastElementChild.textContent=tr(on?"ONLINE":"NO SIGNAL");}
 window.addEventListener("resize",()=>{ if(S.view==="games"){ sizeBoard(); sizeBlocks(); const g=(window.OUTPOST_GAMES||{})[S.game]; g&&g.resize&&g.resize(); } if(S.view==="quran"&&QD){ qFit(); const el=$("#qTrack").children[S.qPage]; el&&el.scrollIntoView({inline:"start",block:"nearest"}); } });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); if(e.key==="Enter"&&e.target.id==="mpNameIn"){ const b=$("[data-act=mpNameSave]"); b&&saveName(b.dataset.q==="1"); } });
-window.addEventListener("online",net); window.addEventListener("offline",net); applyStatic(); net();
+window.addEventListener("online",net); window.addEventListener("offline",net); applyStatic(); net(); drawAcctBits();
 
 /* offline install: only works when the files are hosted on their own site */
 try{ if("serviceWorker" in navigator && location.protocol==="https:" && window.top===window.self){ navigator.serviceWorker.register("sw.js").then(()=>{ if(S.view==="home") renderHome(); }).catch(()=>{}); } }catch(e){}
