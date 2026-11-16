@@ -36,6 +36,8 @@ Outpost is an offline "pocket kit" web app for iPhone (and Android), installed f
 
 ### Chess (the biggest part)
 - Engine: `ChessEngine(scope)` (0x88 board, alpha-beta, quiescence). Passes the standard perft suite and Chess960 perft positions. Runs in a Web Worker built from `ChessEngine.toString()`. Variants: `setVariant(0 std / 1 king of the hill / 2 three-check)`, Chess960 via FEN castling letters.
+- **Brilliant Mover** (`LEVELS[10]`, 1500, fixed name, `brill:1`): each move asks full-strength Stockfish for its top 5 (`sfBot(fen,{multipv:5})`; Outpost Chess `rootSearch` via worker message `roots` / `onRoots` when Stockfish can't run) and plays any sacrifice that is as good as the best move (`brillPick`, same rule as the review's Brilliant); badge + ding shown at once (`onBotMove` with `brill`). Otherwise plays like a 1500 (depth 3, noise 45, 4 % blunders). The bot list is shown sorted by Elo; LEVELS indexes never change (saved games use them).
+- `sfBot(fen,{elo,multipv,ms})` sets UCI_LimitStrength / UCI_Elo / MultiPV per request on the shared bot Stockfish (`SFB`).
 - Modes: 10 bots (400–2000 Elo with Outpost Chess, plus **Grandmaster 2600** = Stockfish with `UCI_LimitStrength`/`UCI_Elo 2600`, 1.5 s a move, in its own worker `SFB` / `sfBotMove`, separate from the review's Stockfish; falls back to Outpost Chess at full strength for Chess960/KOTH/Three-check or if Stockfish can't load). `botNames()` keeps existing names when a bot is added, modes Standard/Chess960/King of the Hill/Three-check/No castling (bots and 1v1 only), 1v1 pass-and-play (board flips each move), online (PeerJS), puzzles.
 - Game state: `CH` (`mode`: bot / mp / hot / puz).
 - The built-in engine (`ChessEngine`) is named **Outpost Chess** in the app.
@@ -118,3 +120,4 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 - 2026-11-16: Update notices (What's new window with date/time, Home button, update bar). Brilliant ding + !! badge in puzzles; puzzle types Mate in 4 and Brilliant move ready; any checkmate accepted on a puzzle's last move. (sw cache v27)
 - 2026-11-16: 50 new puzzles (17 brilliant, 17 mate in 4, 16 mate in 3), all solved through the app in testing. (sw cache v28)
 - 2026-11-16: Bots' and online opponents' brilliant moves also get the !! badge and ding. (sw cache v29)
+- 2026-11-16: New bot Brilliant Mover (1500): plays every brilliant sacrifice it finds, with badge and ding. (sw cache v30)

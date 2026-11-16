@@ -890,6 +890,7 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Brilliant Mover":"صائد الروائع","Hunts for brilliant sacrifices":"يبحث عن التضحيات الرائعة",
 "What's new":"ما الجديد","Updated":"تم التحديث","Got it":"حسنًا","All updates":"كل التحديثات","Outpost was updated. Tap to reload.":"تم تحديث Outpost. اضغط لإعادة التحميل.",
 "Mate in 4":"كش مات في ٤","Brilliant move":"نقلة رائعة",
 "Grandmaster":"أستاذ كبير (Grandmaster)","Grandmaster · Stockfish":"أستاذ كبير · Stockfish","You had checkmate in {n} with {b}! {m} lets it slip.":"كان لديك كش مات في {n} بـ {b}! و{m} تضيّعه.","They had checkmate in {n} with {b} and missed it. Lucky!":"كان لديهم كش مات في {n} بـ {b} وفاتهم. كنت محظوظًا!","{m}! Forced checkmate in {n}.":"{m}! كش مات إجباري في {n}.","{m}. They have a forced checkmate in {n}.":"{m}. لديهم كش مات إجباري في {n}.",
@@ -1725,6 +1726,7 @@ function ChessEngine(scope){
   if(scope&&scope.postMessage){ // running as a Web Worker
     scope.onmessage=e=>{ const d=e.data; variant=d.variant|0;
       if(d.type==="analyze"){ const rows=analyzeGame(d.fens,d.played,d.opts,(k,n)=>scope.postMessage({id:d.id,type:"progress",k,n})); scope.postMessage({id:d.id,type:"analysis",rows,tag:d.tag}); return; }
+      if(d.type==="roots"){ setFen(d.fen); scope.postMessage({id:d.id,roots:rootSearch(d.opts).slice(0,10)}); return; }
       setFen(d.fen); const m=think(d.opts); scope.postMessage({id:d.id,move:m}); };
   }
   return api;
@@ -1781,14 +1783,15 @@ const LEVELS=[
  {elo:1600,rank:"Advanced",            o:{depth:4,noise:20,blunder:.01,ms:900}},
  {elo:1800,rank:"Expert",              o:{depth:5,noise:8,ms:1200}},
  {elo:2000,rank:"Candidate master",    o:{depth:10,ms:2500}},
- {elo:2600,rank:"Grandmaster",         o:{depth:10,ms:3000}, sf:2600}   // Stockfish limited to 2600 Elo (Outpost Chess at full strength when Stockfish cannot run)
+ {elo:2600,rank:"Grandmaster",         o:{depth:10,ms:3000}, sf:2600},  // Stockfish limited to 2600 Elo (Outpost Chess at full strength when Stockfish cannot run)
+ {elo:1500,rank:"Hunts for brilliant sacrifices", o:{depth:3,noise:45,blunder:.04,ms:600}, brill:1, name:"Brilliant Mover"}   // plays like a 1500 player, but always plays a brilliant sacrifice when one exists
 ];
 const NAMES=[["Omar","عمر"],["Lina","لينا"],["Youssef","يوسف"],["Sara","سارة"],["Karim","كريم"],["Nour","نور"],["Adam","آدم"],["Mariam","مريم"],["Hassan","حسن"],["Layla","ليلى"],["Ziad","زياد"],["Hana","هنا"],["Tarek","طارق"],["Salma","سلمى"],["Ali","علي"],["Farida","فريدة"],["Mostafa","مصطفى"],["Jana","جنى"],["Khaled","خالد"],["Malak","ملك"]];
-const AVC=["#e07a5f","#3d8bd4","#81b29a","#c77dff","#f2a541","#4ecdc4","#ef476f","#8d99ae","#b5838d","#c9a227"];
+const AVC=["#e07a5f","#3d8bd4","#81b29a","#c77dff","#f2a541","#4ecdc4","#ef476f","#8d99ae","#b5838d","#c9a227","#1baaa6"];
 function botNames(){ let n=store.get("botNames",null);
   if(Array.isArray(n)&&n.length&&n.length<LEVELS.length){ const pool=NAMES.map((_,i)=>i).filter(i=>!n.includes(i)); while(n.length<LEVELS.length&&pool.length) n.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); store.set("botNames",n); }   // a new bot keeps the old names
   if(!Array.isArray(n)||n.length!==LEVELS.length){ const pool=NAMES.map((_,i)=>i); n=[]; while(n.length<LEVELS.length){ n.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); } store.set("botNames",n); } return n; }
-const botName=i=>NAMES[botNames()[i]][GL()?1:0];
+const botName=i=>LEVELS[i]&&LEVELS[i].name?tr(LEVELS[i].name):NAMES[botNames()[i]][GL()?1:0];
 const pcFile=p=>(p>0?"w":"b")+"PNBRQK"[Math.abs(p)-1];
 const pcImg=(p,cls)=>`<i class="${cls||"pc"}" style="background-image:url(pieces/${pcFile(p)}.svg)"></i>`;
 const MP_TIME=15*60*1000;
@@ -1972,7 +1975,7 @@ function coachSay(text){ try{ const sy=window.speechSynthesis; if(!sy) return; s
 function coachSayMove(){ if(!CH||!CH.an) return; const k=CH.view===null?CH.moves.length:CH.view, P=CH.an.plies[k-1]; if(P) coachSay(coachText(P,k-1,true)); else coachSay(""); }
 const coachSum=()=>{ if(CH.mode==="hot") return ""; const a=CH.color>0?CH.an.acc.w:CH.an.acc.b; return COACH[GL()?"ar":"en"].sum[a>=90?0:a>=75?1:a>=50?2:3]; };
 function engine(){ if(!CE) CE=ChessEngine(null); return CE; }
-function worker(){ if(CW===null){ try{ CW=new Worker(URL.createObjectURL(new Blob(["("+ChessEngine.toString()+")(self);"],{type:"text/javascript"}))); CW.onmessage=e=>{ if(e.data&&e.data.type) onAnalysis(e.data); else onBotMove(e.data); }; CW.onerror=()=>{CW=false;}; }catch(e){ CW=false; } } return CW; }
+function worker(){ if(CW===null){ try{ CW=new Worker(URL.createObjectURL(new Blob(["("+ChessEngine.toString()+")(self);"],{type:"text/javascript"}))); CW.onmessage=e=>{ if(e.data&&e.data.type) onAnalysis(e.data); else if(e.data&&e.data.roots) onRoots(e.data); else onBotMove(e.data); }; CW.onerror=()=>{CW=false;}; }catch(e){ CW=false; } } return CW; }
 function chessReplay(moves,E){ E=E||engine(); setupEngine(E); const keys=[E.fen().split(" ").slice(0,4).join(" ")]; for(const s of moves){ const m=E.legal().find(x=>E.moveStr(x)===s); if(!m) break; E.make(m); keys.push(E.fen().split(" ").slice(0,4).join(" ")); } return keys; }
 const posKey=()=>engine().fen().split(" ").slice(0,4).join(" ");
 const strSq=s=>(s.charCodeAt(1)-49)*16+(s.charCodeAt(0)-97);
@@ -2055,7 +2058,7 @@ function renderChessMenu(v){
     <button class="hotcard puzcard" data-act="puzOpen"><span class="hoticon pzicon">?</span><span class="otxt"><b>${tr("Puzzles")}</b><small>${GL()?`${AD(PZ_N)} لغز: كش مات وتكتيكات ونقلات رائعة · حللت ${AD(puzCount())}`:`${PZ_N} puzzles: checkmates, tactics and brilliant moves · ${puzCount()} solved`}</small></span></button>
     <button class="hotcard" data-act="chessHot"><span class="hoticon">${pcImg(6)}${pcImg(-6)}</span><span class="otxt"><b>${tr("1v1 on this phone")}</b><small>${tr("Two players pass the phone. The board flips after every move. Uses the mode chosen above.")}</small></span></button>
     <div class="seg seg3"><button data-act="chessColor" data-c="w" class="${col==="w"?"on":""}">${tr("White")}</button><button data-act="chessColor" data-c="r" class="${col==="r"?"on":""}">${tr("Random")}</button><button data-act="chessColor" data-c="b" class="${col==="b"?"on":""}">${tr("Black")}</button></div>
-    <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.sf?"Grandmaster · Stockfish":L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
+    <div class="bots">${LEVELS.map((L,i)=>[L,i]).sort((a,b)=>a[0].elo-b[0].elo||a[1]-b[1]).map(([L,i])=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.sf?"Grandmaster · Stockfish":L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
     <p class="foot">${tr("Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.")} ${tr("Game review: Stockfish 18 (GPL-3).")}</p>`;
 }
 function newCH(o){ return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null,variant:"std",start:STD_FEN,fens:[],rows:[],asked:[],liveC:[],live:null,why:null,arrows:[],arrowFrom:null,gid:++gameSeq},o); }
@@ -2190,35 +2193,52 @@ function maybeBot(){
   CH.pending={id,t0};
   const vc=vcode(CH.variant), fen=E.fen();
   const own=()=>{ if(!CH||id!==chessReq) return; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
-  if(L.sf&&(CH.variant==="std"||CH.variant==="nocastle")&&typeof WebAssembly==="object")
-    return sfBotMove(fen,L.sf,1500).then(u=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===u); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
+  const sfOk=(CH.variant==="std"||CH.variant==="nocastle")&&typeof WebAssembly==="object";
+  if(L.brill){ // look for a brilliant sacrifice first (full-strength Stockfish, top 5 moves; Outpost Chess otherwise), else play like a 1500 player
+    const pickOrOwn=list=>{ if(!CH||id!==chessReq) return; const m=brillPick(engine(),list); if(m===null) return own(); onBotMove({id,move:m,brill:true}); };
+    if(sfOk) return sfBot(fen,{multipv:5,ms:1000}).then(r=>{ const E2=engine(); pickOrOwn(r.lines.map(x=>({s:x.s,m:E2.legal().find(y=>E2.moveStr(y)===x.mv)}))); }).catch(own);
+    const w=worker(); if(w){ CH.rootsCb={id,f:list=>pickOrOwn(list)}; return w.postMessage({id,type:"roots",fen,opts:{depth:4,ms:900},variant:vc}); }
+    return own();
+  }
+  if(L.sf&&sfOk) return sfBot(fen,{elo:L.sf,multipv:1,ms:1500}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
   own();
 }
 /* the Grandmaster bot: its own Stockfish, separate from the one that reviews games */
 const SFB={w:null,ready:null,on:null};
-function sfBotReady(elo){
+function sfBotReady(){
   if(SFB.ready) return SFB.ready;
   return SFB.ready=new Promise((ok,no)=>{ let w; try{ w=new Worker("stockfish/stockfish-18-lite-single.js"); }catch(e){ return no(e); }
     const t=setTimeout(()=>{ try{w.terminate();}catch(e){} no(new Error("load")); },45000);
     w.onmessage=e=>{ const l=String(e.data);
-      if(l==="uciok"){ w.postMessage("setoption name UCI_LimitStrength value true"); w.postMessage("setoption name UCI_Elo value "+elo); w.postMessage("isready"); }
+      if(l==="uciok") w.postMessage("isready");
       else if(l==="readyok"&&!SFB.w){ clearTimeout(t); SFB.w=w; ok(w); }
       else if(SFB.on) SFB.on(l); };
     w.onerror=()=>{ clearTimeout(t); no(new Error("error")); };
     w.postMessage("uci");
   }).catch(e=>{ SFB.ready=null; SFB.w=null; throw e; });
 }
-function sfBotMove(fen,elo,ms){ return sfBotReady(elo).then(w=>new Promise((ok,no)=>{
-  const t=setTimeout(()=>{ SFB.on=null; no(new Error("stuck")); },ms*4+5000);
-  SFB.on=l=>{ if(l.startsWith("bestmove")){ clearTimeout(t); SFB.on=null; ok(l.split(" ")[1]); } };
-  w.postMessage("position fen "+fen); w.postMessage("go movetime "+ms); })); }
+function sfBot(fen,o){ // o: {elo (0 = full strength), multipv, ms} -> {best, lines:[{s, mv}]} (side to move's view)
+  return sfBotReady().then(w=>new Promise((ok,no)=>{ const lines=[];
+    const t=setTimeout(()=>{ SFB.on=null; no(new Error("stuck")); },o.ms*4+5000);
+    SFB.on=l=>{ if(l.startsWith("info ")&&l.includes(" score ")){ const m=l.match(/ multipv (\d+) score (cp|mate) (-?\d+).* pv (\S+)/); if(m) lines[+m[1]-1]={s:sfScore(m[2],+m[3]),mv:m[4]}; }
+      else if(l.startsWith("bestmove")){ clearTimeout(t); SFB.on=null; ok({best:l.split(" ")[1],lines:lines.filter(Boolean)}); } };
+    w.postMessage("setoption name UCI_LimitStrength value "+(o.elo?"true":"false")); if(o.elo) w.postMessage("setoption name UCI_Elo value "+o.elo);
+    w.postMessage("setoption name MultiPV value "+(o.multipv||1)); w.postMessage("position fen "+fen); w.postMessage("go movetime "+o.ms); })); }
+/* a move the review would call brilliant: a sacrifice that is as good as the best move, and not losing */
+function brillPick(E,list){
+  list=list.filter(x=>x&&x.m!==undefined&&x.s!==null&&x.s!==undefined); if(!list.length) return null; const wb=winPct(list[0].s);
+  for(const x of list){ const wp=winPct(x.s); if(wb-wp<0.3&&wp>=45&&(wb<97||x.s>90000)&&isSacrifice(E,x.m)) return x.m; }
+  return null;
+}
+function onRoots(d){ if(!CH||!CH.rootsCb||CH.rootsCb.id!==d.id) return; const f=CH.rootsCb.f; CH.rootsCb=null; f(d.roots.map(([s,m])=>({s,m}))); }
 function onBotMove(d){
   if(!CH||d.id!==chessReq) return;
   const wait=CH.pending&&CH.pending.id===d.id?Math.max(0,450-(Date.now()-CH.pending.t0)):0;
   const go=()=>{ if(!CH||d.id!==chessReq) return; const lp=CH.moves.length-1;
     if(lp>=0&&CH.rows[lp]===undefined&&Date.now()-CH.moveT<2200) return setTimeout(go,100);
     const hold=CH.live&&CH.live.ply===lp?Math.max(0,1500-(Date.now()-CH.live.t)):0;
-    setTimeout(()=>{ if(!CH||d.id!==chessReq) return; CH.thinking=false; CH.pending=null; if(d.move) playMove(d.move); else drawBoard(); },hold); };
+    setTimeout(()=>{ if(!CH||d.id!==chessReq) return; CH.thinking=false; CH.pending=null;
+      if(d.move){ const sn=d.brill?san(engine(),d.move):""; playMove(d.move); if(d.brill&&CH){ const i=CH.moves.length-1; if(!CH.liveC[i]){ CH.liveC[i]="brilliant"; CH.live={ply:i,t:Date.now(),san:sn}; ensureAudio(); ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){} drawBoard(); } } } else drawBoard(); },hold); };
   setTimeout(go,wait);
 }
 function chessEnd(){
@@ -2837,6 +2857,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-16T21:24:00Z",en:["New bot: Brilliant Mover (1500). It makes normal mistakes, but whenever a brilliant sacrifice exists it plays it at once, with the !! badge and the ding."],
+  ar:["بوت جديد: صائد الروائع (١٥٠٠). يخطئ مثل أي لاعب، لكن كلما وُجدت تضحية رائعة يلعبها فورًا، مع علامة !! والصوت."]},
  {at:"2026-11-16T21:17:00Z",en:["Brilliant moves by bots and online opponents now get the !! badge and the brilliant ding too, like in 1v1."],
   ar:["النقلات الرائعة من البوتات ومن خصمك أونلاين تحصل الآن على علامة !! وصوت النقلة الرائعة، مثل وضع ١ ضد ١."]},
  {at:"2026-11-16T20:10:00Z",en:["50 new chess puzzles (150 in total): 17 brilliant sacrifices, 17 mate in 4 and 16 mate in 3. Every move you need to find is the only one that works, checked by Stockfish.","Brilliant-move puzzles have a teal tag, mate in 4 a pink one. Solving a sacrifice plays the brilliant ding."],
