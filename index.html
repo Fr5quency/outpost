@@ -510,6 +510,10 @@ body[data-view="games"].inchess .prefs{display:none}
 .ach{display:flex;flex-direction:column;gap:3px;padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--panel);opacity:.55;filter:grayscale(1)}
 .ach.got{opacity:1;filter:none;border-color:color-mix(in srgb,var(--signal) 55%,var(--line))}
 .achi{font-size:26px}.ach b{font-size:14px}.ach small{color:var(--muted);font-size:12px;line-height:1.35}.ach em{font-style:normal;color:var(--signal);font-size:11px;font-weight:700}
+/* play a friend */
+.ficon{background:#5b7bd5;font-size:28px}
+.fcode{font:800 44px/1 var(--display);letter-spacing:.18em;color:var(--signal);margin:6px 0}
+#friendIn{flex:1;min-width:0;font:700 20px/1 var(--display);letter-spacing:.15em;text-align:center}
 /* game history */
 .hicon{background:#5b7bd5;color:#fff}.hicon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -936,6 +940,8 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Play a friend":"العب مع صديق","Share a code and play each other online. 15 minutes each.":"شارك رمزًا والعبا معًا أونلاين. ١٥ دقيقة لكل لاعب.","One of you creates a code, the other joins with it. Both need internet.":"أحدكما ينشئ رمزًا والآخر ينضم به. كلاكما يحتاج إنترنت.",
+"Create a code":"أنشئ رمزًا","5-digit code":"رمز من ٥ أرقام","Join":"انضم","Enter the 5-digit code":"أدخل الرمز المكوّن من ٥ أرقام","Waiting for your friend":"بانتظار صديقك","Tell your friend to tap Play a friend → Join, and enter this code.":"اطلب من صديقك أن يضغط العب مع صديق ← انضم، ويكتب هذا الرمز.","Send the code":"أرسل الرمز","Copied":"تم النسخ",
 "Solved today. Come back tomorrow!":"حللته اليوم. عد غدًا!","A new puzzle every day. Keep your streak going.":"لغز جديد كل يوم. حافظ على سلسلتك.","Your stats":"إحصائياتك","Achievements":"الإنجازات","Achievement unlocked":"إنجاز جديد",
 "Play a few more games to see the chart.":"العب بضع مباريات أخرى لترى الرسم.","Start":"البداية","Win rate":"نسبة الفوز","Brilliant moves":"النقلات الرائعة","Puzzles solved":"الألغاز المحلولة","Daily streak":"السلسلة اليومية","Lessons":"الدروس",
 "Elo over time":"التصنيف عبر الوقت","Accuracy (last 30 reviewed games)":"الدقة (آخر ٣٠ مباراة مُراجَعة)","Against each bot":"ضد كل بوت","No bot games yet.":"لا مباريات ضد البوتات بعد.","Stats come from your last 100 saved games.":"الإحصائيات من آخر ١٠٠ مباراة محفوظة.",
@@ -2136,6 +2142,7 @@ function renderChessMenu(v){
   const col=S.chessColor||"w";
   v.innerHTML=`<div class="row"><button class="btn small" data-act="gHome">${tr("‹ Games")}</button></div>
     <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Choose your opponent")}</h2></div>
+    <button class="hotcard friendcard" data-act="friendOpen"><span class="hoticon ficon">🤝</span><span class="otxt"><b>${tr("Play a friend")}</b><small>${tr("Share a code and play each other online. 15 minutes each.")}</small></span></button>
     <button class="onlinecard" data-act="mpPlay"><span class="oicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></span><span class="otxt"><b>${tr("Play online")}</b><small>${tr("15 minutes each · against another Outpost player · needs internet")}</small></span></button>
     ${nameChip()}
     ${eloChips()}
@@ -2944,21 +2951,21 @@ function saveName(thenPlay){
   const v=($("#mpNameIn").value||"").replace(/\s+/g," ").trim().slice(0,20);
   if(!v){ toast(tr("Enter a name first")); return; }
   store.set("mpName",v); closeModal();
-  if(thenPlay) mpPlay(S.mpWant); else show("games",true);
+  if(thenPlay) mpPlay(S.mpWant,S.mpCodeWant); else show("games",true);
 }
-function mpPlay(game){
-  game=MPG[game]?game:"chess"; S.mpWant=game; closeModal();
+function mpPlay(game,code){
+  game=MPG[game]?game:"chess"; S.mpWant=game; S.mpCode=code||null; closeModal();
   if(navigator.onLine===false) return modal(`<h3>${tr("You are offline")}</h3><p class="sub">${tr("Online games need an internet connection. The computer opponents work offline.")}</p><button class="btn primary" data-act="modalClose">${tr("OK")}</button>`);
-  if(!myName()) return askName(true);
+  if(!myName()){ S.mpCodeWant=code||null; return askName(true); }
   if(MPG[game].busy&&MPG[game].busy()) return;
-  S.game="mpQueue"; show("games"); mpQueue(game);
+  S.game="mpQueue"; show("games"); mpQueue(game,code);
 }
 function mpStatus(st){ if(MP) MP.status=st; const el=$("#qStatus"); if(el) el.textContent=tr(st); }
 function mpStop(){ const m=MP; MP=null; if(!m) return; clearTimeout(m.retry); clearInterval(m.tick);
   try{ m.lob&&m.lob.destroy(); }catch(e){} try{ m.conn&&m.conn.close(); }catch(e){} try{ m.me&&m.me.destroy(); }catch(e){} }
 function mpFail(msg){ const g=MP?MP.game:"chess"; mpStop(); if(S.game==="mpQueue"){ S.game=MPG[g].back; show("games"); } modal(`<h3>${tr("Could not connect")}</h3><p class="sub">${tr(msg)}</p><div class="row"><button class="btn primary grow" data-act="mpPlay" data-g="${g}">${tr("Try again")}</button><button class="btn grow" data-act="modalClose">${tr("Cancel")}</button></div>`); }
-async function mpQueue(game){
-  mpStop(); const my={t0:Date.now(),status:"Connecting…",game,lobby:LOBBY+(game==="chess"?"":"-"+game)}; MP=my; if(S.game==="mpQueue") renderGames();
+async function mpQueue(game,code){
+  mpStop(); const my={t0:Date.now(),status:"Connecting…",game,code:code||null,lobby:code?"outpost-friend-"+game+"-"+code:LOBBY+(game==="chess"?"":"-"+game)}; /* a friend code = a private lobby only the two of you know */ MP=my; if(S.game==="mpQueue") renderGames();
   my.tick=setInterval(()=>{ const el=$("#qTime"); if(el){ const s=Math.floor((Date.now()-my.t0)/1000); el.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); } },500);
   try{ await loadPeer(); }catch(e){ if(MP===my) mpFail("The online service could not load. Check your internet connection."); return; }
   if(MP!==my) return;
@@ -3037,8 +3044,9 @@ function tickClock(){
 function renderQueue(v){
   v.innerHTML=`<div class="row"><button class="btn small" data-act="mpLeave">${tr("‹ Leave queue")}</button></div>
     <div class="card queue"><div class="radar"><i></i><i></i><i></i><b>${MPG[(MP&&MP.game)||"chess"].icon()}</b></div>
-      <div class="eyebrow">${tr(MPG[(MP&&MP.game)||"chess"].title)}</div><h2>${tr("Finding an opponent")}</h2><p class="sub" id="qStatus">${tr(MP?MP.status:"Connecting…")}</p><div class="big" id="qTime">0:00</div>
-      <p class="sub">${tr(MPG[(MP&&MP.game)||"chess"].info)}</p>
+      <div class="eyebrow">${tr(MPG[(MP&&MP.game)||"chess"].title)}</div><h2>${tr(MP&&MP.code?"Waiting for your friend":"Finding an opponent")}</h2>
+      ${MP&&MP.code?`<div class="fcode" dir="ltr">${MP.code}</div><p class="sub">${tr("Tell your friend to tap Play a friend → Join, and enter this code.")}</p><button class="btn small" data-act="friendShare">${tr("Send the code")}</button>`:""}<p class="sub" id="qStatus">${tr(MP?MP.status:"Connecting…")}</p><div class="big" id="qTime">0:00</div>
+      ${MP&&MP.code?"":`<p class="sub">${tr(MPG[(MP&&MP.game)||"chess"].info)}</p>`}
       <p>${tr("Playing as")} <b>${esc(myName())}</b></p>
       <button class="btn" data-act="mpLeave">${tr("Leave queue")}</button></div>`;
 }
@@ -3275,6 +3283,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-16T22:23:00Z",en:["Play a friend: create a 5-digit code, send it, and play each other online."],
+  ar:["العب مع صديق: أنشئ رمزًا من ٥ أرقام، أرسله، والعبا معًا أونلاين."]},
  {at:"2026-11-16T22:23:00Z",en:["Daily puzzle: a new puzzle every day, with a 🔥 streak.","Your stats: Elo over time, accuracy trend, win rate against each bot, brilliant moves, puzzles and lessons.","Achievements: 24 badges to unlock, from your first win to beating the Grandmaster."],
   ar:["لغز اليوم: لغز جديد كل يوم، مع سلسلة 🔥.","إحصائياتك: التصنيف عبر الوقت، ومسار الدقة، ونسبة الفوز ضد كل بوت، والنقلات الرائعة، والألغاز والدروس.","الإنجازات: ٢٤ شارة لتفتحها، من أول فوز حتى هزيمة الأستاذ الكبير."]},
  {at:"2026-11-16T22:20:00Z",en:["Opening names: see which opening you're playing (Italian Game, Sicilian Najdorf…) during the game, in history and in shared games.","Openings & gambits: 19 interactive lessons. Play the moves yourself with an explanation for every move. 10 openings and 9 gambits, including the Alien Gambit, King's Gambit, Fried Liver, Stafford and Englund traps."],
@@ -3379,6 +3389,14 @@ document.addEventListener("click",e=>{
   if(ga==="puzHint"){ if(CH.puz.done||engine().turn()!==CH.color) return; CH.puz.fail=true; CH.puz.hint=strSq(CH.puz.P.m[CH.puz.step]); CH.puz.wrong=null; return drawBoard(); }
   if(ga==="puzSol") return puzSolution();
   if(ga==="retryStart") return startRetry();
+  if(ga==="friendOpen") return modal(`<h3>${tr("Play a friend")}</h3><p class="sub">${tr("One of you creates a code, the other joins with it. Both need internet.")}</p>
+    <button class="btn primary" data-act="friendCreate">${tr("Create a code")}</button>
+    <div class="row"><input type="text" id="friendIn" inputmode="numeric" maxlength="5" placeholder="${tr("5-digit code")}" dir="ltr"><button class="btn" data-act="friendJoin">${tr("Join")}</button></div>
+    <button class="btn ghost" data-act="modalClose">${tr("Cancel")}</button>`);
+  if(ga==="friendCreate") return mpPlay("chess",String(Math.floor(10000+Math.random()*90000)));
+  if(ga==="friendJoin"){ const c=(($("#friendIn")||{}).value||"").replace(/\D/g,""); if(c.length!==5) return toast(tr("Enter the 5-digit code")); return mpPlay("chess",c); }
+  if(ga==="friendShare"){ const c=MP&&MP.code; if(!c) return; const t=GL()?`العب معي شطرنج في Outpost: افتح الشطرنج ← العب مع صديق ← انضم، واكتب الرمز ${c}`:`Play me at chess in Outpost: open Chess → Play a friend → Join, and enter the code ${c}`;
+    try{ if(navigator.share) return navigator.share({text:t}).catch(()=>{}); }catch(e){} try{ navigator.clipboard.writeText(t); toast(tr("Copied")); }catch(e){} return; }
   if(ga==="courseList"){ closeModal(); chessReq++; S.game="courseList"; return show("games"); }
   if(ga==="courseGo") return startCourse(gel.dataset.id);
   if(ga==="dailyGo") return startDaily();

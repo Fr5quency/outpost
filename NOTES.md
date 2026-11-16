@@ -71,6 +71,7 @@ Outpost is an offline "pocket kit" web app for iPhone (and Android), installed f
 ### Online play
 - PeerJS public broker + WebRTC. Matchmaking: whoever claims the lobby ID (`outpost-pocketkit-chess-lobby-v1`, plus `-four` / `-blocks`) waits; others connect to it. Games register handlers in `MPG` (chess in index.html; `window.OUTPOST_MP.register` for Four in a Row in games-more.js; block battle in index.html).
 - Online: chess (15 min each), Four in a Row (30 s per move), Block Puzzle score battle (3 min, same pieces from a shared seed).
+- **Play a friend**: `mpPlay(game, code)` → `mpQueue` uses the private lobby `outpost-friend-<game>-<5-digit code>` instead of the public one, so only the two players with the code meet (same host/guest logic). Menu card → modal: Create a code / Join with a code; the waiting screen shows the code and a Send button (share sheet / clipboard). Online Elo counts as usual. Tested with three pages (friend pair + a random player who must not be matched).
 - Never tested against the real PeerJS servers (blocked from the build sandbox); tested with a BroadcastChannel stand-in.
 
 ### Account & sync (sign in)
@@ -139,3 +140,4 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 - 2026-11-16: Stage A: evaluation bar, learn from your mistakes, share PGN / picture. (sw cache v34)
 - 2026-11-16: Stage B: opening names; 19 opening and gambit lessons. (sw cache v35)
 - 2026-11-16: Stage C: daily puzzle + streak, stats page, 24 achievements. (sw cache v36)
+- 2026-11-16: Stage D: play a friend with a 5-digit code. (sw cache v37)
