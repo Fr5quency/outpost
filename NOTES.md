@@ -52,6 +52,7 @@ Outpost is an offline "pocket kit" web app for iPhone (and Android), installed f
 - Firebase project `outpost-f3a72` (config `FB_CFG` in index.html; it is public by design). Google sign-in uses `signInWithPopup`, falling back to `signInWithRedirect`. Authorized domain needed: `fr5quency.github.io`.
 - Database: **Cloud Firestore**, called through its REST API with the user's ID token (no Firestore SDK, to keep the app small). One document per user: `users/{uid}` with `data` (JSON string of every `outpost.*` localStorage key) and `updatedAt`.
 - Security rules (published in the Firebase console): `match /users/{uid} { allow read, write: if request.auth != null && request.auth.uid == uid; }`
+- If sync shows `(download 403)` / `(upload 403)`: the Firestore rules are missing or not published (Firestore Database → Rules → paste → Publish). This happened once at setup; publishing the rules fixed it.
 - Never uploaded (per-phone meta keys): `probe`, `eloPending`, `acct`, `syncAt`, `syncDirtyAt`, `syncUid`.
 - How sync works: `store.set` calls `window.__syncHook`, which stamps `syncDirtyAt` and uploads 4 s later. On open / coming online / returning to the app, the newer copy wins (`updatedAt` in the cloud vs `syncAt` / `syncDirtyAt` on the phone); pulling cloud data replaces local keys and reloads the page.
 - First sign-in on a phone (`syncUid` differs): cloud empty → upload; phone has no real data (only lang/theme/name-type settings) → restore silently; both have data → ask "Use my account's data" / "Keep this phone's data".
@@ -95,3 +96,4 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 - 2026-11-16: added this NOTES.md.
 - 2026-11-16: Sign in with Google + account sync to Firestore (all app data); Apple button shown as "Coming soon". Firebase SDK bundled in `firebase/`; service worker skips other sites. (sw cache v20)
 - 2026-11-16: Fixed sync stuck on "Syncing…" (status never refreshed after a failed first sync, no time limit on requests, error messages hidden behind the account page). Errors now show their reason. (sw cache v21)
+- 2026-11-16: Google sign-in + sync confirmed working on the owner's iPhone (after publishing the Firestore rules).
