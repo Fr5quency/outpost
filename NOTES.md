@@ -46,6 +46,10 @@ Outpost is an offline "pocket kit" web app for iPhone (and Android), installed f
 - The built-in engine (`ChessEngine`) is named **Outpost Chess** in the app.
 - Review engine: **Stockfish 18** (`SF`, `sfQueue`, `sfJob`) for Standard and No-castling games: per position `go depth 20 movetime 1000` with MultiPV 2 (best move, score, second-best score for "only move"), plus a 500 ms search of the played move if it was not one of the top two. Mate scores are mapped onto the built-in engine's scale (±100000). Newest position first; jobs of a closed game are dropped. Chess960 / King of the Hill / Three-check use the built-in engine (`anLocal`), and so does everything if Stockfish cannot load (`sfFail`, state −1). Rows made by Stockfish carry `sf:1`. Checked against Morphy's Opera Game: 13.Rxd7 and 16.Qb8+ Brilliant, 15…Nxd7 Blunder, White 99% accuracy.
 - Engine shown: every analysis row has `sf` (1 Stockfish, 0 built-in; `null` = saved before this was recorded). `engineName(rows)` → "Analysed by Stockfish 18 / Outpost Chess / both" in the review summary; saved games keep `eng` (sf / local / mix), shown in the history row.
+- Puzzle mode is generic: `startPz(P,{kind})` with `CH.puz.P` = {f, m, t, r}; kinds `pz` (numbered, saves progress), `daily`, `retry`, `course`. `puzTitle/puzSub/puzBack` and the done-buttons depend on the kind; `puzDone()` calls `window.onPuzDone(kind,puz)` (hook for daily/courses/achievements).
+- Learn from your mistakes: `myMistakes()` turns your mistake/miss/blunder plies (both sides in 1v1; not bot vs bot; standard/no-castling only) into one-move puzzles (best move from the review); button in the review summary; `S.retry` keeps the game to go back to (`retryBack`).
+- Evaluation bar: `.evbar` in `#revLine` (so it never changes the board size), White's winning chances from `whiteWin(k)` (corrected values).
+- Share: `makePgn()` (tags, SAN, result from `gameWinner()` / `CH.winner`), `sharePgn()` (share sheet, else clipboard, else text box), `shareImage()` (1080×1440 canvas of the final position, names, Elo, result, accuracy; share sheet with a file, else download).
 - Board size: `sizeBoard` ignores `#coachBox`, `#revLine` and `#mlist`, so the review text never shrinks the board; the coach text is capped at 4 lines and scrolls.
 - Classification accuracy:
   - Stockfish rows also keep the second-best move and score (`s2`, `b2`; packed as items 6–7).
@@ -127,3 +131,4 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 - 2026-11-16: Bot vs bot mode; Brilliant Mover description. (sw cache v31)
 - 2026-11-16: Brilliant Mover plays sound-enough sacrifices (gambler); new description. (sw cache v32)
 - 2026-11-16: Bot vs bot: Brilliant Mover's opponent gives it sacrifice chances. (sw cache v33)
+- 2026-11-16: Stage A: evaluation bar, learn from your mistakes, share PGN / picture. (sw cache v34)
