@@ -478,6 +478,14 @@ body[data-view="games"].inchess .prefs{display:none}
 .evbar i{display:block;height:100%;background:#f0f0ea;transition:width .35s ease}
 .retrybtn{border-color:#e6912c;color:#e6912c}
 .pgnbox{width:100%;height:220px;font:12px/1.4 ui-monospace,monospace;background:var(--sunk);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px}
+/* openings */
+.lesson{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;text-align:start}
+.lesson p{flex:1;margin:0;font-size:14px;line-height:1.45}
+.optag{max-width:52vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}.optag[hidden]{display:none}
+.coursecard.done{border-color:color-mix(in srgb,#81b64c 60%,var(--line))}
+.cicon{background:#739552}.cicon.sideb{background:#3a3a3a}.cicon2{background:#a88764;font-size:28px}
+.coursecard .otxt small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hmid small.hop{color:var(--ink);opacity:.85}
 /* game history */
 .hicon{background:#5b7bd5;color:#fff}.hicon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -904,6 +912,8 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Openings & gambits":"الافتتاحات والمناورات","Openings":"الافتتاحات","Gambits":"المناورات","You play White":"تلعب بالأبيض","You play Black":"تلعب بالأسود","Play the moves yourself. Every move comes with a short explanation.":"العب النقلات بنفسك. كل نقلة معها شرح قصير.",
+"That's not the move in this lesson. Try again.":"هذه ليست نقلة هذا الدرس. حاول مرة أخرى.","Good move. Keep going.":"نقلة جيدة. تابع.","Lesson complete! You can play it again or try another one.":"اكتمل الدرس! يمكنك إعادته أو تجربة درس آخر.",
 "Your mistake":"خطؤك","Daily puzzle":"لغز اليوم","Lesson":"درس","‹ Back to the game":"› العودة إلى المباراة","‹ Lessons":"› الدروس","Next mistake":"الخطأ التالي","Back to the game":"العودة إلى المباراة","Again":"مرة أخرى","More lessons":"دروس أخرى",
 "Evaluation":"التقييم","Share":"مشاركة","Share this game":"شارك هذه المباراة","PGN opens in chess.com, Lichess and other chess apps.":"ملف PGN يفتح في chess.com وLichess وتطبيقات الشطرنج الأخرى.","Share PGN":"شارك PGN","Share a picture":"شارك صورة","PGN copied":"تم نسخ PGN","Making the picture…":"جارٍ إنشاء الصورة…","Could not make the picture":"تعذّر إنشاء الصورة",
 "Bot vs bot":"بوت ضد بوت","Pick two bots and watch them play. Brilliant moves get the !! badge and the ding.":"اختر بوتين وشاهدهما يلعبان. النقلات الرائعة تحصل على علامة !! والصوت.","Stop the match":"أوقف المباراة","Other bots":"بوتات أخرى","Wow! You're such a clever bot!":"واو! أنت بوت ذكي جدًا!",
@@ -1775,6 +1785,7 @@ function renderGames(){
   if(S.game==="puzList") return renderPuzList(v);
   if(S.game==="chessHist") return renderChessHist(v);
   if(S.game==="bvbSetup") return renderBvb(v);
+  if(S.game==="courseList") return renderCourses(v);
   if(S.game==="blocks") return renderBlocks(v);
   const XG=window.OUTPOST_GAMES||{}; if(XG[S.game]) return XG[S.game].render(v);
   const best=store.get("blocksBest",0), cs=store.get("chess",null);
@@ -2012,7 +2023,7 @@ const youLabel=()=>CH&&CH.mode==="bvb"?botName(bvbLvl(CH.color)):CH&&(CH.mode===
 let PZ=null, PZp=null;
 const puzTitle=()=>{ const p=CH.puz; return p.kind==="retry"?tr("Your mistake"):p.kind==="daily"?tr("Daily puzzle"):p.kind==="course"?(p.title||tr("Lesson")):tr("Puzzle")+" "+(p.i+1); };
 const puzSub=()=>{ const p=CH.puz, P=p.P; if(p.kind==="retry") return GL()?`لعبت ${esc(P.played)}. جد أفضل نقلة`:`You played ${esc(P.played)}. Find the best move`;
-  if(p.kind==="course") return GL()?`الخطوة ${AD(Math.min(p.step+1,P.m.length))} من ${AD(P.m.length)}`:`Step ${Math.min(p.step+1,P.m.length)} of ${P.m.length}`; return tr(PZ_TYPE[P.t]||"Puzzle")+" · "+P.r; };
+  if(p.kind==="course"){ const n=Math.ceil(P.m.length/2); return tr(CH.color>0?"You play White":"You play Black")+(GL()?` · ${AD(n)} نقلات`:` · ${n} moves`); } return tr(PZ_TYPE[P.t]||"Puzzle")+" · "+P.r; };
 const puzBack=()=>{ const k=CH.puz.kind; return k==="retry"?["retryBack","‹ Back to the game"]:k==="daily"?["chessMenu","‹ Chess"]:k==="course"?["courseList","‹ Lessons"]:["puzList","‹ Puzzles"]; };
 const PZ_TYPE={m1:"Mate in 1",m2:"Mate in 2",m3:"Mate in 3",m4:"Mate in 4",win:"Win material",brill:"Brilliant move"}, PZ_N=150;
 const puzState=()=>{ const st=store.get("puz",null); return st&&st.done?st:{done:{}}; };
@@ -2038,7 +2049,7 @@ function startPz(P,o){ const color=P.f.split(" ")[1]==="b"?-1:1; chessReq++;
   CH=newCH({mode:"puz",lvl:0,color,flip:color<0,variant:"std",start:P.f,puz:Object.assign({i:-1,kind:"pz",P,step:0,fail:false,done:false,hint:null,wrong:null},o)});
   CH.keys=chessReplay([]); CH.fens=[engine().fen()]; closeModal(); S.game="chess"; show("games");
 }
-function puzDone(){ const k=CH.puz.kind; if(window.onPuzDone) window.onPuzDone(k,CH.puz); }   // daily / courses / achievements hook in here
+function puzDone(){ const k=CH.puz.kind; if(k==="course"){ const d=courseDone(); d[CH.puz.course]=1; store.set("courses",d); } if(window.onPuzDone) window.onPuzDone(k,CH.puz); }   // daily / courses / achievements hook in here
 function puzApply(m){ // play one move of the solution on the board
   const E=engine(), f=m&127, t=(m>>7)&127, s=E.moveStr(m); if(!E.make(m)) return;
   CH.moves.push(s); CH.last=[f,t]; CH.sel=-1; CH.puz.hint=null; CH.puz.wrong=null; CH.puz.step++; CH.arrows=[]; CH.arrowFrom=null;
@@ -2051,7 +2062,8 @@ function puzReply(then){ const g=CH.gid; setTimeout(()=>{ if(!CH||CH.gid!==g||CH
 function puzMove(m){ // your move: it must be the puzzle's move (any checkmate is accepted on the last move)
   const E=engine(), P=CH.puz.P, want=P.m[CH.puz.step]; let ok=E.moveStr(m)===want;
   if(!ok&&CH.puz.step===P.m.length-1&&E.make(m)){ ok=E.inCheck()&&!E.legal().length; E.unmake(); }
-  if(!ok){ CH.puz.fail=true; CH.puz.wrong=(m>>7)&127; CH.sel=-1; drawBoard(); haptic(60); toast(tr("Not the best move. Try again.")); return false; }
+  if(!ok){ CH.puz.fail=true; CH.puz.wrong=(m>>7)&127; CH.sel=-1; drawBoard(); haptic(60); toast(tr(CH.puz.kind==="course"?"That's not the move in this lesson. Try again.":"Not the best move. Try again.")); return false; }
+  if(CH.puz.kind==="course"){ const c=COURSES.find(x=>x.id===CH.puz.course); CH.puz.note=(c&&c.notes[CH.puz.lk]||[])[GL()?1:0]||tr("Good move. Keep going."); CH.puz.lk++; }
   const brill=isSacrifice(E,m), sn=brill?san(E,m):"";   // a correct sacrifice is a brilliant move: ding and "!!" like in a game
   puzApply(m);
   if(brill){ CH.live={ply:CH.moves.length-1,t:Date.now(),san:sn}; ensureAudio(); if(!(CH.puz.done&&!CH.puz.fail)) ding(); haptic(40); drawBoard(); }
@@ -2103,6 +2115,7 @@ function renderChessMenu(v){
     <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
     <p class="sub">${tr((VARIANTS.find(x=>x[0]===(S.chessVariant||"std"))||VARIANTS[0])[2])}</p>
     <button class="hotcard bvbcard" data-act="bvbOpen"><span class="hoticon bvbicon">${pcImg(2)}<b>vs</b>${pcImg(-2)}</span><span class="otxt"><b>${tr("Bot vs bot")}</b><small>${tr("Pick two bots and watch them play. Brilliant moves get the !! badge and the ding.")}</small></span></button>
+    <button class="hotcard coursescard" data-act="courseList"><span class="hoticon cicon2">📖</span><span class="otxt"><b>${tr("Openings & gambits")}</b><small>${GL()?`${AD(COURSES.length)} دروس، منها مناورة الفضائي · أكملت ${AD(Object.keys(courseDone()).length)}`:`${COURSES.length} lessons, including the Alien Gambit · ${Object.keys(courseDone()).length} done`}</small></span></button>
     <button class="hotcard histcard" data-act="chessHist"><span class="hoticon hicon"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4M12 7v5l3 2"/></svg></span><span class="otxt"><b>${tr("Game history")}</b><small>${GL()?`كل مبارياتك مع النقلات والمراجعة · ${AD(archList().length)} مباراة`:`All your games with moves and review · ${archList().length} saved`}</small></span></button>
     <button class="hotcard puzcard" data-act="puzOpen"><span class="hoticon pzicon">?</span><span class="otxt"><b>${tr("Puzzles")}</b><small>${GL()?`${AD(PZ_N)} لغز: كش مات وتكتيكات ونقلات رائعة · حللت ${AD(puzCount())}`:`${PZ_N} puzzles: checkmates, tactics and brilliant moves · ${puzCount()} solved`}</small></span></button>
     <button class="hotcard" data-act="chessHot"><span class="hoticon">${pcImg(6)}${pcImg(-6)}</span><span class="otxt"><b>${tr("1v1 on this phone")}</b><small>${tr("Two players pass the phone. The board flips after every move. Uses the mode chosen above.")}</small></span></button>
@@ -2123,10 +2136,11 @@ function renderChess(v){
   if(!CH){ S.game=null; return renderGames(); }
   const AR_=CH.arch, mp=CH.mode==="mp", mpl=mp&&!AR_, puz=CH.mode==="puz", hot=CH.mode==="hot"||puz, bvb=CH.mode==="bvb", on=oppName();
   v.innerHTML=`<div class="gwrap${puz?" puzmode":""}" id="gameRoot">
-    <div class="gtop"><button class="btn small gback" data-act="${AR_?"chessHist":puz?puzBack()[0]:"chessMenu"}">${tr(AR_?"‹ History":puz?puzBack()[1]:mp?"‹ Leave":bvb?"‹ Chess":"‹ Opponents")}</button>${AR_?`<span class="vtag">${archDate(AR_.t)}</span>`:CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
+    <div class="gtop"><button class="btn small gback" data-act="${AR_?"chessHist":puz?puzBack()[0]:"chessMenu"}">${tr(AR_?"‹ History":puz?puzBack()[1]:mp?"‹ Leave":bvb?"‹ Chess":"‹ Opponents")}</button>${AR_?`<span class="vtag">${archDate(AR_.t)}</span>`:CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:puz?"":`<span class="vtag optag" id="openTag" hidden></span>`}${fsButton()}</div>
     <div class="pbar"><span class="ava${hot?(CH.color>0?" sideb":" sidew"):""}" style="${hot?"":`background:${mp?"#5b7bd5":AVC[CH.lvl]}`}">${hot?pcImg(-6*CH.color,"cp"):esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:puz?`<em>${puzSub()}</em>`:hot?"":`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mpl?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
     <div class="pbar"><span class="ava ${hot?(CH.color>0?"sidew":"sideb"):bvb?"":"you"}" style="${bvb?`background:${AVC[bvbLvl(CH.color)]}`:""}">${hot?pcImg(6*CH.color,"cp"):esc(bvb?youLabel():meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(youLabel())} ${bvb?`<em>${LEVELS[bvbLvl(CH.color)].elo}</em>`:AR_?(AR_.mb!=null?`<em>${AR_.mb}</em>`:""):mp?`<em>${eloOn()}</em>`:(!hot&&CH.variant==="std")?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mpl?`<span class="clock" id="clkYou"></span>`:""}</div>
+    ${puz&&CH.puz.kind==="course"?`<div class="lesson" id="lessonBox"></div>`:""}
     <div class="revline" id="revLine"></div>
     <div class="coach" id="coachBox" hidden></div>
     <div class="navrow" dir="ltr">
@@ -2143,7 +2157,7 @@ function renderChess(v){
 }
 function sizeBoard(){
   const root=$("#gameRoot"), bd=$("#board"); if(!root||!bd) return;
-  let w=root.clientWidth; const other=[...root.children].filter(c=>c!==bd&&c.id!=="mlist"&&c.id!=="coachBox"&&c.id!=="revLine"&&(!S.gfs||!c.classList.contains("gtop"))).reduce((t,c)=>t+c.offsetHeight+10,0);
+  let w=root.clientWidth; const other=[...root.children].filter(c=>c!==bd&&c.id!=="mlist"&&c.id!=="coachBox"&&c.id!=="revLine"&&c.id!=="lessonBox"&&(!S.gfs||!c.classList.contains("gtop"))).reduce((t,c)=>t+c.offsetHeight+10,0);
   if(S.gfs) w=Math.min(w,window.innerHeight-other-40);
   else w=Math.min(w,window.innerHeight-(root.getBoundingClientRect().top+window.scrollY)-other-$(".tabs").offsetHeight-12);
   bd.style.setProperty("--bs",Math.max(240,Math.floor(w/8)*8)+"px");
@@ -2187,6 +2201,8 @@ function drawBoard(){
   reviewOverlay();
   userArrows();
   moveList();
+  const lb=$("#lessonBox"); if(lb&&CH.puz) lb.innerHTML=`<i class="coachava" style="background-image:url(pieces/wN.svg)"></i><p>${esc(courseNote())}</p>`;
+  const ot=$("#openTag"); if(ot){ const nm=openingName(live?CH.moves.length:CH.view); ot.textContent=nm; ot.hidden=!nm; }
 }
 /* your own arrows: double-tap a square to start one, double-tap another to finish it; a single tap on the board clears them */
 const DOUBLE_TAP_MS=380;
@@ -2366,7 +2382,7 @@ function archRecord(res,R,hotWin){ // called once when a game ends
     o:hot?hotWin:(WIN.includes(res)?1:LOSE.includes(res)?0:0.5),
     on:CH.mode==="bvb"?botName(CH.lvlW)+" — "+botName(CH.lvlB):hot?"":oppName(),lw:CH.lvlW,lb:CH.lvlB,oe:CH.mode==="mp"?CH.oppElo:CH.mode==="bot"?LEVELS[CH.lvl].elo:null,lvl:CH.lvl|0,me:hot?"":meName(),
     mb:R?R.from:null,ma:R?R.to:null,k:R?(CH.mode==="mp"?"on":"off"):""};
-  if(CH.start&&CH.start!==STD_FEN) g.s=CH.start;
+  if(CH.start&&CH.start!==STD_FEN) g.s=CH.start; const oe=openingEntry(CH.moves.length); if(oe) g.op=oe[0];
   CH.archId=g.id; const a=archList(); a.unshift(g); store.set("chessGames",a.slice(0,ARCH_MAX)); archRows();
 }
 function archRows(){ // keep the analysis with the saved game, so its review opens instantly later
@@ -2404,7 +2420,7 @@ function renderChessHist(v){
       const icon=oc==="w"?"+":oc==="l"?"−":oc==="d"?"=":"";
       return `<button class="hrow" data-act="archOpen" data-id="${g.id}">
         <span class="hres r-${oc==="W"||oc==="B"?"h":oc}">${oc==="W"?pcImg(6,"cp"):oc==="B"?pcImg(-6,"cp"):icon}</span>
-        <span class="hmid"><b>${who}${g.oe?` <em>(${N(g.oe)})</em>`:""}</b><small>${archMode(g)}${SEP()}${archWhy(g)}${SEP()}${GL()?`${AD(n)} نقلة`:`${n} moves`}</small><small>${archDate(g.t)}${g.eng?SEP()+(g.eng==="sf"?"Stockfish 18":(g.eng==="mix"?"Stockfish 18 + Outpost Chess":"Outpost Chess")):""}</small></span>
+        <span class="hmid"><b>${who}${g.oe?` <em>(${N(g.oe)})</em>`:""}</b>${g.op?`<small class="hop">${esc((OPENINGS.find(o=>o[0]===g.op)||[g.op,g.op])[GL()?1:0])}</small>`:""}<small>${archMode(g)}${SEP()}${archWhy(g)}${SEP()}${GL()?`${AD(n)} نقلة`:`${n} moves`}</small><small>${archDate(g.t)}${g.eng?SEP()+(g.eng==="sf"?"Stockfish 18":(g.eng==="mix"?"Stockfish 18 + Outpost Chess":"Outpost Chess")):""}</small></span>
         <span class="hend">${g.ma!=null?`<b>${N(g.ma)}</b><em class="${d>0?"up":d<0?"down":""}">${d>0?"+"+N(d):d<0?"−"+N(-d):"±"+N(0)}</em>`:""}${acc!=null?`<small>${tr("Accuracy")} ${GL()?AD(acc):acc}</small>`:""}</span>
       </button>`; }).join("")}</div>`
     :`<div class="card"><p class="sub">${tr(all.length?"No games here yet.":"Your finished games will appear here, with their moves and game review.")}</p></div>`}
@@ -2419,6 +2435,124 @@ function moveList(){
     const P=CH.an&&CH.an.plies[i]; h+=`<button class="mv${at===i+1?" on":""}" data-act="mvGo" data-k="${i+1}" dir="ltr">${P?`<i style="background:${CLS[P.c].c}"></i>`:""}${esc(s)}</button>`; });
   box.innerHTML=h; const on=box.querySelector(".mv.on"); if(on&&box.scrollHeight>box.clientHeight) box.scrollTop=on.offsetTop-box.clientHeight/2;
 }
+
+/* ===== OPENINGS: names (shown during games and in history) and courses (openings + gambits) ===== */
+const OPENINGS=[ // [English, Arabic, moves]; the deepest match wins
+["King's Pawn Opening","افتتاح بيدق الملك","e4"],["Queen's Pawn Opening","افتتاح بيدق الوزير","d4"],["English Opening","الافتتاح الإنجليزي","c4"],["Réti Opening","افتتاح ريتي","Nf3"],["Bird's Opening","افتتاح بيرد","f4"],
+["Open Game","اللعبة المفتوحة","e4 e5"],["King's Knight Opening","افتتاح حصان الملك","e4 e5 Nf3"],["Bishop's Opening","افتتاح الفيل","e4 e5 Bc4"],
+["Italian Game","اللعبة الإيطالية","e4 e5 Nf3 Nc6 Bc4"],["Italian Game: Giuoco Piano","الإيطالية: جوكو بيانو","e4 e5 Nf3 Nc6 Bc4 Bc5"],["Evans Gambit","مناورة إيفانز","e4 e5 Nf3 Nc6 Bc4 Bc5 b4"],
+["Jerome Gambit","مناورة جيروم","e4 e5 Nf3 Nc6 Bc4 Bc5 Bxf7+"],["Two Knights Defense","دفاع الحصانين","e4 e5 Nf3 Nc6 Bc4 Nf6"],["Fried Liver Attack","هجوم الكبد المقلي","e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7"],
+["Ruy Lopez","روي لوبيز","e4 e5 Nf3 Nc6 Bb5"],["Ruy Lopez: Berlin Defense","روي لوبيز: الدفاع البرليني","e4 e5 Nf3 Nc6 Bb5 Nf6"],["Ruy Lopez: Morphy Defense","روي لوبيز: دفاع مورفي","e4 e5 Nf3 Nc6 Bb5 a6"],
+["Scotch Game","اللعبة الاسكتلندية","e4 e5 Nf3 Nc6 d4"],["Scotch Gambit","المناورة الاسكتلندية","e4 e5 Nf3 Nc6 d4 exd4 Bc4"],["Ponziani Opening","افتتاح بونزياني","e4 e5 Nf3 Nc6 c3"],
+["Four Knights Game","لعبة الأحصنة الأربعة","e4 e5 Nf3 Nc6 Nc3 Nf6"],["Petrov's Defense","دفاع بتروف","e4 e5 Nf3 Nf6"],["Stafford Gambit","مناورة ستافورد","e4 e5 Nf3 Nf6 Nxe5 Nc6"],
+["Philidor Defense","دفاع فيليدور","e4 e5 Nf3 d6"],["Latvian Gambit","المناورة اللاتفية","e4 e5 Nf3 f5"],["Vienna Game","لعبة فيينا","e4 e5 Nc3"],["Vienna Gambit","مناورة فيينا","e4 e5 Nc3 Nf6 f4"],
+["King's Gambit","مناورة الملك","e4 e5 f4"],["King's Gambit Accepted","مناورة الملك المقبولة","e4 e5 f4 exf4"],["Danish Gambit","المناورة الدنماركية","e4 e5 d4 exd4 c3"],["Center Game","لعبة المركز","e4 e5 d4 exd4 Qxd4"],
+["Sicilian Defense","الدفاع الصقلي","e4 c5"],["Sicilian: Najdorf","الصقلي: نايدورف","e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6"],["Sicilian: Dragon","الصقلي: التنين","e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 g6"],
+["Sicilian: Smith-Morra Gambit","الصقلي: مناورة سميث-مورا","e4 c5 d4 cxd4 c3"],["Sicilian: Alapin","الصقلي: ألابين","e4 c5 c3"],["Sicilian: Closed","الصقلي المغلق","e4 c5 Nc3"],
+["French Defense","الدفاع الفرنسي","e4 e6"],["French: Advance","الفرنسي: التقدم","e4 e6 d4 d5 e5"],["French: Winawer","الفرنسي: فيناور","e4 e6 d4 d5 Nc3 Bb4"],
+["Caro-Kann Defense","دفاع كارو-كان","e4 c6"],["Caro-Kann: Advance","كارو-كان: التقدم","e4 c6 d4 d5 e5"],["Caro-Kann: Classical","كارو-كان: الكلاسيكي","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5"],
+["Caro-Kann: Alien Gambit","كارو-كان: مناورة الفضائي (Alien)","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5"],
+["Scandinavian Defense","الدفاع الإسكندنافي","e4 d5"],["Pirc Defense","دفاع بيرتس","e4 d6 d4 Nf6 Nc3 g6"],["Alekhine's Defense","دفاع أليخين","e4 Nf6"],["Modern Defense","الدفاع الحديث","e4 g6"],
+["Queen's Gambit","مناورة الوزير","d4 d5 c4"],["Queen's Gambit Declined","مناورة الوزير المرفوضة","d4 d5 c4 e6"],["Queen's Gambit Accepted","مناورة الوزير المقبولة","d4 d5 c4 dxc4"],
+["Slav Defense","الدفاع السلافي","d4 d5 c4 c6"],["Albin Countergambit","مناورة ألبين المضادة","d4 d5 c4 e5"],["London System","نظام لندن","d4 d5 Bf4"],["London System","نظام لندن","d4 Nf6 Bf4"],
+["Indian Defense","الدفاع الهندي","d4 Nf6"],["King's Indian Defense","الدفاع الهندي الملكي","d4 Nf6 c4 g6 Nc3 Bg7 e4 d6"],["Nimzo-Indian Defense","الدفاع النمزو-هندي","d4 Nf6 c4 e6 Nc3 Bb4"],
+["Queen's Indian Defense","الدفاع الهندي للوزير","d4 Nf6 c4 e6 Nf3 b6"],["Grünfeld Defense","دفاع غرونفيلد","d4 Nf6 c4 g6 Nc3 d5"],["Catalan Opening","الافتتاح الكتالوني","d4 Nf6 c4 e6 g3"],
+["Benko Gambit","مناورة بنكو","d4 Nf6 c4 c5 d5 b5"],["Budapest Gambit","مناورة بودابست","d4 Nf6 c4 e5"],["Dutch Defense","الدفاع الهولندي","d4 f5"],["Englund Gambit","مناورة إنغلوند","d4 e5"]
+];
+/* courses: you play one side; every one of your moves has a short explanation [English, Arabic] */
+const COURSES=[
+{id:"italian",g:0,side:"w",n:["Italian Game","اللعبة الإيطالية"],line:"e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 d6 O-O O-O Re1 a6",
+ idea:["One of the oldest openings: quick development, the bishop aims at f7, and a slow, solid centre.","من أقدم الافتتاحات: تطوير سريع، والفيل يستهدف f7، ومركز صلب يُبنى بهدوء."],
+ notes:[["e4 takes the centre and opens lines for the queen and bishop.","e4 تسيطر على المركز وتفتح الطريق للوزير والفيل."],["Nf3 develops and attacks the e5 pawn.","Nf3 تطوّر الحصان وتهاجم بيدق e5."],["Bc4 aims at f7, the weakest square near Black's king.","Bc4 يستهدف f7، أضعف مربع قرب ملك الأسود."],["c3 prepares d4 to build a big centre.","c3 تُحضّر لـ d4 لبناء مركز كبير."],["d3 keeps e4 safe: the slow, solid 'Giuoco Pianissimo'.","d3 تحمي e4: أسلوب «جوكو بيانيسيمو» الهادئ والصلب."],["Castle early: the king is safe and the rook comes to the centre.","بيّت مبكرًا: الملك آمن والرخ يقترب من المركز."],["Re1 supports e4 and prepares d4 later.","Re1 يدعم e4 ويحضّر لـ d4 لاحقًا."]]},
+{id:"ruy",g:0,side:"w",n:["Ruy Lopez","روي لوبيز"],line:"e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O",
+ idea:["The 'Spanish': pressure on the knight that defends e5, then a long, rich fight.","«الإسبانية»: ضغط على الحصان الذي يحمي e5، ثم معركة طويلة وغنية."],
+ notes:[["e4: take the centre.","e4: سيطر على المركز."],["Nf3 attacks e5.","Nf3 تهاجم e5."],["Bb5 pins down the defender of e5.","Bb5 يضغط على الحصان المدافع عن e5."],["Ba4 keeps the pressure instead of trading.","Ba4 يُبقي الضغط بدل التبادل."],["Castle: e4 is not really hanging, because ...Nxe4 runs into Re1.","بيّت: بيدق e4 ليس في خطر حقيقي، فبعد ...Nxe4 يأتي Re1."],["Re1 protects e4 for good.","Re1 يحمي e4 نهائيًا."],["Bb3: the bishop keeps looking at f7.","Bb3: الفيل يواصل النظر إلى f7."],["c3 prepares d4 and gives the bishop a retreat on c2.","c3 تُحضّر لـ d4 وتمنح الفيل مربع تراجع c2."]]},
+{id:"qg",g:0,side:"w",n:["Queen's Gambit","مناورة الوزير"],line:"d4 d5 c4 e6 Nc3 Nf6 Bg5 Be7 e3 O-O Nf3 h6 Bh4",
+ idea:["White offers the c-pawn to pull Black's d-pawn away from the centre.","يعرض الأبيض بيدق c ليسحب بيدق d الأسود بعيدًا عن المركز."],
+ notes:[["d4 takes the centre; the queen protects it.","d4 تسيطر على المركز والوزير يحميها."],["c4: the 'gambit'. If Black takes, White gets the centre.","c4: «المناورة». إذا أخذ الأسود، يحصل الأبيض على المركز."],["Nc3 adds pressure on d5.","Nc3 تزيد الضغط على d5."],["Bg5 pins the knight that defends d5.","Bg5 يثبّت الحصان المدافع عن d5."],["e3 opens the way for the other bishop.","e3 تفتح الطريق للفيل الآخر."],["Nf3: develop and get ready to castle.","Nf3: طوّر واستعد للتبييت."],["Bh4 keeps the pin.","Bh4 يحافظ على التثبيت."]]},
+{id:"london",g:0,side:"w",n:["London System","نظام لندن"],line:"d4 d5 Bf4 Nf6 e3 e6 Nf3 c5 c3 Nc6 Nbd2 Bd6 Bg3 O-O Bd3",
+ idea:["A system: the same solid setup against almost anything. Easy to learn, hard to break.","نظام: نفس التشكيل الصلب ضد أي شيء تقريبًا. سهل التعلّم وصعب الكسر."],
+ notes:[["d4: the centre.","d4: المركز."],["Bf4 comes out before e3 locks it in.","Bf4 يخرج قبل أن تحبسه e3."],["e3 builds the pawn chain.","e3 تبني سلسلة البيادق."],["Nf3: develop.","Nf3: طوّر."],["c3 makes d4 rock solid.","c3 تجعل d4 صلبة كالصخر."],["Nbd2: the knight supports e4 later.","Nbd2: الحصان يدعم e4 لاحقًا."],["Bg3 keeps the bishop instead of trading it.","Bg3 يحتفظ بالفيل بدل تبادله."],["Bd3: everything is developed. Castle next.","Bd3: كل شيء متطور. بيّت بعدها."]]},
+{id:"najdorf",g:0,side:"b",n:["Sicilian: Najdorf","الصقلي: نايدورف"],line:"e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6 Be3 e5 Nb3 Be6",
+ idea:["The favourite of Fischer and Kasparov: sharp, unbalanced, full of chances to win.","مفضّل فيشر وكاسباروف: حاد وغير متوازن ومليء بفرص الفوز."],
+ notes:[["c5 fights for d4 without copying White.","c5 تقاتل على d4 دون تقليد الأبيض."],["d6 controls e5 and opens the bishop.","d6 تسيطر على e5 وتفتح الفيل."],["cxd4: trade a side pawn for a centre pawn.","cxd4: بادل بيدق الجناح ببيدق المركز."],["Nf6 attacks e4.","Nf6 تهاجم e4."],["a6: the Najdorf move. It stops Nb5 and Bb5 and prepares ...b5.","a6: نقلة نايدورف. تمنع Nb5 وBb5 وتحضّر ...b5."],["e5 chases the knight and grabs space.","e5 تطارد الحصان وتكسب مساحة."],["Be6 develops and watches d5.","Be6 يتطور ويراقب d5."]]},
+{id:"french",g:0,side:"b",n:["French Defense","الدفاع الفرنسي"],line:"e4 e6 d4 d5 Nc3 Nf6 Bg5 Be7 e5 Nfd7 Bxe7 Qxe7",
+ idea:["Solid and counter-attacking: let White build the centre, then hit it.","صلب وهجومي مضاد: دع الأبيض يبني المركز ثم اضربه."],
+ notes:[["e6 prepares ...d5.","e6 تحضّر ...d5."],["d5 challenges e4 right away.","d5 تتحدى e4 فورًا."],["Nf6 adds pressure on e4.","Nf6 تزيد الضغط على e4."],["Be7 breaks the pin.","Be7 يكسر التثبيت."],["Nfd7: the knight steps back; ...c5 will attack the centre.","Nfd7: الحصان يتراجع، و...c5 ستهاجم المركز."],["Qxe7: the queen recaptures and stays active.","Qxe7: الوزير يستعيد ويبقى نشطًا."]]},
+{id:"caro",g:0,side:"b",n:["Caro-Kann Defense","دفاع كارو-كان"],line:"e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5 Ng3 Bg6 h4 h6 Nf3 Nd7",
+ idea:["Rock-solid: the light-squared bishop gets out before ...e6.","صلب كالصخر: الفيل الأبيض يخرج قبل ...e6."],
+ notes:[["c6 prepares ...d5 with support.","c6 تحضّر ...d5 بدعم."],["d5 challenges the centre.","d5 تتحدى المركز."],["dxe4 releases the tension.","dxe4 تُنهي التوتر."],["Bf5 develops with tempo on the knight.","Bf5 يتطور مع كسب الوقت بمهاجمة الحصان."],["Bg6 keeps the bishop safe.","Bg6 يحافظ على الفيل آمنًا."],["h6 gives the bishop a home on h7.","h6 تمنح الفيل مكانًا على h7."],["Nd7 stops Ne5 and prepares ...Ngf6.","Nd7 تمنع Ne5 وتحضّر ...Ngf6."]]},
+{id:"kid",g:0,side:"b",n:["King's Indian Defense","الدفاع الهندي الملكي"],line:"d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nc6",
+ idea:["Let White take the centre, then attack it and the king side.","دع الأبيض يأخذ المركز، ثم هاجمه وهاجم جناح الملك."],
+ notes:[["Nf6 stops e4 for now.","Nf6 تمنع e4 مؤقتًا."],["g6 prepares the fianchetto.","g6 تحضّر الفيانكيتو."],["Bg7: the bishop on the long diagonal.","Bg7: الفيل على القطر الطويل."],["d6 controls e5.","d6 تسيطر على e5."],["Castle: the king is safe behind the bishop.","بيّت: الملك آمن خلف الفيل."],["e5 strikes the centre.","e5 تضرب المركز."],["Nc6 adds pressure on d4.","Nc6 تزيد الضغط على d4."]]},
+{id:"scandi",g:0,side:"b",n:["Scandinavian Defense","الدفاع الإسكندنافي"],line:"e4 d5 exd5 Qxd5 Nc3 Qa5 d4 Nf6 Nf3 c6 Bc4 Bf5",
+ idea:["Hit the centre on move one. Simple plans, easy to learn.","اضرب المركز من النقلة الأولى. خطط بسيطة وسهلة التعلّم."],
+ notes:[["d5 attacks e4 immediately.","d5 تهاجم e4 فورًا."],["Qxd5 takes back with the queen.","Qxd5 يستعيد بالوزير."],["Qa5: a safe square that pins along the a5–e1 diagonal.","Qa5: مربع آمن ويثبّت على القطر a5–e1."],["Nf6: develop.","Nf6: طوّر."],["c6 gives the queen a retreat and solid pawns.","c6 تمنح الوزير مربع تراجع وبيادق صلبة."],["Bf5: the bishop out before ...e6.","Bf5: الفيل يخرج قبل ...e6."]]},
+{id:"slav",g:0,side:"b",n:["Slav Defense","الدفاع السلافي"],line:"d4 d5 c4 c6 Nf3 Nf6 Nc3 dxc4 a4 Bf5",
+ idea:["Defend d5 with the c-pawn so the light-squared bishop stays free.","دافع عن d5 ببيدق c حتى يبقى الفيل الأبيض حرًّا."],
+ notes:[["d5: the centre.","d5: المركز."],["c6 supports d5 and keeps the c8 bishop free.","c6 تدعم d5 وتُبقي فيل c8 حرًّا."],["Nf6: develop.","Nf6: طوّر."],["dxc4 grabs the pawn when White can't easily win it back.","dxc4 تأخذ البيدق عندما يصعب على الأبيض استعادته."],["Bf5: the bishop is out, exactly as planned.","Bf5: الفيل خرج كما خططنا."]]},
+/* gambits */
+{id:"alien",g:1,side:"w",n:["Alien Gambit","مناورة الفضائي (Alien)"],line:"e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 h6 Nxf7 Kxf7 Bc4+ e6 Nf3",
+ idea:["A wild knight sacrifice against the Caro-Kann, made famous by streamer Witty Alien. Engines say it's unsound, but in blitz it's a monster.","تضحية حصان جنونية ضد كارو-كان، اشتهرت بفضل البث المباشر لـ Witty Alien. المحركات تقول إنها غير سليمة، لكنها وحش في البليتز."],
+ notes:[["e4: the centre.","e4: المركز."],["d4: a full centre.","d4: مركز كامل."],["Nc3 defends e4.","Nc3 يدافع عن e4."],["Nxe4: take back.","Nxe4: استعد البيدق."],["Ng5!? The alien knight lands. It eyes f7.","Ng5!? الحصان الفضائي يهبط. إنه يستهدف f7."],["Nxf7!! The sacrifice: the black king is dragged out.","Nxf7!! التضحية: الملك الأسود يُسحب إلى الخارج."],["Bc4+: check, and every piece joins the attack.","Bc4+: كش، وكل القطع تنضم للهجوم."],["Nf3, then Ne5+ or Qe2: the attack keeps coming.","Nf3، ثم Ne5+ أو Qe2: الهجوم مستمر."]]},
+{id:"kingsg",g:1,side:"w",n:["King's Gambit","مناورة الملك"],line:"e4 e5 f4 exf4 Nf3 g5 h4 g4 Ne5 Nf6 Bc4 d5 exd5 Bd6",
+ idea:["The romantic gambit: give the f-pawn to open the f-file and attack.","المناورة الرومانسية: أعطِ بيدق f لتفتح العمود f وتهاجم."],
+ notes:[["e4: the centre.","e4: المركز."],["f4: the gambit pawn.","f4: بيدق المناورة."],["Nf3 stops ...Qh4+.","Nf3 يمنع ...Qh4+."],["h4 hits Black's pawn chain.","h4 تضرب سلسلة بيادق الأسود."],["Ne5: the Kieseritzky. The knight jumps to a strong square.","Ne5: خط كيزيريتسكي. الحصان يقفز إلى مربع قوي."],["Bc4 aims at f7.","Bc4 يستهدف f7."],["exd5: grab the centre pawn.","exd5: خذ بيدق المركز."]]},
+{id:"evans",g:1,side:"w",n:["Evans Gambit","مناورة إيفانز"],line:"e4 e5 Nf3 Nc6 Bc4 Bc5 b4 Bxb4 c3 Ba5 d4 exd4 O-O",
+ idea:["Give a pawn to win time and build a huge centre with an attack.","أعطِ بيدقًا لتكسب الوقت وتبني مركزًا ضخمًا مع هجوم."],
+ notes:[["e4: the centre.","e4: المركز."],["Nf3 attacks e5.","Nf3 تهاجم e5."],["Bc4 aims at f7.","Bc4 يستهدف f7."],["b4!? The Evans: a pawn for time.","b4!? إيفانز: بيدق مقابل الوقت."],["c3 attacks the bishop and prepares d4.","c3 تهاجم الفيل وتحضّر d4."],["d4 blows the centre open.","d4 تفتح المركز."],["Castle: development first, the pawns can wait.","بيّت: التطوير أولًا، والبيادق يمكنها الانتظار."]]},
+{id:"danish",g:1,side:"w",n:["Danish Gambit","المناورة الدنماركية"],line:"e4 e5 d4 exd4 c3 dxc3 Bc4 cxb2 Bxb2",
+ idea:["Give two pawns for two bishops that rake the whole board.","أعطِ بيدقين مقابل فيلين يمسحان الرقعة كلها."],
+ notes:[["e4: the centre.","e4: المركز."],["d4 opens the centre.","d4 تفتح المركز."],["c3 offers another pawn.","c3 تعرض بيدقًا آخر."],["Bc4: develop, and offer one more!","Bc4: طوّر، واعرض بيدقًا ثالثًا!"],["Bxb2: two bishops aimed at f7 and g7. Black's king is in danger.","Bxb2: فيلان يستهدفان f7 وg7. ملك الأسود في خطر."]]},
+{id:"morra",g:1,side:"w",n:["Smith-Morra Gambit","مناورة سميث-مورا"],line:"e4 c5 d4 cxd4 c3 dxc3 Nxc3 Nc6 Nf3 d6 Bc4 e6 O-O Nf6 Qe2",
+ idea:["The anti-Sicilian gambit: one pawn for fast development and open files.","مناورة ضد الصقلي: بيدق مقابل تطوير سريع وأعمدة مفتوحة."],
+ notes:[["e4: the centre.","e4: المركز."],["d4 opens the game.","d4 تفتح اللعب."],["c3: the Morra pawn.","c3: بيدق مورا."],["Nxc3: the knight comes out with tempo.","Nxc3: الحصان يخرج مع كسب الوقت."],["Nf3: develop.","Nf3: طوّر."],["Bc4 aims at e6 and f7.","Bc4 يستهدف e6 وf7."],["Castle.","بيّت."],["Qe2, then Rd1: pressure on the d-file.","Qe2 ثم Rd1: ضغط على العمود d."]]},
+{id:"friedliver",g:1,side:"w",n:["Fried Liver Attack","هجوم الكبد المقلي"],line:"e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7 Kxf7 Qf3+ Ke6 Nc3",
+ idea:["A famous knight sacrifice on f7 that drags the king into the middle of the board.","تضحية حصان شهيرة على f7 تسحب الملك إلى وسط الرقعة."],
+ notes:[["e4: the centre.","e4: المركز."],["Nf3 attacks e5.","Nf3 تهاجم e5."],["Bc4 aims at f7.","Bc4 يستهدف f7."],["Ng5: two pieces hit f7.","Ng5: قطعتان تضربان f7."],["exd5: take the pawn.","exd5: خذ البيدق."],["Nxf7!! The knight sacrifice.","Nxf7!! تضحية الحصان."],["Qf3+: the king must go forward.","Qf3+: الملك مضطر للتقدم."],["Nc3: bring everything to the pinned knight on d5.","Nc3: اجلب كل شيء نحو الحصان المثبّت على d5."]]},
+{id:"stafford",g:1,side:"b",n:["Stafford Gambit","مناورة ستافورد"],line:"e4 e5 Nf3 Nf6 Nxe5 Nc6 Nxc6 dxc6 d3 Bc5 Bg5 Nxe4 Bxd8 Bxf2+ Ke2 Bg4#",
+ idea:["A trappy gambit for Black. Here is its most famous trap: if White grabs the queen, it's checkmate.","مناورة مليئة بالفخاخ للأسود. هذا أشهر فخ فيها: إذا أخذ الأبيض الوزير، فهو كش مات."],
+ notes:[["e5: the centre.","e5: المركز."],["Nf6: Petrov style.","Nf6: بأسلوب بتروف."],["Nc6!? The Stafford: give the e5 pawn.","Nc6!? ستافورد: أعطِ بيدق e5."],["dxc6: open lines for the bishop and queen.","dxc6: افتح الخطوط للفيل والوزير."],["Bc5 aims at f2.","Bc5 يستهدف f2."],["Nxe4!! Let White take the queen.","Nxe4!! دع الأبيض يأخذ الوزير."],["Bxf2+: check.","Bxf2+: كش."],["Bg4#: checkmate!","Bg4#: كش مات!"]]},
+{id:"englund",g:1,side:"b",n:["Englund Gambit","مناورة إنغلوند"],line:"d4 e5 dxe5 Nc6 Nf3 Qe7 Bf4 Qb4+ Bd2 Qxb2 Bc3 Bb4 Qd2 Bxc3 Qxc3 Qc1#",
+ idea:["A cheeky gambit against d4, with a famous queen trap that ends in mate.","مناورة جريئة ضد d4، مع فخ وزير شهير ينتهي بكش مات."],
+ notes:[["e5!? The Englund pawn.","e5!? بيدق إنغلوند."],["Nc6 attacks e5.","Nc6 تهاجم e5."],["Qe7 attacks e5 again.","Qe7 تهاجم e5 مرة أخرى."],["Qb4+: check, and b2 is hanging.","Qb4+: كش، وبيدق b2 مكشوف."],["Qxb2 attacks the rook.","Qxb2 يهاجم الرخ."],["Bb4! The pin.","Bb4! التثبيت."],["Bxc3: remove the defender.","Bxc3: أزل المدافع."],["Qc1#: checkmate!","Qc1#: كش مات!"]]},
+{id:"budapest",g:1,side:"b",n:["Budapest Gambit","مناورة بودابست"],line:"d4 Nf6 c4 e5 dxe5 Ng4 Bf4 Nc6 Nf3 Bb4+ Nbd2 Qe7 a3 Ngxe5",
+ idea:["Black gives the e-pawn for quick, active pieces, and usually wins it back.","يعطي الأسود بيدق e مقابل قطع نشطة وسريعة، وعادة ما يستعيده."],
+ notes:[["Nf6: develop.","Nf6: طوّر."],["e5!? The Budapest.","e5!? بودابست."],["Ng4 attacks e5.","Ng4 تهاجم e5."],["Nc6 attacks e5 again.","Nc6 تهاجم e5 مرة أخرى."],["Bb4+: check and develop.","Bb4+: كش وتطوير."],["Qe7: three attackers on e5.","Qe7: ثلاثة مهاجمين على e5."],["Ngxe5: the pawn is back.","Ngxe5: استعدنا البيدق."]]}
+];
+let OPEN_MAP=null;
+const openKey=E=>E.fen().split(" ").slice(0,3).join(" ");
+function sanToMoves(line){ const E=ChessEngine(null); E.reset(); const out=[], clean=x=>x.replace(/[+#!?]/g,"");
+  for(const tok of line.split(" ")){ const m=E.legal().find(x=>clean(san(E,x))===clean(tok)); if(m===undefined) return null; out.push(E.moveStr(m)); E.make(m); } return out; }
+function openMap(){ if(OPEN_MAP) return OPEN_MAP; OPEN_MAP=new Map(); const E=ChessEngine(null);
+  for(const o of OPENINGS){ E.reset(); const toks=o[2].split(" "); let ok=true; for(const tok of toks){ const m=E.legal().find(x=>san(E,x).replace(/[+#]/g,"")===tok.replace(/[+#]/g,"")); if(m===undefined){ ok=false; break; } E.make(m); }
+    if(ok) OPEN_MAP.set(openKey(E),o); else (OPEN_MAP.bad=OPEN_MAP.bad||[]).push(o[0]); }
+  return OPEN_MAP; }
+let OPEN_CACHE={};
+function openingName(n,moves){ // name of the opening reached by the first n moves of the game (standard chess only)
+  moves=moves||(CH&&CH.moves)||[]; if(!CH||(CH.variant&&CH.variant!=="std")||(CH.start&&CH.start!==STD_FEN)) return "";
+  n=Math.min(n,moves.length,30); const ck=moves.slice(0,n).join(" "); if(ck in OPEN_CACHE) return OPEN_CACHE[ck];
+  const M=openMap(), E=ChessEngine(null); E.reset(); let name="";
+  for(let i=0;i<n;i++){ const m=E.legal().find(x=>E.moveStr(x)===moves[i]); if(m===undefined) break; E.make(m); const o=M.get(openKey(E)); if(o) name=GL()?o[1]:o[0]; }
+  return OPEN_CACHE[ck]=name; }
+/* course screen + playing a course */
+const courseDone=()=>store.get("courses",{})||{};
+function renderCourses(v){
+  const done=courseDone(), card=c=>`<button class="hotcard coursecard${done[c.id]?" done":""}" data-act="courseGo" data-id="${c.id}"><span class="hoticon cicon ${c.side==="w"?"sidew":"sideb"}">${pcImg(c.side==="w"?2:-2)}</span><span class="otxt"><b>${esc(c.n[GL()?1:0])}${done[c.id]?" ✓":""}</b><small>${tr(c.side==="w"?"You play White":"You play Black")} · ${esc(c.idea[GL()?1:0])}</small></span></button>`;
+  v.innerHTML=`<div class="row"><button class="btn small" data-act="chessMenu">${tr("‹ Chess")}</button></div>
+    <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Openings & gambits")}</h2><p class="sub">${tr("Play the moves yourself. Every move comes with a short explanation.")}</p></div>
+    <h3 class="sect">${tr("Openings")}</h3>${COURSES.filter(c=>!c.g).map(card).join("")}
+    <h3 class="sect">${tr("Gambits")}</h3>${COURSES.filter(c=>c.g).map(card).join("")}`;
+}
+function startCourse(id){
+  const c=COURSES.find(x=>x.id===id); if(!c) return; const all=sanToMoves(c.line); if(!all) return toast("?");
+  const E=ChessEngine(null); E.reset(); let pre=[]; if(c.side==="b"){ const m=E.legal().find(x=>E.moveStr(x)===all[0]); E.make(m); pre=[all[0]]; }
+  const P={f:E.fen(),m:all.slice(pre.length),t:"course",r:0};
+  startPz(P,{kind:"course",title:c.n[GL()?1:0],course:c.id,note:c.idea[GL()?1:0],lk:0});
+}
+function courseNote(){ const p=CH.puz, c=COURSES.find(x=>x.id===p.course); if(!c) return ""; if(p.done) return tr("Lesson complete! You can play it again or try another one.");
+  return p.note||""; }
+function openingEntry(n,moves){ const nm=openingName(n,moves); if(!nm) return null; return OPENINGS.find(o=>o[0]===nm||o[1]===nm)||null; }
 
 /* ===== GAME REVIEW ===== */
 const BOOK_ICON='<svg viewBox="0 0 24 24"><path d="M4 5.5C6.5 4.3 9.3 4.3 12 6c2.7-1.7 5.5-1.7 8-.5V19c-2.5-1.2-5.3-1.2-8 .5-2.7-1.7-5.5-1.7-8-.5z" fill="currentColor"/></svg>';
@@ -2529,7 +2663,6 @@ function startReview(){ // most moves were already analysed during the game, so 
   CH.anWait=()=>{ const k=have(), bar=$("#anBar"), t=$("#anTxt"); if(bar){ bar.style.width=(100*k/(n+1))+"%"; t.textContent=Math.round(100*k/(n+1))+"%"; } if(k===n+1) finish(); };
   CH.anWait();
 }
-const openingName=n=>"";   // replaced by the opening book in the next stage
 /* ---- share a game: PGN (opens in chess.com / Lichess) or a picture of the final position ---- */
 function gameWinner(){ // 1 White, -1 Black, 0 draw/unfinished
   if(CH.winner!==undefined) return CH.winner; const E=engine(); if(!E.legal().length&&E.inCheck()) return -E.turn();
@@ -2994,6 +3127,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-16T22:20:00Z",en:["Opening names: see which opening you're playing (Italian Game, Sicilian Najdorf…) during the game, in history and in shared games.","Openings & gambits: 19 interactive lessons. Play the moves yourself with an explanation for every move. 10 openings and 9 gambits, including the Alien Gambit, King's Gambit, Fried Liver, Stafford and Englund traps."],
+  ar:["أسماء الافتتاحات: اعرف أي افتتاح تلعبه (الإيطالية، الصقلي نايدورف…) أثناء المباراة وفي السجل وفي المباريات المُشاركة.","الافتتاحات والمناورات: ١٩ درسًا تفاعليًا. العب النقلات بنفسك مع شرح لكل نقلة. ١٠ افتتاحات و٩ مناورات، منها مناورة الفضائي ومناورة الملك والكبد المقلي وفخاخ ستافورد وإنغلوند."]},
  {at:"2026-11-16T22:14:00Z",en:["Evaluation bar in the game review: see who is winning after every move.","Learn from your mistakes: after a review, retry every mistake, miss and blunder you made and find the best move.","Share a game: as PGN (opens in chess.com and Lichess) or as a picture of the final position."],
   ar:["شريط التقييم في مراجعة المباراة: اعرف من يتقدّم بعد كل نقلة.","تعلّم من أخطائك: بعد المراجعة، أعد كل خطأ وفرصة ضائعة وخطأ فادح وجد أفضل نقلة.","شارك مباراة: كملف PGN (يفتح في chess.com وLichess) أو كصورة للوضع الأخير."]},
  {at:"2026-11-16T21:53:00Z",en:["Bot vs bot: when a bot plays Brilliant Mover, it now walks into sacrifices, giving Brilliant Mover real chances for !! moves."],
@@ -3094,6 +3229,8 @@ document.addEventListener("click",e=>{
   if(ga==="puzHint"){ if(CH.puz.done||engine().turn()!==CH.color) return; CH.puz.fail=true; CH.puz.hint=strSq(CH.puz.P.m[CH.puz.step]); CH.puz.wrong=null; return drawBoard(); }
   if(ga==="puzSol") return puzSolution();
   if(ga==="retryStart") return startRetry();
+  if(ga==="courseList"){ closeModal(); chessReq++; S.game="courseList"; return show("games"); }
+  if(ga==="courseGo") return startCourse(gel.dataset.id);
   if(ga==="retryBack") return retryBack();
   if(ga==="retryNext"){ const R=S.retry; if(!R||R.k>=R.list.length-1) return retryBack(); R.k++; return startPz(R.list[R.k],{kind:"retry"}); }
   if(ga==="shareGame") return shareMenu();
