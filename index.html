@@ -461,6 +461,28 @@ body[data-view="games"].inchess .prefs{display:none}
 .pz.star::after{content:"★";position:absolute;top:2px;right:5px;font-size:11px;color:#eab308}
 .sq.hintsq{box-shadow:inset 0 0 0 calc(var(--bs)/8*.09) #3b82f6}
 .sq.wrongsq{background:#e5584f!important}
+/* game history */
+.hicon{background:#5b7bd5;color:#fff}.hicon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hstats span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
+.hstats b{font:800 22px/1 var(--display)}.hstats small{color:var(--muted);font-size:12px}
+.hstats .hw b{color:#81b64c}.hstats .hl b{color:#ca3431}.hstats .hd b{color:var(--muted)}
+.hlist{display:flex;flex-direction:column;gap:8px}
+.hrow{display:flex;align-items:center;gap:12px;text-align:start;padding:12px;border-radius:14px;background:var(--panel);border:1px solid var(--line);color:var(--ink);width:100%}
+.hres{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font:800 20px/1 var(--display);color:#fff}
+.hres.r-w{background:#81b64c}.hres.r-l{background:#ca3431}.hres.r-d{background:#8d99ae}.hres.r-h{background:#739552}.hres .cp{width:26px;height:26px;margin:0}
+.hmid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.hmid b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hmid b em{font-style:normal;font-weight:600;color:var(--muted)}
+.hmid small{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hend{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.hend b{font:800 15px/1 var(--display)}.hend em{font-style:normal;font-weight:800;font-size:12px;color:var(--muted)}.hend em.up{color:#81b64c}.hend em.down{color:#ca3431}.hend small{color:var(--muted);font-size:11px}
+.mlist{display:flex;flex-wrap:wrap;align-items:center;gap:4px 2px;max-height:150px;overflow-y:auto;padding:10px;border-radius:14px;background:var(--panel);border:1px solid var(--line);direction:ltr;position:relative}
+.mlist[hidden]{display:none}
+.mno{color:var(--muted);font:600 12px/1 var(--display);margin:0 2px 0 6px}
+.mv{display:inline-flex;align-items:center;gap:4px;padding:5px 7px;border-radius:7px;font:600 14px/1 var(--display);color:var(--ink);background:none;border:0}
+.mv i{width:8px;height:8px;border-radius:50%;flex:none}
+.mv.on{background:var(--sunk);outline:1px solid var(--line)}
+.gwrap.fs .mlist{display:none}
 /* account */
 .acctbtn{flex:none;display:flex;align-items:center;gap:6px;height:36px;padding:0 12px 0 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 13px/1 var(--body);margin-inline-start:auto}
 .acctbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}
@@ -856,6 +878,9 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Game history":"سجل المباريات","‹ History":"› السجل","Won":"فوز","Drawn":"تعادل","Lost":"خسارة","All":"الكل","Online":"أونلاين","Bots":"البوتات","Bot":"بوت","1v1":"١ ضد ١",
+"Checkmate":"كش مات","Resignation":"استسلام","Time":"الوقت","Abandoned":"انسحاب","Stalemate":"تعادل بالجمود","50-move rule":"قاعدة الخمسين نقلة","Repetition":"تكرار","Insufficient material":"قطع غير كافية",
+"No games here yet.":"لا توجد مباريات هنا بعد.","Your finished games will appear here, with their moves and game review.":"ستظهر مبارياتك المنتهية هنا، مع نقلاتها ومراجعتها.",
 "Sign in":"تسجيل الدخول","Account":"الحساب","‹ Back":"› رجوع","Continue with Google":"المتابعة باستخدام Google","Continue with Apple":"المتابعة باستخدام Apple","Coming soon":"قريبًا","Loading…":"جارٍ التحميل…",
 "Save your notes, checklists, game progress and ratings to your account, and get them back on any phone.":"احفظ ملاحظاتك وقوائمك وتقدمك في الألعاب وتصنيفاتك في حسابك، واستعدها على أي هاتف.",
 "Outpost works fully without an account. Signing in needs internet; after that, your data syncs whenever you're online.":"يعمل Outpost بالكامل بدون حساب. تسجيل الدخول يحتاج إنترنت، وبعدها تتم مزامنة بياناتك كلما اتصلت.",
@@ -1711,6 +1736,7 @@ function renderGames(){
   if(S.game==="chessMenu") return renderChessMenu(v);
   if(S.game==="mpQueue") return renderQueue(v);
   if(S.game==="puzList") return renderPuzList(v);
+  if(S.game==="chessHist") return renderChessHist(v);
   if(S.game==="blocks") return renderBlocks(v);
   const XG=window.OUTPOST_GAMES||{}; if(XG[S.game]) return XG[S.game].render(v);
   const best=store.get("blocksBest",0), cs=store.get("chess",null);
@@ -1798,6 +1824,7 @@ function onAnalysis(d){
   const i=d.tag.i; CH.rows[i]=d.rows[0];
   if(i<CH.moves.length) liveClass(i);
   if(CH.anWait) CH.anWait();
+  if(CH.over&&CH.archId) archRows();
   fillAn();
 }
 function fillAn(){ // when idle, analyse one earlier move that is still missing (new moves always go first)
@@ -1877,8 +1904,8 @@ function chessReplay(moves,E){ E=E||engine(); setupEngine(E); const keys=[E.fen(
 const posKey=()=>engine().fen().split(" ").slice(0,4).join(" ");
 const strSq=s=>(s.charCodeAt(1)-49)*16+(s.charCodeAt(0)-97);
 function saveChess(){ if(CH&&CH.mode==="bot") store.set("chess",{lvl:CH.lvl,color:CH.color,moves:CH.moves,over:CH.over||null,variant:CH.variant,start:CH.start}); }
-const oppName=()=>CH.mode==="puz"?tr("Puzzle")+" "+(CH.puz.i+1):CH.mode==="mp"?CH.opp:CH.mode==="hot"?tr(CH.color>0?"Black":"White"):botName(CH.lvl);
-const youLabel=()=>CH&&(CH.mode==="hot"||CH.mode==="puz")?tr(CH.color>0?"White":"Black"):meName();
+const oppName=()=>CH.arch&&CH.mode!=="hot"?CH.arch.on:CH.mode==="puz"?tr("Puzzle")+" "+(CH.puz.i+1):CH.mode==="mp"?CH.opp:CH.mode==="hot"?tr(CH.color>0?"Black":"White"):botName(CH.lvl);
+const youLabel=()=>CH&&(CH.mode==="hot"||CH.mode==="puz")?tr(CH.color>0?"White":"Black"):CH&&CH.arch&&CH.arch.me?CH.arch.me:meName();
 /* ===== PUZZLES: 100 positions in puzzles.json, each with one correct line. f = position, m = moves (yours, reply, yours...), t = type, r = rating ===== */
 let PZ=null, PZp=null;
 const PZ_TYPE={m1:"Mate in 1",m2:"Mate in 2",m3:"Mate in 3",win:"Win material"};
@@ -1948,6 +1975,7 @@ function renderChessMenu(v){
     <p class="sub">${tr("Ratings are approximate. The bot plays fully offline.")}</p>
     <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
     <p class="sub">${tr((VARIANTS.find(x=>x[0]===(S.chessVariant||"std"))||VARIANTS[0])[2])}</p>
+    <button class="hotcard histcard" data-act="chessHist"><span class="hoticon hicon"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4M12 7v5l3 2"/></svg></span><span class="otxt"><b>${tr("Game history")}</b><small>${GL()?`كل مبارياتك مع النقلات والمراجعة · ${AD(archList().length)} مباراة`:`All your games with moves and review · ${archList().length} saved`}</small></span></button>
     <button class="hotcard puzcard" data-act="puzOpen"><span class="hoticon pzicon">?</span><span class="otxt"><b>${tr("Puzzles")}</b><small>${GL()?`100 لغز: كش مات وتكتيكات · حللت ${puzCount()}`:`100 puzzles: checkmates and tactics · ${puzCount()} solved`}</small></span></button>
     <button class="hotcard" data-act="chessHot"><span class="hoticon">${pcImg(6)}${pcImg(-6)}</span><span class="otxt"><b>${tr("1v1 on this phone")}</b><small>${tr("Two players pass the phone. The board flips after every move. Uses the mode chosen above.")}</small></span></button>
     <div class="seg seg3"><button data-act="chessColor" data-c="w" class="${col==="w"?"on":""}">${tr("White")}</button><button data-act="chessColor" data-c="r" class="${col==="r"?"on":""}">${tr("Random")}</button><button data-act="chessColor" data-c="b" class="${col==="b"?"on":""}">${tr("Black")}</button></div>
@@ -1965,12 +1993,12 @@ function resumeChess(){ const cs=store.get("chess",null); chessReq++; CH=newCH({
 const NAV='<svg viewBox="0 0 24 24">';
 function renderChess(v){
   if(!CH){ S.game=null; return renderGames(); }
-  const mp=CH.mode==="mp", puz=CH.mode==="puz", hot=CH.mode==="hot"||puz, on=oppName();
+  const AR_=CH.arch, mp=CH.mode==="mp", mpl=mp&&!AR_, puz=CH.mode==="puz", hot=CH.mode==="hot"||puz, on=oppName();
   v.innerHTML=`<div class="gwrap${puz?" puzmode":""}" id="gameRoot">
-    <div class="gtop"><button class="btn small gback" data-act="${puz?"puzList":"chessMenu"}">${tr(puz?"‹ Puzzles":mp?"‹ Leave":"‹ Opponents")}</button>${CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
-    <div class="pbar"><span class="ava${hot?(CH.color>0?" sideb":" sidew"):""}" style="${hot?"":`background:${mp?"#5b7bd5":AVC[CH.lvl]}`}">${hot?pcImg(-6*CH.color,"cp"):esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:puz?`<em>${tr(PZ_TYPE[PZ[CH.puz.i].t])} · ${PZ[CH.puz.i].r}</em>`:hot?"":`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mp?`<span class="clock" id="clkOpp"></span>`:""}</div>
+    <div class="gtop"><button class="btn small gback" data-act="${AR_?"chessHist":puz?"puzList":"chessMenu"}">${tr(AR_?"‹ History":puz?"‹ Puzzles":mp?"‹ Leave":"‹ Opponents")}</button>${AR_?`<span class="vtag">${archDate(AR_.t)}</span>`:CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:""}${fsButton()}</div>
+    <div class="pbar"><span class="ava${hot?(CH.color>0?" sideb":" sidew"):""}" style="${hot?"":`background:${mp?"#5b7bd5":AVC[CH.lvl]}`}">${hot?pcImg(-6*CH.color,"cp"):esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:puz?`<em>${tr(PZ_TYPE[PZ[CH.puz.i].t])} · ${PZ[CH.puz.i].r}</em>`:hot?"":`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mpl?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
-    <div class="pbar"><span class="ava ${hot?(CH.color>0?"sidew":"sideb"):"you"}">${hot?pcImg(6*CH.color,"cp"):esc(meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(youLabel())} ${mp?`<em>${eloOn()}</em>`:(!hot&&CH.variant==="std")?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mp?`<span class="clock" id="clkYou"></span>`:""}</div>
+    <div class="pbar"><span class="ava ${hot?(CH.color>0?"sidew":"sideb"):"you"}">${hot?pcImg(6*CH.color,"cp"):esc(meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(youLabel())} ${AR_?(AR_.mb!=null?`<em>${AR_.mb}</em>`:""):mp?`<em>${eloOn()}</em>`:(!hot&&CH.variant==="std")?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mpl?`<span class="clock" id="clkYou"></span>`:""}</div>
     <div class="revline" id="revLine"></div>
     <div class="coach" id="coachBox" hidden></div>
     <div class="navrow" dir="ltr">
@@ -1980,13 +2008,14 @@ function renderChess(v){
       <button class="btn" data-act="nav" data-n="last" aria-label="${tr("Latest move")}">${NAV}<path d="M18 5v14M6 6l8 6-8 6z"/></svg></button>
     </div>
     <div class="gctl" id="gctl"></div>
+    <div class="mlist" id="mlist" hidden></div>
   </div>`;
   if(S.gfs) $("#gameRoot").classList.add("fs");
-  drawBoard(); sizeBoard(); if(mp) tickClock();
+  drawBoard(); sizeBoard(); if(mpl) tickClock();
 }
 function sizeBoard(){
   const root=$("#gameRoot"), bd=$("#board"); if(!root||!bd) return;
-  let w=root.clientWidth; const other=[...root.children].filter(c=>c!==bd&&(!S.gfs||!c.classList.contains("gtop"))).reduce((t,c)=>t+c.offsetHeight+10,0);
+  let w=root.clientWidth; const other=[...root.children].filter(c=>c!==bd&&c.id!=="mlist"&&(!S.gfs||!c.classList.contains("gtop"))).reduce((t,c)=>t+c.offsetHeight+10,0);
   if(S.gfs) w=Math.min(w,window.innerHeight-other-40);
   else w=Math.min(w,window.innerHeight-(root.getBoundingClientRect().top+window.scrollY)-other-$(".tabs").offsetHeight-12);
   bd.style.setProperty("--bs",Math.max(240,Math.floor(w/8)*8)+"px");
@@ -2025,6 +2054,7 @@ function drawBoard(){
   else if(g&&g.dataset.s!==want){ g.dataset.s=want; g.innerHTML=`<button class="btn" data-act="chessFlip">${tr("Flip board")}</button>`+(want==="review"?`<button class="btn primary" data-act="review">★ ${tr("Game review")}</button>`:want==="play"?`<button class="btn danger" data-act="chessResign">${tr("Resign")}</button>`:""); }
   reviewOverlay();
   userArrows();
+  moveList();
 }
 /* your own arrows: double-tap a square to start one, double-tap another to finish it; a single tap on the board clears them */
 const DOUBLE_TAP_MS=380;
@@ -2118,12 +2148,78 @@ function finishChess(res){
   const why={win:tr("Checkmate."),lose:tr("Checkmate."),stalemate:tr("Stalemate: no legal moves, but not in check."),fifty:tr("50 moves without a capture or pawn move."),repetition:tr("The same position happened three times."),material:tr("Not enough pieces left to checkmate.")}[res]||"";
   const why2=CH.why==="hill"?tr("The king reached the centre."):CH.why==="3check"?tr("Third check."):why;
   if(mp){ const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },2500); }
-  const R=rateGame(res), d=R?R.to-R.from:0;
+  const R=rateGame(res), d=R?R.to-R.from:0; try{ archRecord(res,R,hotWin); }catch(e){}
   const eloLine=R?`<p class="eloline"><span>${tr(R.kind)}</span> <b>${R.from}</b> → <b>${R.to}</b> <em class="${d>0?"up":d<0?"down":""}">${d>0?"+"+d:d<0?d:"±0"}</em></p>`:"";
   setTimeout(()=>modal(`<div class="result">${hot?(hotWin?pcImg(6*hotWin,"pcbig"):"½"):WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${hot?hotHead:head}</h3>${(hot?(hotSub||why2):why2)?`<p class="sub">${hot?(hotSub||why2):why2}</p>`:""}${eloLine}
     ${CH.moves.length?`<button class="btn primary reviewbtn" data-act="review">★ ${tr("Game review")}</button>`:""}
     <div class="row">${mp?`<button class="btn grow" data-act="mpPlay">${tr("Find a new opponent")}</button>`:`<button class="btn grow" data-act="chessRematch">${tr("Rematch")}</button>`}<button class="btn grow" data-act="chessMenu">${tr(mp||hot?"Back to chess":"Other opponent")}</button></div>
     <button class="btn ghost" data-act="modalClose">${tr("Look at the board")}</button>`),350);
+}
+
+/* ===== GAME HISTORY: every finished game is kept (newest first) with moves, players, Elo, result and analysis; synced with the account ===== */
+const ARCH_MAX=100;
+const archList=()=>{ const a=store.get("chessGames",[]); return Array.isArray(a)?a:[]; };
+const packRow=r=>r?[r.best||0,r.bs,r.ps,r.only?1:0,r.n|0]:0;
+const unpackRow=x=>x?{best:x[0],bs:x[1],ps:x[2],only:!!x[3],n:x[4]}:undefined;
+function archRecord(res,R,hotWin){ // called once when a game ends
+  if(!CH||CH.arch||CH.mode==="puz"||(!CH.moves.length&&!R)) return;
+  const WIN=["win","oppResign","timeWin","left"], LOSE=["lose","resign","timeLose"], hot=CH.mode==="hot";
+  const g={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),t:Date.now(),mode:CH.mode,v:CH.variant,c:hot?1:CH.color,m:CH.moves.join(" "),r:res,w:CH.why||"",
+    o:hot?hotWin:(WIN.includes(res)?1:LOSE.includes(res)?0:0.5),
+    on:hot?"":oppName(),oe:CH.mode==="mp"?CH.oppElo:CH.mode==="bot"?LEVELS[CH.lvl].elo:null,lvl:CH.lvl|0,me:hot?"":meName(),
+    mb:R?R.from:null,ma:R?R.to:null,k:R?(CH.mode==="mp"?"on":"off"):""};
+  if(CH.start&&CH.start!==STD_FEN) g.s=CH.start;
+  CH.archId=g.id; const a=archList(); a.unshift(g); store.set("chessGames",a.slice(0,ARCH_MAX)); archRows();
+}
+function archRows(){ // keep the analysis with the saved game, so its review opens instantly later
+  if(!CH||!CH.archId) return; const a=archList(), g=a.find(x=>x.id===CH.archId); if(!g) return;
+  const n=CH.moves.length, rows=[]; let all=true; for(let i=0;i<=n;i++){ rows.push(packRow(CH.rows[i])); if(CH.rows[i]===undefined) all=false; }
+  g.a=rows; if(all&&!g.acc){ try{ const A=CH.an||classifyGame(CH.rows,CH.moves); g.acc=[+A.acc.w.toFixed(1),+A.acc.b.toFixed(1)]; }catch(e){} }
+  store.set("chessGames",a); if(CH.arch) CH.arch=g;
+}
+function openArch(id){
+  const g=archList().find(x=>x.id===id); if(!g) return; chessReq++; closeModal();
+  CH=newCH({mode:g.mode,lvl:g.lvl|0,color:g.c,flip:g.c<0,variant:g.v||"std",start:g.s||STD_FEN,oppElo:g.oe,opp:g.on,arch:g,archId:g.id,over:g.r,rated:true,why:g.w||null});
+  CH.moves=g.m?g.m.split(" "):[]; CH.keys=chessReplay(CH.moves); CH.moves=CH.moves.slice(0,CH.keys.length-1); rebuildFens();
+  (g.a||[]).forEach((x,i)=>{ const r=unpackRow(x); if(r) CH.rows[i]=r; });
+  if(CH.moves.length){ const s=CH.moves[CH.moves.length-1]; CH.last=[strSq(s),strSq(s.slice(2))]; }
+  S.game="chess"; show("games");
+}
+const archWhy=g=>{ const k=g.w==="hill"?"hill":g.w==="3check"?"3check":g.r;
+  return tr({win:"Checkmate",lose:"Checkmate",resign:"Resignation",oppResign:"Resignation",timeWin:"Time",timeLose:"Time",left:"Abandoned",stalemate:"Stalemate",fifty:"50-move rule",repetition:"Repetition",material:"Insufficient material",hill:"King of the Hill",
+    "3check":"Three-check"}[k]||"Draw"); };
+const archMode=g=>tr(g.mode==="mp"?"Online":g.mode==="hot"?"1v1":"Bot")+(g.v&&g.v!=="std"?SEP()+tr(vName(g.v)):"");
+const archDate=t=>{ const d=new Date(t), L=GL()?"ar-EG":undefined; return d.toLocaleDateString(L,{day:"numeric",month:"short",year:d.getFullYear()===new Date().getFullYear()?undefined:"numeric"})+SEP()+d.toLocaleTimeString(L,{hour:"2-digit",minute:"2-digit"}); };
+const N=n=>GL()?AD(n):String(n), SEP=()=>GL()?"، ":" · ";   // "·" looks like the Arabic zero
+function archOutcome(g){ // from your side: "w" / "l" / "d"; 1v1 games say who won
+  if(g.mode==="hot") return g.o===1?"W":g.o===-1?"B":"d"; return g.o===1?"w":g.o===0?"l":"d"; }
+function renderChessHist(v){
+  const all=archList(), f=S.histF||"all", list=all.filter(g=>f==="all"||g.mode===f);
+  const mine=all.filter(g=>g.mode!=="hot"), W=mine.filter(g=>g.o===1).length, L=mine.filter(g=>g.o===0).length, D=mine.length-W-L;
+  const chip=(k,l)=>`<button class="chip ${f===k?"on":""}" data-act="histF" data-f="${k}">${tr(l)}</button>`;
+  v.innerHTML=`<div class="row"><button class="btn small" data-act="chessMenu">${tr("‹ Chess")}</button></div>
+    <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Game history")}</h2></div>
+    <div class="hstats"><span class="hw"><b>${N(W)}</b><small>${tr("Won")}</small></span><span class="hd"><b>${N(D)}</b><small>${tr("Drawn")}</small></span><span class="hl"><b>${N(L)}</b><small>${tr("Lost")}</small></span></div>
+    <div class="chips">${chip("all","All")}${chip("mp","Online")}${chip("bot","Bots")}${chip("hot","1v1")}</div>
+    ${list.length?`<div class="hlist">${list.map(g=>{ const oc=archOutcome(g), n=Math.ceil((g.m?g.m.split(" ").length:0)/2), d=g.ma!=null&&g.mb!=null?g.ma-g.mb:null, acc=g.acc?(g.c>0?g.acc[0]:g.acc[1]):null;
+      const who=g.mode==="hot"?tr("White")+" — "+tr("Black"):esc(g.on);
+      const icon=oc==="w"?"+":oc==="l"?"−":oc==="d"?"=":"";
+      return `<button class="hrow" data-act="archOpen" data-id="${g.id}">
+        <span class="hres r-${oc==="W"||oc==="B"?"h":oc}">${oc==="W"?pcImg(6,"cp"):oc==="B"?pcImg(-6,"cp"):icon}</span>
+        <span class="hmid"><b>${who}${g.oe?` <em>(${N(g.oe)})</em>`:""}</b><small>${archMode(g)}${SEP()}${archWhy(g)}${SEP()}${GL()?`${AD(n)} نقلة`:`${n} moves`}</small><small>${archDate(g.t)}</small></span>
+        <span class="hend">${g.ma!=null?`<b>${N(g.ma)}</b><em class="${d>0?"up":d<0?"down":""}">${d>0?"+"+N(d):d<0?"−"+N(-d):"±"+N(0)}</em>`:""}${acc!=null?`<small>${tr("Accuracy")} ${GL()?AD(acc):acc}</small>`:""}</span>
+      </button>`; }).join("")}</div>`
+    :`<div class="card"><p class="sub">${tr(all.length?"No games here yet.":"Your finished games will appear here, with their moves and game review.")}</p></div>`}
+    ${all.length?`<p class="sub">${GL()?`آخر ${AD(ARCH_MAX)} مباراة تُحفظ على هذا الهاتف وفي حسابك.`:`Your last ${ARCH_MAX} games are kept on this phone and in your account.`}</p>`:""}`;
+}
+/* list of moves under the board once a game is over; tap one to jump there */
+function moveList(){
+  const box=$("#mlist"); if(!box||!CH) return; if(!CH.over||!CH.moves.length){ box.hidden=true; return; } box.hidden=false;
+  if(!CH.sans||CH.sans.length!==CH.moves.length){ const E=ChessEngine(null); setupEngine(E); CH.sans=[]; for(const s of CH.moves){ const m=E.legal().find(x=>E.moveStr(x)===s); if(m===undefined) break; CH.sans.push(san(E,m)); E.make(m); } }
+  const at=CH.view===null?CH.moves.length:CH.view, w0=(CH.start||STD_FEN).split(" ")[1]==="b"?1:0;
+  let h=""; CH.sans.forEach((s,i)=>{ const k=i+w0; if(k%2===0||i===0) h+=`<span class="mno">${Math.floor(k/2)+1}.${k%2?"..":""}</span>`;
+    const P=CH.an&&CH.an.plies[i]; h+=`<button class="mv${at===i+1?" on":""}" data-act="mvGo" data-k="${i+1}" dir="ltr">${P?`<i style="background:${CLS[P.c].c}"></i>`:""}${esc(s)}</button>`; });
+  box.innerHTML=h; const on=box.querySelector(".mv.on"); if(on&&box.scrollHeight>box.clientHeight) box.scrollTop=on.offsetTop-box.clientHeight/2;
 }
 
 /* ===== GAME REVIEW ===== */
@@ -2211,7 +2307,7 @@ function startReview(){ // most moves were already analysed during the game, so 
   if(CH.an) return showSummary();
   const n=CH.moves.length; for(let i=0;i<=n;i++) queueAn(i);
   const have=()=>{ let k=0; for(let i=0;i<=n;i++) if(CH.rows[i]!==undefined) k++; return k; };
-  const finish=()=>{ CH.anWait=null; CH.an=classifyGame(CH.rows,CH.moves); CH.live=null; drawBoard(); showSummary(); };
+  const finish=()=>{ CH.anWait=null; CH.an=classifyGame(CH.rows,CH.moves); CH.live=null; if(CH.archId) archRows(); drawBoard(); showSummary(); };
   if(have()===n+1) return finish();
   modal(`<div class="anwrap"><div class="anspin">${pcImg(3)}</div><h3>${tr("Analyzing your game…")}</h3><div class="meter"><b id="anBar" style="width:0%"></b></div><p class="sub" id="anTxt">0%</p></div>`);
   CH.anWait=()=>{ const k=have(), bar=$("#anBar"), t=$("#anTxt"); if(bar){ bar.style.width=(100*k/(n+1))+"%"; t.textContent=Math.round(100*k/(n+1))+"%"; } if(k===n+1) finish(); };
@@ -2660,6 +2756,10 @@ document.addEventListener("click",e=>{
   if(ga==="chessRematch"){ closeModal(); S.chessVariant=CH.variant; return CH.mode==="hot"?startHot():startChess(CH.lvl,CH.color>0?"w":"b"); }
   if(ga==="chessHot") return startHot();
   if(ga==="puzOpen"||ga==="puzList") return openPuzzles();
+  if(ga==="chessHist"){ closeModal(); chessReq++; if(CH&&CH.arch) CH=null; S.game="chessHist"; return show("games"); }
+  if(ga==="histF"){ S.histF=gel.dataset.f; return renderChessHist($("#v-games")); }
+  if(ga==="archOpen") return openArch(gel.dataset.id);
+  if(ga==="mvGo"){ navTo(+gel.dataset.k); return coachSayMove(); }
   if(ga==="puzGo") return startPuzzle(+gel.dataset.i);
   if(ga==="puzRetry") return startPuzzle(CH.puz.i);
   if(ga==="puzNext"){ const st=puzState(); let n=-1; for(let k=1;k<=PZ.length;k++){ const j=(CH.puz.i+k)%PZ.length; if(!st.done[j]){ n=j; break; } } return n<0?openPuzzles():startPuzzle(n); }

@@ -1,5 +1,5 @@
 // Outpost offline cache. Bump the version when you upload a new index.html.
-const CACHE = "outpost-v21";
+const CACHE = "outpost-v22";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-512.png", "./quran.json", "./duas.json", "./amiri-quran.woff2", "./games-more.js", "./puzzles.json", "./firebase/firebase-app-compat.js", "./firebase/firebase-auth-compat.js", "./pieces/wK.svg", "./pieces/wQ.svg", "./pieces/wR.svg", "./pieces/wB.svg", "./pieces/wN.svg", "./pieces/wP.svg", "./pieces/bK.svg", "./pieces/bQ.svg", "./pieces/bR.svg", "./pieces/bB.svg", "./pieces/bN.svg", "./pieces/bP.svg"];
 
 self.addEventListener("install", e => {
