@@ -1897,10 +1897,11 @@ function onAnalysis(d){
 }
 function fillAn(){ // when idle, analyse one earlier move that is still missing (new moves always go first)
   if(!CH) return; for(let k=0;k<CH.moves.length;k++){ if(CH.rows[k]===undefined){ if(CH.asked[k]) return; return queueAn(k); } } }
-function liveClass(i){ // rate the move as soon as its analysis arrives; a brilliant move by you dings and keeps its badge until the next move
+function liveClass(i){ // rate the move as soon as its analysis arrives; a brilliant move (by either side) dings and keeps its badge until the next move
   if(CH.liveC[i]) return; const V=ChessEngine(null); chessReplay(CH.moves.slice(0,i),V);
   const P=classifyPly(V,CH.rows[i],CH.moves[i],i,CH.liveC[i-1],null); if(!P) return; CH.liveC[i]=P.c;
-  if(P.c==="brilliant"&&(CH.mode==="hot"||P.color===CH.color)&&i===CH.moves.length-1){ CH.live={ply:i,t:Date.now(),san:P.san}; ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){}
+  /* anyone's brilliant move: yours, the bot's, the online opponent's, both players in 1v1 */
+  if(P.c==="brilliant"&&i===CH.moves.length-1){ CH.live={ply:i,t:Date.now(),san:P.san}; ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){}
     drawBoard(); }
 }
 /* ---- coach: short spoken comments in the review ---- */
@@ -2836,6 +2837,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-16T21:17:00Z",en:["Brilliant moves by bots and online opponents now get the !! badge and the brilliant ding too, like in 1v1."],
+  ar:["النقلات الرائعة من البوتات ومن خصمك أونلاين تحصل الآن على علامة !! وصوت النقلة الرائعة، مثل وضع ١ ضد ١."]},
  {at:"2026-11-16T20:10:00Z",en:["50 new chess puzzles (150 in total): 17 brilliant sacrifices, 17 mate in 4 and 16 mate in 3. Every move you need to find is the only one that works, checked by Stockfish.","Brilliant-move puzzles have a teal tag, mate in 4 a pink one. Solving a sacrifice plays the brilliant ding."],
   ar:["٥٠ لغز شطرنج جديد (١٥٠ لغزًا): ١٧ تضحية رائعة، ١٧ كش مات في ٤، و١٦ كش مات في ٣. كل نقلة عليك إيجادها هي الوحيدة الصحيحة، وتحقق منها Stockfish.","ألغاز النقلة الرائعة لها علامة فيروزية، وكش مات في ٤ علامة وردية. حل التضحية يُصدر صوت النقلة الرائعة."]},
  {at:"2026-11-16T19:48:00Z",en:["Update notices: this window shows what changed and when, and a bar appears when an update arrives while the app is open. Tap \"What's new\" on Home to see every update.","A brilliant move in a puzzle now dings and shows the !! badge.","50 new puzzles were added in the next update."],
