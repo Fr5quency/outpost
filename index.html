@@ -878,6 +878,7 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Game review: Stockfish 18 (GPL-3).":"مراجعة المباريات: Stockfish 18 (رخصة GPL-3).",
 "Game history":"سجل المباريات","‹ History":"› السجل","Won":"فوز","Drawn":"تعادل","Lost":"خسارة","All":"الكل","Online":"أونلاين","Bots":"البوتات","Bot":"بوت","1v1":"١ ضد ١",
 "Checkmate":"كش مات","Resignation":"استسلام","Time":"الوقت","Abandoned":"انسحاب","Stalemate":"تعادل بالجمود","50-move rule":"قاعدة الخمسين نقلة","Repetition":"تكرار","Insufficient material":"قطع غير كافية",
 "No games here yet.":"لا توجد مباريات هنا بعد.","Your finished games will appear here, with their moves and game review.":"ستظهر مبارياتك المنتهية هنا، مع نقلاتها ومراجعتها.",
@@ -1816,6 +1817,52 @@ function aworker(){ if(AW===null){ try{ AW=new Worker(URL.createObjectURL(new Bl
 function queueAn(i){ // ply i = the position before move i plus the move played there; i === moves.length is the final position
   if(!CH||CH.rows[i]!==undefined||CH.asked[i]||!CH.fens[i]) return; CH.asked[i]=1;
   const msg={id:0,type:"analyze",fens:[CH.fens[i]],played:[CH.moves[i]||null],opts:AN_OPTS,variant:vcode(CH.variant),tag:{g:CH.gid,i}};
+  if(sfUsable(CH.variant)) return sfQueue(msg);
+  anLocal(msg);
+}
+/* ---- Stockfish 18 for the game review (lite single-threaded WebAssembly, GPL-3: see stockfish/README.txt).
+   Used for standard and no-castling games; the built-in engine is the fallback and handles the other modes. ---- */
+const SF={w:null,state:0,q:[],busy:null,onLine:null}, SF_MS=1000;          // state: 0 not started, 1 loading, 2 ready, -1 unavailable
+const sfUsable=v=>(v==="std"||v==="nocastle")&&typeof WebAssembly==="object"&&SF.state!==-1;
+function sfStart(){
+  if(SF.state) return; SF.state=1;
+  try{ SF.w=new Worker("stockfish/stockfish-18-lite-single.js"); }catch(e){ return sfFail(); }
+  SF.w.onmessage=e=>{ const l=String(e.data);
+    if(l==="uciok"){ SF.w.postMessage("setoption name Hash value 32"); SF.w.postMessage("isready"); }
+    else if(l==="readyok"&&SF.state===1){ clearTimeout(SF.to); SF.state=2; sfNext(); }
+    else if(SF.onLine) SF.onLine(l); };
+  SF.w.onerror=()=>sfFail();
+  SF.w.postMessage("uci"); SF.to=setTimeout(()=>{ if(SF.state===1) sfFail(); },45000);
+}
+function sfFail(){ // engine missing or broken: everything waiting goes to the built-in engine
+  SF.state=-1; clearTimeout(SF.to); try{ SF.w&&SF.w.terminate(); }catch(e){} const q=SF.q.concat(SF.busy?[SF.busy]:[]); SF.q=[]; SF.busy=null; SF.onLine=null; q.forEach(j=>anLocal(j.msg)); }
+const sfScore=(t,n)=>t==="cp"?n:n>0?100000-(2*n-1):-100000+2*(-n);   // mate in n -> same scale as the built-in engine
+function sfGo(fen,moves,multipv,go){ return new Promise((ok,no)=>{ const res={}, t=setTimeout(()=>no(new Error("stuck")),SF_MS*8+4000);
+  SF.onLine=l=>{
+    if(l.startsWith("info ")&&l.includes(" score ")){ const pv=+((l.match(/ multipv (\d+)/)||[0,1])[1]), m=l.match(/ score (cp|mate) (-?\d+)/), mv=(l.match(/ pv (\S+)/)||[])[1]; if(m) res[pv]={s:sfScore(m[1],+m[2]),mv:mv||(res[pv]&&res[pv].mv)}; }
+    else if(l.startsWith("bestmove")){ clearTimeout(t); SF.onLine=null; res.best=l.split(" ")[1]; ok(res); } };
+  SF.w.postMessage("setoption name MultiPV value "+multipv); SF.w.postMessage("position fen "+fen+(moves?" moves "+moves:"")); SF.w.postMessage(go); }); }
+async function sfJob(msg){ // one position: best move and score, the played move's score, and whether the best move was the only good one
+  const fen=msg.fens[0], played=msg.played[0], V=ChessEngine(null); V.setVariant(0); V.setFen(fen); const L=V.legal();
+  if(!L.length) return {best:0,bs:null,ps:null,only:false,n:0};
+  const A=await sfGo(fen,"",Math.min(2,L.length),"go depth 20 movetime "+SF_MS), find=u=>L.find(x=>V.moveStr(x)===u);
+  const bs=A[1]?A[1].s:0, s2=A[2]?A[2].s:null; let best=find(A.best); if(best===undefined) best=find(A[1]&&A[1].mv); if(best===undefined) throw new Error("move");
+  let ps=null;
+  if(played){ if(played===A.best) ps=bs; else if(A[2]&&A[2].mv===played) ps=s2; else { const B=await sfGo(fen,played,1,"go depth 18 movetime "+(SF_MS>>1)); ps=B[1]?-B[1].s:0; } }
+  const only=L.length>1&&s2!==null&&winPct(bs)<97&&winPct(bs)-winPct(s2)>=15;
+  return {best,bs,ps,only,n:L.length,depth:0,sf:1};
+}
+function sfQueue(msg){ SF.q.push({msg}); sfStart(); sfNext(); }
+async function sfNext(){
+  if(SF.state!==2||SF.busy) return;
+  SF.q=SF.q.filter(j=>CH&&j.msg.tag.g===CH.gid);   // moves of a game that is no longer open are dropped
+  const j=SF.q.pop(); if(!j) return;                // newest move first
+  SF.busy=j; let row=null; try{ row=await sfJob(j.msg); }catch(e){ if(e&&e.message==="stuck") return sfFail(); }
+  if(SF.busy!==j) return; SF.busy=null;
+  if(row) onAnalysis({type:"analysis",rows:[row],tag:j.msg.tag}); else anLocal(j.msg);
+  sfNext();
+}
+function anLocal(msg){ // the built-in engine
   const w=aworker(); if(w) w.postMessage(msg);
   else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(msg.variant); onAnalysis({type:"analysis",rows:T.analyzeGame(msg.fens,msg.played,msg.opts),tag:msg.tag}); },30);
 }
@@ -1980,7 +2027,7 @@ function renderChessMenu(v){
     <button class="hotcard" data-act="chessHot"><span class="hoticon">${pcImg(6)}${pcImg(-6)}</span><span class="otxt"><b>${tr("1v1 on this phone")}</b><small>${tr("Two players pass the phone. The board flips after every move. Uses the mode chosen above.")}</small></span></button>
     <div class="seg seg3"><button data-act="chessColor" data-c="w" class="${col==="w"?"on":""}">${tr("White")}</button><button data-act="chessColor" data-c="r" class="${col==="r"?"on":""}">${tr("Random")}</button><button data-act="chessColor" data-c="b" class="${col==="b"?"on":""}">${tr("Black")}</button></div>
     <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
-    <p class="foot">${tr("Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.")}</p>`;
+    <p class="foot">${tr("Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.")} ${tr("Game review: Stockfish 18 (GPL-3).")}</p>`;
 }
 function newCH(o){ return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null,variant:"std",start:STD_FEN,fens:[],rows:[],asked:[],liveC:[],live:null,why:null,arrows:[],arrowFrom:null,gid:++gameSeq},o); }
 function rebuildFens(){ const V=ChessEngine(null); setupEngine(V); const out=[V.fen()]; for(const s of CH.moves){ const m=V.legal().find(x=>V.moveStr(x)===s); if(m===undefined) break; V.make(m); out.push(V.fen()); } CH.fens=out; }
@@ -2286,7 +2333,7 @@ function classifyPly(E,r,mvStr,i,prevC,nxt){ // E = position before the move; it
   let c;
   if(i<30&&CH.variant==="std"&&book().has(key)) c="book";
   else if(r.n<=1) c="best";
-  else if(isBest&&sac&&wp>=45&&wb<97) c="brilliant";
+  else if(isBest&&sac&&wp>=45&&(wb<97||r.bs>90000)) c="brilliant";   // a sacrifice that forces mate is brilliant even when already winning
   else if(isBest&&r.only&&wb<97) c="great";
   else if(isBest) c="best";
   else if(loss<=2) c="excellent"; else if(loss<=5) c="good"; else if(loss<=10) c="inaccuracy"; else if(loss<=20) c="mistake"; else c="blunder";
