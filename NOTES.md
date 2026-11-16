@@ -82,6 +82,7 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 ## Release checklist
 
 1. Make the change; add Arabic strings to `AR`.
+1a. **Add an entry at the top of `UPDATES`** in index.html (`at` = release time in UTC, `en` + `ar` bullet lists). Phones show it once as "What's new" after updating (`seenUpdate`, per phone, not synced); Home has a "What's new" button with the full list; if a new service worker takes over while the app is open, a bar offers to reload.
 2. Bump `CACHE` in `sw.js` (add any new file to its list).
 3. Test in a phone-sized browser; check `window.__miss` is empty and there are no page errors.
 4. Commit and push to `main`; GitHub Pages updates in ~1 minute.
@@ -114,3 +115,4 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 - 2026-11-16: Review summary and history show which engine analysed the game; coach comments no longer make the board smaller. (sw cache v24)
 - 2026-11-16: The built-in engine is now called "Outpost Chess" in the review summary and history. (sw cache v25)
 - 2026-11-16: Grandmaster bot (Stockfish, 2600). Review: backward correction pass, second-best moves, mate distances and evaluation shown, Miss vs Blunder for missed mates, Great for the only mating move, deeper Outpost Chess review. Checked: Opera Game matches chess.com; Ra3 video position = Miss (Ra2+ mate in 7). (sw cache v26)
+- 2026-11-16: Update notices (What's new window with date/time, Home button, update bar). Brilliant ding + !! badge in puzzles; puzzle types Mate in 4 and Brilliant move ready; any checkmate accepted on a puzzle's last move. (sw cache v27)

@@ -456,7 +456,7 @@ body[data-view="games"].inchess .prefs{display:none}
 .pz{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 2px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
 .pz b{font:800 17px/1 var(--display)}.pz small{font-size:10px;color:var(--muted)}
 .pz::before{content:"";position:absolute;top:5px;left:6px;width:6px;height:6px;border-radius:50%;background:#94a3b8}
-.pz.t-m1::before{background:#22c55e}.pz.t-m2::before{background:#3b82f6}.pz.t-m3::before{background:#a855f7}.pz.t-win::before{background:#f59e0b}
+.pz.t-m1::before{background:#22c55e}.pz.t-m2::before{background:#3b82f6}.pz.t-m3::before{background:#a855f7}.pz.t-win::before{background:#f59e0b}.pz.t-m4::before{background:#ec4899}.pz.t-brill::before{background:#1baaa6}
 .pz.done{background:color-mix(in srgb,var(--good) 22%,var(--panel));border-color:var(--good)}
 .pz.star::after{content:"★";position:absolute;top:2px;right:5px;font-size:11px;color:#eab308}
 .sq.hintsq{box-shadow:inset 0 0 0 calc(var(--bs)/8*.09) #3b82f6}
@@ -486,6 +486,15 @@ body[data-view="games"].inchess .prefs{display:none}
 .mv i{width:8px;height:8px;border-radius:50%;flex:none}
 .mv.on{background:var(--sunk);outline:1px solid var(--line)}
 .gwrap.fs .mlist{display:none}
+/* update notices */
+.updchip{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 14px/1.2 var(--body);text-align:start}
+.updchip small{color:var(--muted);font-weight:500;font-size:12px}
+.updhead{font-size:34px;line-height:1}
+.updwhen{margin:0;color:var(--muted);font-size:13px}
+.updlist{margin:0;padding-inline-start:20px;text-align:start;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.45}
+.updall{max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;text-align:start}
+.updall .updwhen{margin-top:8px;font-weight:700;color:var(--ink)}
+.updbar{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 8px);z-index:70;padding:12px 14px;border-radius:14px;border:0;background:var(--signal);color:#111;font:700 14px/1.2 var(--body);box-shadow:0 8px 24px rgba(0,0,0,.3)}
 /* account */
 .acctbtn{flex:none;display:flex;align-items:center;gap:6px;height:36px;padding:0 12px 0 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 13px/1 var(--body);margin-inline-start:auto}
 .acctbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}
@@ -881,6 +890,8 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"What's new":"ما الجديد","Updated":"تم التحديث","Got it":"حسنًا","All updates":"كل التحديثات","Outpost was updated. Tap to reload.":"تم تحديث Outpost. اضغط لإعادة التحميل.",
+"Mate in 4":"كش مات في ٤","Brilliant move":"نقلة رائعة",
 "Grandmaster":"أستاذ كبير (Grandmaster)","Grandmaster · Stockfish":"أستاذ كبير · Stockfish","You had checkmate in {n} with {b}! {m} lets it slip.":"كان لديك كش مات في {n} بـ {b}! و{m} تضيّعه.","They had checkmate in {n} with {b} and missed it. Lucky!":"كان لديهم كش مات في {n} بـ {b} وفاتهم. كنت محظوظًا!","{m}! Forced checkmate in {n}.":"{m}! كش مات إجباري في {n}.","{m}. They have a forced checkmate in {n}.":"{m}. لديهم كش مات إجباري في {n}.",
 "Analysed by":"حلّلها",
 "Game review: Stockfish 18 (GPL-3).":"مراجعة المباريات: Stockfish 18 (رخصة GPL-3).",
@@ -1071,6 +1082,7 @@ function renderHome(){
        <li>Turn on Airplane Mode and open it from the home screen to test.</li>
      </ol>`;
   $("#v-home").innerHTML=`
+  <button class="updchip" data-act="whatsNew"><span>✨ ${tr("What's new")}</span><small>${tr("Updated")} ${updWhen(UPDATES[0].at)}</small></button>
   <div class="card ready">
     <div class="ring"><svg viewBox="0 0 112 112"><circle class="bg" cx="56" cy="56" r="46"/><circle class="fg" cx="56" cy="56" r="46" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p.pct/100)}"/></svg>
       <div class="num">${p.pct}%<small>${tr("READY")}</small></div></div>
@@ -1968,7 +1980,7 @@ const oppName=()=>CH.arch&&CH.mode!=="hot"?CH.arch.on:CH.mode==="puz"?tr("Puzzle
 const youLabel=()=>CH&&(CH.mode==="hot"||CH.mode==="puz")?tr(CH.color>0?"White":"Black"):CH&&CH.arch&&CH.arch.me?CH.arch.me:meName();
 /* ===== PUZZLES: 100 positions in puzzles.json, each with one correct line. f = position, m = moves (yours, reply, yours...), t = type, r = rating ===== */
 let PZ=null, PZp=null;
-const PZ_TYPE={m1:"Mate in 1",m2:"Mate in 2",m3:"Mate in 3",win:"Win material"};
+const PZ_TYPE={m1:"Mate in 1",m2:"Mate in 2",m3:"Mate in 3",m4:"Mate in 4",win:"Win material",brill:"Brilliant move"}, PZ_N=100;
 const puzState=()=>{ const st=store.get("puz",null); return st&&st.done?st:{done:{}}; };
 const puzCount=()=>Object.keys(puzState().done).length;
 function loadPuzzles(){ return PZ?Promise.resolve(PZ):(PZp||(PZp=getJSON("puzzles.json").then(d=>{ PZ=d; return d; }).catch(e=>{ PZp=null; throw e; }))); }
@@ -1998,11 +2010,14 @@ function puzApply(m){ // play one move of the solution on the board
   drawBoard();
 }
 function puzReply(then){ const g=CH.gid; setTimeout(()=>{ if(!CH||CH.gid!==g||CH.puz.done) return; const E=engine(), P=PZ[CH.puz.i], m=E.legal().find(x=>E.moveStr(x)===P.m[CH.puz.step]); if(m!==undefined) puzApply(m); if(then) then(); },520); }
-function puzMove(m){ // your move: it must be the puzzle's move (any checkmate is accepted on the last move of a mate puzzle)
+function puzMove(m){ // your move: it must be the puzzle's move (any checkmate is accepted on the last move)
   const E=engine(), P=PZ[CH.puz.i], want=P.m[CH.puz.step]; let ok=E.moveStr(m)===want;
-  if(!ok&&P.t!=="win"&&CH.puz.step===P.m.length-1&&E.make(m)){ ok=E.inCheck()&&!E.legal().length; E.unmake(); }
+  if(!ok&&CH.puz.step===P.m.length-1&&E.make(m)){ ok=E.inCheck()&&!E.legal().length; E.unmake(); }
   if(!ok){ CH.puz.fail=true; CH.puz.wrong=(m>>7)&127; CH.sel=-1; drawBoard(); haptic(60); toast(tr("Not the best move. Try again.")); return false; }
-  puzApply(m); if(!CH.puz.done) puzReply(); return true;
+  const brill=isSacrifice(E,m), sn=brill?san(E,m):"";   // a correct sacrifice is a brilliant move: ding and "!!" like in a game
+  puzApply(m);
+  if(brill){ CH.live={ply:CH.moves.length-1,t:Date.now(),san:sn}; ensureAudio(); if(!(CH.puz.done&&!CH.puz.fail)) ding(); haptic(40); drawBoard(); }
+  if(!CH.puz.done) puzReply(); return true;
 }
 function puzSolution(){ // show the rest of the line, one move at a time
   if(!CH||CH.mode!=="puz"||CH.puz.done) return; CH.puz.fail=true; const g=CH.gid;
@@ -2036,7 +2051,7 @@ function renderChessMenu(v){
     <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
     <p class="sub">${tr((VARIANTS.find(x=>x[0]===(S.chessVariant||"std"))||VARIANTS[0])[2])}</p>
     <button class="hotcard histcard" data-act="chessHist"><span class="hoticon hicon"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4M12 7v5l3 2"/></svg></span><span class="otxt"><b>${tr("Game history")}</b><small>${GL()?`كل مبارياتك مع النقلات والمراجعة · ${AD(archList().length)} مباراة`:`All your games with moves and review · ${archList().length} saved`}</small></span></button>
-    <button class="hotcard puzcard" data-act="puzOpen"><span class="hoticon pzicon">?</span><span class="otxt"><b>${tr("Puzzles")}</b><small>${GL()?`100 لغز: كش مات وتكتيكات · حللت ${puzCount()}`:`100 puzzles: checkmates and tactics · ${puzCount()} solved`}</small></span></button>
+    <button class="hotcard puzcard" data-act="puzOpen"><span class="hoticon pzicon">?</span><span class="otxt"><b>${tr("Puzzles")}</b><small>${GL()?`${AD(PZ_N)} لغز: كش مات وتكتيكات ونقلات رائعة · حللت ${AD(puzCount())}`:`${PZ_N} puzzles: checkmates, tactics and brilliant moves · ${puzCount()} solved`}</small></span></button>
     <button class="hotcard" data-act="chessHot"><span class="hoticon">${pcImg(6)}${pcImg(-6)}</span><span class="otxt"><b>${tr("1v1 on this phone")}</b><small>${tr("Two players pass the phone. The board flips after every move. Uses the mode chosen above.")}</small></span></button>
     <div class="seg seg3"><button data-act="chessColor" data-c="w" class="${col==="w"?"on":""}">${tr("White")}</button><button data-act="chessColor" data-c="r" class="${col==="r"?"on":""}">${tr("Random")}</button><button data-act="chessColor" data-c="b" class="${col==="b"?"on":""}">${tr("Black")}</button></div>
     <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.sf?"Grandmaster · Stockfish":L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
@@ -2717,7 +2732,7 @@ document.addEventListener("pointerup",bPointerUp); document.addEventListener("po
 /* ===== ACCOUNT: sign in with Google (Firebase Auth); your data is saved as one document per person in Firestore,
    through Firestore's REST API (no database SDK needed). Security rules allow each person to read/write only users/{their id}. ===== */
 const FB_CFG={apiKey:"AIzaSyDHquGPLCgu7izwzVTGrp5N73QZvKiZmEY",authDomain:"outpost-f3a72.firebaseapp.com",projectId:"outpost-f3a72",storageBucket:"outpost-f3a72.firebasestorage.app",messagingSenderId:"545267681659",appId:"1:545267681659:web:7b96f6baf3093d25a915de"};
-const SYNC_META=new Set(["probe","eloPending","acct","syncAt","syncDirtyAt","syncUid"]);   // never uploaded
+const SYNC_META=new Set(["probe","eloPending","acct","syncAt","syncDirtyAt","syncUid","seenUpdate"]);   // never uploaded
 let FBA=null, FBp=null, ACC=store.get("acct",null), syncT=null, syncBusy=false, syncErr="";
 /* every network step gets a time limit, so a stalled request can never leave sync stuck */
 const SYNC_MS=20000, timeout=(p,ms=SYNC_MS)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error("timeout")),ms))]);
@@ -2819,6 +2834,29 @@ window.addEventListener("online",()=>{ if(ACC) syncNow(false); });
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&ACC) syncNow(false); });
 try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.removeItem("outpost.toast"); setTimeout(()=>toast(m),400); } }catch(e){}
 
+/* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
+const UPDATES=[
+ {at:"2026-11-16T19:48:00Z",en:["Update notices: this window shows what changed and when, and a bar appears when an update arrives while the app is open. Tap \"What's new\" on Home to see every update.","A brilliant move in a puzzle now dings and shows the !! badge.","50 new puzzles are coming in the next update."],
+  ar:["إشعارات التحديث: هذه النافذة تعرض ما تغيّر ومتى، ويظهر شريط عند وصول تحديث والتطبيق مفتوح. اضغط \"ما الجديد\" في الرئيسية لرؤية كل التحديثات.","النقلة الرائعة في الألغاز تُصدر صوتًا وتظهر علامة !!.","٥٠ لغزًا جديدًا في التحديث القادم."]},
+ {at:"2026-11-16T18:18:00Z",en:["New Grandmaster bot (2600), powered by Stockfish.","Game review: corrects itself using the whole game, shows forced mates (M7) and the evaluation after every move, better Miss / Blunder / Great labels."],
+  ar:["بوت جديد: أستاذ كبير (٢٦٠٠) يعمل بـ Stockfish.","مراجعة المباراة: تصحّح نفسها باستخدام المباراة كاملة، وتعرض الكش مات الإجباري (M7) والتقييم بعد كل نقلة، وتصنيفات أدق."]},
+ {at:"2026-11-16T17:51:00Z",en:["The review shows which engine analysed the game: Stockfish 18 or Outpost Chess.","The coach's comments no longer make the board smaller."],
+  ar:["المراجعة تعرض المحرك الذي حلّل المباراة: Stockfish 18 أو Outpost Chess.","تعليقات المدرب لم تعد تصغّر الرقعة."]},
+ {at:"2026-11-16T17:35:00Z",en:["Game review now uses Stockfish 18, the engine chess.com uses."],ar:["مراجعة المباراة تستخدم الآن Stockfish 18، المحرك الذي يستخدمه chess.com."]},
+ {at:"2026-11-16T17:04:00Z",en:["Chess game history: every game saved with its moves, players, Elo, result and review."],ar:["سجل مباريات الشطرنج: كل مباراة محفوظة بنقلاتها ولاعبيها وتصنيفاتها ونتيجتها ومراجعتها."]},
+ {at:"2026-11-16T12:05:00Z",en:["Sign in with Google: your data is saved to your account and synced between phones."],ar:["تسجيل الدخول بحساب Google: بياناتك محفوظة في حسابك ومتزامنة بين الهواتف."]}
+];
+const updWhen=at=>{ const d=new Date(at), L=GL()?"ar-EG":undefined; return d.toLocaleDateString(L,{weekday:"short",day:"numeric",month:"short",year:"numeric"})+(GL()?"، ":" · ")+d.toLocaleTimeString(L,{hour:"2-digit",minute:"2-digit"}); };
+const updList=u=>`<p class="updwhen">${tr("Updated")} ${updWhen(u.at)}</p><ul class="updlist">${(GL()?u.ar:u.en).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+function showUpdate(){ const u=UPDATES[0]; modal(`<div class="updhead">✨</div><h3>${tr("What's new")}</h3>${updList(u)}
+  <button class="btn primary" data-act="modalClose">${tr("Got it")}</button><button class="btn ghost" data-act="updAll">${tr("All updates")}</button>`); try{ localStorage.setItem("outpost.seenUpdate",u.at); }catch(e){} }
+function showAllUpdates(){ modal(`<h3>${tr("All updates")}</h3><div class="updall">${UPDATES.map(updList).join("")}</div><button class="btn primary" data-act="modalClose">${tr("Close")}</button>`); }
+/* first open after an update: show what changed */
+(function(){ let seen=null; try{ seen=localStorage.getItem("outpost.seenUpdate"); }catch(e){} if(seen!==UPDATES[0].at) setTimeout(()=>{ if($("#modal").hidden) showUpdate(); },900); })();
+/* an update arrived while the app is open: offer to reload */
+try{ if(navigator.serviceWorker){ const had=!!navigator.serviceWorker.controller; navigator.serviceWorker.addEventListener("controllerchange",()=>{ if(!had||$("#updBar")) return;
+  document.body.insertAdjacentHTML("beforeend",`<button class="updbar" id="updBar" data-act="appReload">✨ ${tr("Outpost was updated. Tap to reload.")}</button>`); }); } }catch(e){}
+
 /* ---------- router & events ---------- */
 const VIEWS={home:renderHome,stack:renderStack,tools:renderTools,notes:renderNotes,field:renderField,quran:renderQuran,duas:renderDuas,games:renderGames};
 function show(v,keepScroll){ if(!VIEWS[v]||((v==="quran"||v==="duas")&&!isAr())) v="home"; if(v!=="quran"&&qObs){qObs.disconnect();qObs=null;} closeSheet(); if(v!=="games"&&S.gfs){ S.gfs=false; document.body.classList.remove("gamefs"); try{ document.fullscreenElement&&document.exitFullscreen(); }catch(e){} } S.view=v; document.body.dataset.view=v; $$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v)); $$(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.go===v)); VIEWS[v](); if(!keepScroll) window.scrollTo(0,0); }
@@ -2830,6 +2868,9 @@ document.addEventListener("click",e=>{
   if(e.target.id==="modal") return closeModal();
   const aa=(e.target.closest("[data-act]")||{dataset:{}}).dataset.act;
   if(aa==="acctOpen") return openAcct();
+  if(aa==="whatsNew") return showUpdate();
+  if(aa==="updAll") return showAllUpdates();
+  if(aa==="appReload") return location.reload();
   if(aa==="acctClose") return closeAcct();
   if(aa==="signGoogle") return signInGoogle();
   if(aa==="syncNow") return syncNow(true);
