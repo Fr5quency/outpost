@@ -900,7 +900,7 @@ const AR={
 /* games */
 "Games":"الألعاب",
 "Bot vs bot":"بوت ضد بوت","Pick two bots and watch them play. Brilliant moves get the !! badge and the ding.":"اختر بوتين وشاهدهما يلعبان. النقلات الرائعة تحصل على علامة !! والصوت.","Stop the match":"أوقف المباراة","Other bots":"بوتات أخرى","Wow! You're such a clever bot!":"واو! أنت بوت ذكي جدًا!",
-"Brilliant Mover":"صائد الروائع","Never misses a brilliant sacrifice: expect frequent !! moves":"لا تفوته أي تضحية رائعة: توقّع نقلات !! كثيرة",
+"Brilliant Mover":"صائد الروائع","An attacking gambler: sacrifices often and never misses a brilliant move":"لاعب هجومي مغامر: يضحّي كثيرًا ولا تفوته أي نقلة رائعة",
 "What's new":"ما الجديد","Updated":"تم التحديث","Got it":"حسنًا","All updates":"كل التحديثات","Outpost was updated. Tap to reload.":"تم تحديث Outpost. اضغط لإعادة التحميل.",
 "Mate in 4":"كش مات في ٤","Brilliant move":"نقلة رائعة",
 "Grandmaster":"أستاذ كبير (Grandmaster)","Grandmaster · Stockfish":"أستاذ كبير · Stockfish","You had checkmate in {n} with {b}! {m} lets it slip.":"كان لديك كش مات في {n} بـ {b}! و{m} تضيّعه.","They had checkmate in {n} with {b} and missed it. Lucky!":"كان لديهم كش مات في {n} بـ {b} وفاتهم. كنت محظوظًا!","{m}! Forced checkmate in {n}.":"{m}! كش مات إجباري في {n}.","{m}. They have a forced checkmate in {n}.":"{m}. لديهم كش مات إجباري في {n}.",
@@ -1795,7 +1795,7 @@ const LEVELS=[
  {elo:1800,rank:"Expert",              o:{depth:5,noise:8,ms:1200}},
  {elo:2000,rank:"Candidate master",    o:{depth:10,ms:2500}},
  {elo:2600,rank:"Grandmaster",         o:{depth:10,ms:3000}, sf:2600},  // Stockfish limited to 2600 Elo (Outpost Chess at full strength when Stockfish cannot run)
- {elo:1500,rank:"Never misses a brilliant sacrifice: expect frequent !! moves", o:{depth:3,noise:45,blunder:.04,ms:600}, brill:1, name:"Brilliant Mover"}   // plays like a 1500 player, but always plays a brilliant sacrifice when one exists
+ {elo:1500,rank:"An attacking gambler: sacrifices often and never misses a brilliant move", o:{depth:3,noise:45,blunder:.04,ms:600}, brill:1, name:"Brilliant Mover"}   // plays like a 1500 player, but always plays a brilliant sacrifice when one exists
 ];
 const NAMES=[["Omar","عمر"],["Lina","لينا"],["Youssef","يوسف"],["Sara","سارة"],["Karim","كريم"],["Nour","نور"],["Adam","آدم"],["Mariam","مريم"],["Hassan","حسن"],["Layla","ليلى"],["Ziad","زياد"],["Hana","هنا"],["Tarek","طارق"],["Salma","سلمى"],["Ali","علي"],["Farida","فريدة"],["Mostafa","مصطفى"],["Jana","جنى"],["Khaled","خالد"],["Malak","ملك"]];
 const AVC=["#e07a5f","#3d8bd4","#81b29a","#c77dff","#f2a541","#4ecdc4","#ef476f","#8d99ae","#b5838d","#c9a227","#1baaa6"];
@@ -2230,8 +2230,10 @@ function maybeBot(){
   const own=()=>{ if(!CH||id!==chessReq) return; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
   const sfOk=(CH.variant==="std"||CH.variant==="nocastle")&&typeof WebAssembly==="object";
   if(L.brill){ // look for a brilliant sacrifice first (full-strength Stockfish, top 5 moves; Outpost Chess otherwise), else play like a 1500 player
-    const pickOrOwn=list=>{ if(!CH||id!==chessReq) return; const m=brillPick(engine(),list); if(m===null) return own(); onBotMove({id,move:m,brill:true}); };
-    if(sfOk) return sfBot(fen,{multipv:5,ms:1000}).then(r=>{ const E2=engine(); pickOrOwn(r.lines.map(x=>({s:x.s,m:E2.legal().find(y=>E2.moveStr(y)===x.mv)}))); }).catch(own);
+    const pickOrOwn=list=>{ if(!CH||id!==chessReq) return; const m=brillPick(engine(),list); if(m!==null) return onBotMove({id,move:m,brill:true});
+      const g=gamblePick(engine(),list); if(g!==null) return onBotMove({id,move:g});   // a sound-enough sacrifice: the review decides if it is brilliant
+      own(); };
+    if(sfOk) return sfBot(fen,{multipv:GAMBLE.pv,ms:1000}).then(r=>{ const E2=engine(); pickOrOwn(r.lines.map(x=>({s:x.s,m:E2.legal().find(y=>E2.moveStr(y)===x.mv)}))); }).catch(own);
     const w=worker(); if(w){ CH.rootsCb={id,f:list=>pickOrOwn(list)}; return w.postMessage({id,type:"roots",fen,opts:{depth:4,ms:900},variant:vc}); }
     return own();
   }
@@ -2263,6 +2265,13 @@ function sfBot(fen,o){ // o: {elo (0 = full strength), multipv, ms} -> {best, li
 function brillPick(E,list){
   list=list.filter(x=>x&&x.m!==undefined&&x.s!==null&&x.s!==undefined); if(!list.length) return null; const wb=winPct(list[0].s);
   for(const x of list){ const wp=winPct(x.s); if(wb-wp<0.3&&wp>=45&&(wb<97||x.s>90000)&&isSacrifice(E,x.m)) return x.m; }
+  return null;
+}
+/* the gambler: a sacrifice close to the best move (at most GAMBLE.loss win-% worse) that keeps at least GAMBLE.min % winning chances; Stockfish shows it GAMBLE.pv moves */
+const GAMBLE={loss:15,min:35,pv:10};
+function gamblePick(E,list){
+  list=list.filter(x=>x&&x.m!==undefined&&x.s!==null&&x.s!==undefined); if(!list.length) return null; const wb=winPct(list[0].s);
+  for(const x of list){ const wp=winPct(x.s); if(wb-wp<=GAMBLE.loss&&wp>=GAMBLE.min&&isSacrifice(E,x.m)) return x.m; }
   return null;
 }
 function onRoots(d){ if(!CH||!CH.rootsCb||CH.rootsCb.id!==d.id) return; const f=CH.rootsCb.f; CH.rootsCb=null; f(d.roots.map(([s,m])=>({s,m}))); }
@@ -2892,6 +2901,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-16T21:31:00Z",en:["Brilliant Mover is now an attacking gambler: it sacrifices whenever a sacrifice is sound, which creates far more chances for brilliant moves. True brilliant moves still get the !! badge and the ding."],
+  ar:["صائد الروائع أصبح لاعبًا هجوميًا مغامرًا: يضحّي كلما كانت التضحية سليمة، فتظهر فرص أكثر بكثير للنقلات الرائعة. والنقلات الرائعة الحقيقية تحصل على علامة !! والصوت."]},
  {at:"2026-11-16T21:27:00Z",en:["New: Bot vs bot. Pick any two bots and watch them play; brilliant moves get the !! badge and the ding, and the bot on the receiving end reacts.","Brilliant Mover now explains what it does under its name."],
   ar:["جديد: بوت ضد بوت. اختر أي بوتين وشاهدهما يلعبان؛ النقلات الرائعة تحصل على علامة !! والصوت، والبوت الآخر يعلّق.","صائد الروائع يشرح أسلوبه الآن تحت اسمه."]},
  {at:"2026-11-16T21:24:00Z",en:["New bot: Brilliant Mover (1500). It makes normal mistakes, but whenever a brilliant sacrifice exists it plays it at once, with the !! badge and the ding."],
