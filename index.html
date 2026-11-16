@@ -429,7 +429,7 @@ h3.sect{margin-top:6px}
 .sq.hill::before{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 3px rgba(255,200,40,.75);pointer-events:none}
 .coach{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px;text-align:start}
 .coach[hidden]{display:none}
-.coach p{flex:1;font-size:14px;line-height:1.4}
+.coach p{flex:1;font-size:14px;line-height:1.4;max-height:5.6em;overflow-y:auto}
 .coachava{flex:none;width:38px;height:38px;border-radius:50%;background:#739552 center/74% no-repeat}
 .btime{font-family:var(--display);font-weight:700}.btime.low{color:#e0312a}
 .bscore small b{color:var(--ink);font:700 13px/1 var(--display)}
@@ -461,6 +461,7 @@ body[data-view="games"].inchess .prefs{display:none}
 .pz.star::after{content:"★";position:absolute;top:2px;right:5px;font-size:11px;color:#eab308}
 .sq.hintsq{box-shadow:inset 0 0 0 calc(var(--bs)/8*.09) #3b82f6}
 .sq.wrongsq{background:#e5584f!important}
+.rv-eng{margin:-6px 0 0;font-size:13px;color:var(--muted)}.rv-eng b{color:var(--ink)}
 /* game history */
 .hicon{background:#5b7bd5;color:#fff}.hicon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -878,6 +879,7 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Analysed by":"حلّلها","Built-in engine":"المحرك المدمج","Stockfish 18 + built-in engine":"Stockfish 18 + المحرك المدمج",
 "Game review: Stockfish 18 (GPL-3).":"مراجعة المباريات: Stockfish 18 (رخصة GPL-3).",
 "Game history":"سجل المباريات","‹ History":"› السجل","Won":"فوز","Drawn":"تعادل","Lost":"خسارة","All":"الكل","Online":"أونلاين","Bots":"البوتات","Bot":"بوت","1v1":"١ ضد ١",
 "Checkmate":"كش مات","Resignation":"استسلام","Time":"الوقت","Abandoned":"انسحاب","Stalemate":"تعادل بالجمود","50-move rule":"قاعدة الخمسين نقلة","Repetition":"تكرار","Insufficient material":"قطع غير كافية",
@@ -1868,7 +1870,7 @@ function anLocal(msg){ // the built-in engine
 }
 function onAnalysis(d){
   if(!CH||!d||d.type!=="analysis"||!d.tag||d.tag.g!==CH.gid) return;
-  const i=d.tag.i; CH.rows[i]=d.rows[0];
+  const i=d.tag.i; CH.rows[i]=d.rows[0]; if(CH.rows[i]&&CH.rows[i].sf===undefined) CH.rows[i].sf=0;
   if(i<CH.moves.length) liveClass(i);
   if(CH.anWait) CH.anWait();
   if(CH.over&&CH.archId) archRows();
@@ -2062,7 +2064,7 @@ function renderChess(v){
 }
 function sizeBoard(){
   const root=$("#gameRoot"), bd=$("#board"); if(!root||!bd) return;
-  let w=root.clientWidth; const other=[...root.children].filter(c=>c!==bd&&c.id!=="mlist"&&(!S.gfs||!c.classList.contains("gtop"))).reduce((t,c)=>t+c.offsetHeight+10,0);
+  let w=root.clientWidth; const other=[...root.children].filter(c=>c!==bd&&c.id!=="mlist"&&c.id!=="coachBox"&&c.id!=="revLine"&&(!S.gfs||!c.classList.contains("gtop"))).reduce((t,c)=>t+c.offsetHeight+10,0);
   if(S.gfs) w=Math.min(w,window.innerHeight-other-40);
   else w=Math.min(w,window.innerHeight-(root.getBoundingClientRect().top+window.scrollY)-other-$(".tabs").offsetHeight-12);
   bd.style.setProperty("--bs",Math.max(240,Math.floor(w/8)*8)+"px");
@@ -2206,8 +2208,11 @@ function finishChess(res){
 /* ===== GAME HISTORY: every finished game is kept (newest first) with moves, players, Elo, result and analysis; synced with the account ===== */
 const ARCH_MAX=100;
 const archList=()=>{ const a=store.get("chessGames",[]); return Array.isArray(a)?a:[]; };
-const packRow=r=>r?[r.best||0,r.bs,r.ps,r.only?1:0,r.n|0]:0;
-const unpackRow=x=>x?{best:x[0],bs:x[1],ps:x[2],only:!!x[3],n:x[4]}:undefined;
+const packRow=r=>r?[r.best||0,r.bs,r.ps,r.only?1:0,r.n|0,r.sf?1:0]:0;
+const unpackRow=x=>x?{best:x[0],bs:x[1],ps:x[2],only:!!x[3],n:x[4],sf:x.length>5?x[5]:null}:undefined;   // null: saved before the engine was recorded
+function engineName(rows){ // "Stockfish 18", "Built-in engine", both, or "" if unknown
+  const r=(rows||[]).filter(x=>x&&x.n>0); if(!r.length||r.some(x=>x.sf===null||x.sf===undefined)) return "";
+  const a=r.some(x=>x.sf===1), b=r.some(x=>x.sf===0); return a&&b?tr("Stockfish 18 + built-in engine"):a?"Stockfish 18":tr("Built-in engine"); }
 function archRecord(res,R,hotWin){ // called once when a game ends
   if(!CH||CH.arch||CH.mode==="puz"||(!CH.moves.length&&!R)) return;
   const WIN=["win","oppResign","timeWin","left"], LOSE=["lose","resign","timeLose"], hot=CH.mode==="hot";
@@ -2221,7 +2226,7 @@ function archRecord(res,R,hotWin){ // called once when a game ends
 function archRows(){ // keep the analysis with the saved game, so its review opens instantly later
   if(!CH||!CH.archId) return; const a=archList(), g=a.find(x=>x.id===CH.archId); if(!g) return;
   const n=CH.moves.length, rows=[]; let all=true; for(let i=0;i<=n;i++){ rows.push(packRow(CH.rows[i])); if(CH.rows[i]===undefined) all=false; }
-  g.a=rows; if(all&&!g.acc){ try{ const A=CH.an||classifyGame(CH.rows,CH.moves); g.acc=[+A.acc.w.toFixed(1),+A.acc.b.toFixed(1)]; }catch(e){} }
+  g.a=rows; if(all){ const en=engineName(CH.rows); if(en) g.eng=en.startsWith("Stockfish 18 +")?"mix":en==="Stockfish 18"?"sf":"local"; } if(all&&!g.acc){ try{ const A=CH.an||classifyGame(CH.rows,CH.moves); g.acc=[+A.acc.w.toFixed(1),+A.acc.b.toFixed(1)]; }catch(e){} }
   store.set("chessGames",a); if(CH.arch) CH.arch=g;
 }
 function openArch(id){
@@ -2253,7 +2258,7 @@ function renderChessHist(v){
       const icon=oc==="w"?"+":oc==="l"?"−":oc==="d"?"=":"";
       return `<button class="hrow" data-act="archOpen" data-id="${g.id}">
         <span class="hres r-${oc==="W"||oc==="B"?"h":oc}">${oc==="W"?pcImg(6,"cp"):oc==="B"?pcImg(-6,"cp"):icon}</span>
-        <span class="hmid"><b>${who}${g.oe?` <em>(${N(g.oe)})</em>`:""}</b><small>${archMode(g)}${SEP()}${archWhy(g)}${SEP()}${GL()?`${AD(n)} نقلة`:`${n} moves`}</small><small>${archDate(g.t)}</small></span>
+        <span class="hmid"><b>${who}${g.oe?` <em>(${N(g.oe)})</em>`:""}</b><small>${archMode(g)}${SEP()}${archWhy(g)}${SEP()}${GL()?`${AD(n)} نقلة`:`${n} moves`}</small><small>${archDate(g.t)}${g.eng?SEP()+(g.eng==="sf"?"Stockfish 18":tr(g.eng==="mix"?"Stockfish 18 + built-in engine":"Built-in engine")):""}</small></span>
         <span class="hend">${g.ma!=null?`<b>${N(g.ma)}</b><em class="${d>0?"up":d<0?"down":""}">${d>0?"+"+N(d):d<0?"−"+N(-d):"±"+N(0)}</em>`:""}${acc!=null?`<small>${tr("Accuracy")} ${GL()?AD(acc):acc}</small>`:""}</span>
       </button>`; }).join("")}</div>`
     :`<div class="card"><p class="sub">${tr(all.length?"No games here yet.":"Your finished games will appear here, with their moves and game review.")}</p></div>`}
@@ -2365,7 +2370,7 @@ function showSummary(){
   const meAcc=me>0?A.acc.w:A.acc.b, opAcc=me>0?A.acc.b:A.acc.w, mp=CH.mode==="mp";
   const rows=CLS_ORDER.map((k,i)=>`<div class="srow2" style="animation-delay:${0.35+i*0.09}s"><span class="cnt" style="color:${CLS[k].c}" data-count="${cnt(me,k)}">0</span><span class="lbl">${badge(k,"sbadge")}<span>${tr(CLS[k].l)}</span></span><span class="cnt" style="color:${CLS[k].c}" data-count="${cnt(-me,k)}">0</span></div>`).join("");
   const $m=$("#modal"); $m.innerHTML=`<div class="modal-in review-in" role="dialog">
-    <div class="rv-head"><span class="rv-star">★</span><h3>${tr("Game Review")}</h3></div>
+    <div class="rv-head"><span class="rv-star">★</span><h3>${tr("Game Review")}</h3></div>${engineName(CH.rows)?`<p class="rv-eng">${tr("Analysed by")} <b>${engineName(CH.rows)}</b></p>`:""}
     <div class="rv-players">
       <div class="rvp"><span class="ava you">${esc(youLabel()).slice(0,1)}</span><small>${esc(youLabel())}</small><b class="accn" data-count="${meAcc.toFixed(1)}" data-dec="1">0</b></div>
       <div class="rv-acc">${tr("Accuracy")}</div>
