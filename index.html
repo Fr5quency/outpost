@@ -486,6 +486,30 @@ body[data-view="games"].inchess .prefs{display:none}
 .cicon{background:#739552}.cicon.sideb{background:#3a3a3a}.cicon2{background:#a88764;font-size:28px}
 .coursecard .otxt small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .hmid small.hop{color:var(--ink);opacity:.85}
+/* stage C: daily, stats, achievements */
+.dicon{background:#3b82f6;font-size:28px}.dailycard.done{border-color:color-mix(in srgb,#81b64c 60%,var(--line))}
+.mtiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mtile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:16px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.mtile span{font-size:26px}.mtile b{font-size:14px}.mtile small{color:var(--muted);font-size:12px}
+.stiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stile{display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 6px;border-radius:14px;border:1px solid var(--line);background:var(--panel);text-align:center}
+.stile b{font:800 20px/1 var(--display)}.stile small{color:var(--muted);font-size:11px}
+.chart{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;touch-action:pan-y}
+.chart svg{display:block;width:100%;height:auto;direction:ltr}
+.cgrid{stroke:var(--line);stroke-width:1}.ctick{fill:var(--muted);font:500 10px/1 var(--body)}
+.cline{fill:none;stroke:var(--signal);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.cdot{fill:var(--signal);stroke:var(--panel);stroke-width:2}.cdot.last{stroke-width:2.5}
+.clast{fill:var(--ink);font:700 12px/1 var(--display)}.cx{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.ctip{position:absolute;top:6px;width:150px;padding:6px 8px;border-radius:8px;background:var(--ink);color:var(--ground);font:600 11px/1.3 var(--body);text-align:center;pointer-events:none}
+.ctip[hidden]{display:none}
+.bstat{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.bstat .ava{width:30px;height:30px;font-size:14px;flex:none}.bsn{flex:1;min-width:0;display:flex;flex-direction:column}.bsn b{font-size:14px}.bsn small{color:var(--muted);font-size:12px}
+.bsbar{flex:0 0 80px;height:6px;border-radius:99px;background:var(--sunk);overflow:hidden;direction:ltr}.bsbar i{display:block;height:100%;background:var(--signal);border-radius:99px}
+.bstat em{font-style:normal;font:700 13px/1 var(--display);width:40px;text-align:end}
+.achgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ach{display:flex;flex-direction:column;gap:3px;padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--panel);opacity:.55;filter:grayscale(1)}
+.ach.got{opacity:1;filter:none;border-color:color-mix(in srgb,var(--signal) 55%,var(--line))}
+.achi{font-size:26px}.ach b{font-size:14px}.ach small{color:var(--muted);font-size:12px;line-height:1.35}.ach em{font-style:normal;color:var(--signal);font-size:11px;font-weight:700}
 /* game history */
 .hicon{background:#5b7bd5;color:#fff}.hicon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -912,6 +936,9 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Solved today. Come back tomorrow!":"حللته اليوم. عد غدًا!","A new puzzle every day. Keep your streak going.":"لغز جديد كل يوم. حافظ على سلسلتك.","Your stats":"إحصائياتك","Achievements":"الإنجازات","Achievement unlocked":"إنجاز جديد",
+"Play a few more games to see the chart.":"العب بضع مباريات أخرى لترى الرسم.","Start":"البداية","Win rate":"نسبة الفوز","Brilliant moves":"النقلات الرائعة","Puzzles solved":"الألغاز المحلولة","Daily streak":"السلسلة اليومية","Lessons":"الدروس",
+"Elo over time":"التصنيف عبر الوقت","Accuracy (last 30 reviewed games)":"الدقة (آخر ٣٠ مباراة مُراجَعة)","Against each bot":"ضد كل بوت","No bot games yet.":"لا مباريات ضد البوتات بعد.","Stats come from your last 100 saved games.":"الإحصائيات من آخر ١٠٠ مباراة محفوظة.",
 "Openings & gambits":"الافتتاحات والمناورات","Openings":"الافتتاحات","Gambits":"المناورات","You play White":"تلعب بالأبيض","You play Black":"تلعب بالأسود","Play the moves yourself. Every move comes with a short explanation.":"العب النقلات بنفسك. كل نقلة معها شرح قصير.",
 "That's not the move in this lesson. Try again.":"هذه ليست نقلة هذا الدرس. حاول مرة أخرى.","Good move. Keep going.":"نقلة جيدة. تابع.","Lesson complete! You can play it again or try another one.":"اكتمل الدرس! يمكنك إعادته أو تجربة درس آخر.",
 "Your mistake":"خطؤك","Daily puzzle":"لغز اليوم","Lesson":"درس","‹ Back to the game":"› العودة إلى المباراة","‹ Lessons":"› الدروس","Next mistake":"الخطأ التالي","Back to the game":"العودة إلى المباراة","Again":"مرة أخرى","More lessons":"دروس أخرى",
@@ -1786,6 +1813,8 @@ function renderGames(){
   if(S.game==="chessHist") return renderChessHist(v);
   if(S.game==="bvbSetup") return renderBvb(v);
   if(S.game==="courseList") return renderCourses(v);
+  if(S.game==="stats") return renderStats(v);
+  if(S.game==="ach") return renderAch(v);
   if(S.game==="blocks") return renderBlocks(v);
   const XG=window.OUTPOST_GAMES||{}; if(XG[S.game]) return XG[S.game].render(v);
   const best=store.get("blocksBest",0), cs=store.get("chess",null);
@@ -1934,7 +1963,7 @@ function liveClass(i){ // rate the move as soon as its analysis arrives; a brill
   const P=classifyPly(V,CH.rows[i],CH.moves[i],i,CH.liveC[i-1],null); if(!P) return; CH.liveC[i]=P.c;
   /* anyone's brilliant move: yours, the bot's, the online opponent's, both players in 1v1 */
   if(P.c==="brilliant"&&i===CH.moves.length-1){ CH.live={ply:i,t:Date.now(),san:P.san}; ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){}
-    drawBoard(); bvbWow(i); }
+    drawBoard(); bvbWow(i); achBrilliant(P); }
 }
 /* bot vs bot: after a brilliant move, the bot it was played against reacts */
 function bvbWow(i){
@@ -2114,6 +2143,8 @@ function renderChessMenu(v){
     <p class="sub">${tr("Ratings are approximate. The bot plays fully offline.")}</p>
     <div class="chips">${VARIANTS.map(x=>`<button class="chip ${(S.chessVariant||"std")===x[0]?"on":""}" data-act="chessVar" data-v="${x[0]}">${tr(x[1])}</button>`).join("")}</div>
     <p class="sub">${tr((VARIANTS.find(x=>x[0]===(S.chessVariant||"std"))||VARIANTS[0])[2])}</p>
+    <button class="hotcard dailycard${dailyDoneToday()?" done":""}" data-act="dailyGo"><span class="hoticon dicon">📅</span><span class="otxt"><b>${tr("Daily puzzle")}${dailyDoneToday()?" ✓":""}</b><small>${dailyDoneToday()?tr("Solved today. Come back tomorrow!"):tr("A new puzzle every day. Keep your streak going.")} · 🔥 ${GL()?AD(dailyStreak()):dailyStreak()}</small></span></button>
+    <div class="mtiles"><button class="mtile" data-act="statsOpen"><span>📊</span><b>${tr("Your stats")}</b></button><button class="mtile" data-act="achOpen"><span>🏆</span><b>${tr("Achievements")}</b><small>${GL()?AD(Object.keys(achGot()).length):Object.keys(achGot()).length}/${GL()?AD(ACH.length):ACH.length}</small></button></div>
     <button class="hotcard bvbcard" data-act="bvbOpen"><span class="hoticon bvbicon">${pcImg(2)}<b>vs</b>${pcImg(-2)}</span><span class="otxt"><b>${tr("Bot vs bot")}</b><small>${tr("Pick two bots and watch them play. Brilliant moves get the !! badge and the ding.")}</small></span></button>
     <button class="hotcard coursescard" data-act="courseList"><span class="hoticon cicon2">📖</span><span class="otxt"><b>${tr("Openings & gambits")}</b><small>${GL()?`${AD(COURSES.length)} دروس، منها مناورة الفضائي · أكملت ${AD(Object.keys(courseDone()).length)}`:`${COURSES.length} lessons, including the Alien Gambit · ${Object.keys(courseDone()).length} done`}</small></span></button>
     <button class="hotcard histcard" data-act="chessHist"><span class="hoticon hicon"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4M12 7v5l3 2"/></svg></span><span class="otxt"><b>${tr("Game history")}</b><small>${GL()?`كل مبارياتك مع النقلات والمراجعة · ${AD(archList().length)} مباراة`:`All your games with moves and review · ${archList().length} saved`}</small></span></button>
@@ -2359,7 +2390,7 @@ function finishChess(res){
   const why={win:tr("Checkmate."),lose:tr("Checkmate."),stalemate:tr("Stalemate: no legal moves, but not in check."),fifty:tr("50 moves without a capture or pawn move."),repetition:tr("The same position happened three times."),material:tr("Not enough pieces left to checkmate.")}[res]||"";
   const why2=CH.why==="hill"?tr("The king reached the centre."):CH.why==="3check"?tr("Third check."):why;
   if(mp){ const my=MP; setTimeout(()=>{ if(MP===my) mpStop(); },2500); }
-  const R=rateGame(res), d=R?R.to-R.from:0; CH.winner=hot?hotWin:(WIN.includes(res)?CH.color:LOSE.includes(res)?-CH.color:0); try{ archRecord(res,R,hotWin); }catch(e){}
+  const R=rateGame(res), d=R?R.to-R.from:0; CH.winner=hot?hotWin:(WIN.includes(res)?CH.color:LOSE.includes(res)?-CH.color:0); try{ archRecord(res,R,hotWin); }catch(e){} try{ achAfterGame(res); }catch(e){}
   const eloLine=R?`<p class="eloline"><span>${tr(R.kind)}</span> <b>${R.from}</b> → <b>${R.to}</b> <em class="${d>0?"up":d<0?"down":""}">${d>0?"+"+d:d<0?d:"±0"}</em></p>`:"";
   setTimeout(()=>modal(`<div class="result">${hot?(hotWin?pcImg(6*hotWin,"pcbig"):"½"):WIN.includes(res)?"🏆":LOSE.includes(res)?pcImg(6*CH.color,"pcbig"):"½"}</div><h3>${hot?hotHead:head}</h3>${(hot?(hotSub||why2):why2)?`<p class="sub">${hot?(hotSub||why2):why2}</p>`:""}${eloLine}
     ${CH.moves.length?`<button class="btn primary reviewbtn" data-act="review">★ ${tr("Game review")}</button>`:""}
@@ -2554,6 +2585,123 @@ function courseNote(){ const p=CH.puz, c=COURSES.find(x=>x.id===p.course); if(!c
   return p.note||""; }
 function openingEntry(n,moves){ const nm=openingName(n,moves); if(!nm) return null; return OPENINGS.find(o=>o[0]===nm||o[1]===nm)||null; }
 
+/* ===== STATS, DAILY PUZZLE, ACHIEVEMENTS ===== */
+const cstats=()=>Object.assign({wins:0,ws:0,brill:0,retries:0},store.get("chessStats",{})||{});
+const dayStr=d=>{ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const dayNum=s=>Math.round(new Date(s+"T12:00:00").getTime()/86400000);
+/* daily puzzle: the same puzzle for everyone on a given day; solving it keeps your streak */
+const dailyState=()=>Object.assign({d:"",streak:0,best:0},store.get("daily",{})||{});
+const dailyStreak=()=>{ const s=dailyState(); if(!s.d) return 0; const gap=dayNum(dayStr())-dayNum(s.d); return gap<=1?s.streak:0; };
+const dailyDoneToday=()=>dailyState().d===dayStr();
+const dailyIndex=()=>((dayNum(dayStr())*61)%PZ_N+PZ_N)%PZ_N;
+function startDaily(){ loadPuzzles().then(()=>{ const i=dailyIndex()%PZ.length; startPz(PZ[i],{kind:"daily",i}); }).catch(()=>toast(tr("Open Outpost once while online so the puzzles are saved on this phone."))); }
+function dailySolved(){ const s=dailyState(), today=dayStr(); if(s.d===today) return; const gap=s.d?dayNum(today)-dayNum(s.d):99;
+  s.streak=gap===1?s.streak+1:1; s.d=today; s.best=Math.max(s.best,s.streak); store.set("daily",s);
+  toast(GL()?`🔥 سلسلة ${AD(s.streak)} يوم`:`🔥 ${s.streak}-day streak`); for(const n of [3,7,30]) if(s.streak>=n) unlock("daily"+n); }
+/* achievements */
+const ACH=[
+ ["first_win","🏆","First win","Win a game against a bot or online.","أول فوز","افز بمباراة ضد بوت أو أونلاين."],
+ ["beat_1600","⚔️","Giant slayer","Beat a bot rated 1600 or more.","قاهر العمالقة","اهزم بوتًا تصنيفه ١٦٠٠ أو أكثر."],
+ ["beat_2000","👑","Candidate master","Beat a bot rated 2000 or more.","مرشّح أستاذ","اهزم بوتًا تصنيفه ٢٠٠٠ أو أكثر."],
+ ["beat_gm","🧠","Grandmaster slayer","Beat the Grandmaster bot.","قاهر الأستاذ الكبير","اهزم بوت الأستاذ الكبير."],
+ ["beat_bm","💎","Out-brilliant the Brilliant Mover","Beat Brilliant Mover.","أذكى من صائد الروائع","اهزم صائد الروائع."],
+ ["online_win","🌍","Online winner","Win an online game.","فائز أونلاين","افز بمباراة أونلاين."],
+ ["streak5","🔥","On fire","Win 5 games in a row.","مشتعل","افز بـ ٥ مباريات متتالية."],
+ ["first_brill","‼️","Brilliant!","Play your first brilliant move.","رائع!","العب أول نقلة رائعة."],
+ ["brill10","✨","Brilliant collector","Play 10 brilliant moves.","جامع الروائع","العب ١٠ نقلات رائعة."],
+ ["acc90","🎯","Sharpshooter","90% accuracy or more in a game of 20+ moves.","القنّاص","دقة ٩٠٪ أو أكثر في مباراة من ٢٠ نقلة فأكثر."],
+ ["elo1000","📈","Rising star","Reach 1000 offline Elo.","نجم صاعد","اصل إلى ١٠٠٠ في التصنيف دون اتصال."],
+ ["elo1500","🚀","Club strength","Reach 1500 offline Elo.","مستوى الأندية","اصل إلى ١٥٠٠ في التصنيف دون اتصال."],
+ ["puz10","🧩","Puzzle solver","Solve 10 puzzles.","حلّال الألغاز","حل ١٠ ألغاز."],
+ ["puz50","🧩","Puzzle master","Solve 50 puzzles.","سيد الألغاز","حل ٥٠ لغزًا."],
+ ["puz150","🏅","All 150","Solve every puzzle.","الـ ١٥٠ كلها","حل كل الألغاز."],
+ ["daily3","📅","Habit","Solve the daily puzzle 3 days in a row.","عادة","حل لغز اليوم ٣ أيام متتالية."],
+ ["daily7","🗓️","One week","Solve the daily puzzle 7 days in a row.","أسبوع كامل","حل لغز اليوم ٧ أيام متتالية."],
+ ["daily30","🌙","One month","Solve the daily puzzle 30 days in a row.","شهر كامل","حل لغز اليوم ٣٠ يومًا متتاليًا."],
+ ["course1","📖","Student","Complete an opening or gambit lesson.","طالب","أكمل درس افتتاح أو مناورة."],
+ ["gambits","♞","Gambiteer","Complete every gambit lesson.","سيد المناورات","أكمل كل دروس المناورات."],
+ ["courses","🎓","Graduate","Complete all 19 lessons.","خرّيج","أكمل الدروس الـ ١٩ كلها."],
+ ["retry5","↻","Learning from mistakes","Fix 5 of your mistakes.","التعلّم من الأخطاء","صحّح ٥ من أخطائك."],
+ ["bvb","🍿","Spectator","Watch a full bot vs bot match.","متفرّج","شاهد مباراة بوت ضد بوت كاملة."],
+ ["share","📤","Show-off","Share a game.","استعراض","شارك مباراة."]
+];
+const achGot=()=>store.get("ach",{})||{};
+let achQ=[], achT=null;
+function unlock(id){ const g=achGot(); if(g[id]) return; const a=ACH.find(x=>x[0]===id); if(!a) return; g[id]=Date.now(); store.set("ach",g); achQ.push(a); achShow(); }
+function achShow(){ if(achT||!achQ.length) return; const a=achQ.shift(); try{ ensureAudio(); ding(); }catch(e){} toast(`${a[1]} ${tr("Achievement unlocked")}: ${GL()?a[4]:a[2]}`); achT=setTimeout(()=>{ achT=null; achShow(); },2600); }
+function achAfterGame(res){ // called when a game ends
+  const W=["win","oppResign","timeWin","left"], L=["lose","resign","timeLose"], st=cstats();
+  if(CH.mode==="bvb"&&CH.moves.length) unlock("bvb");
+  if(CH.mode==="bot"||CH.mode==="mp"){
+    if(W.includes(res)){ st.wins++; st.ws++; unlock("first_win");
+      if(CH.mode==="mp") unlock("online_win");
+      else { const L0=LEVELS[CH.lvl]; if(L0.elo>=1600) unlock("beat_1600"); if(L0.elo>=2000) unlock("beat_2000"); if(L0.sf) unlock("beat_gm"); if(L0.brill) unlock("beat_bm"); }
+      if(st.ws>=5) unlock("streak5"); }
+    else if(L.includes(res)) st.ws=0;
+    store.set("chessStats",st); }
+  if(eloOff()>=1000) unlock("elo1000"); if(eloOff()>=1500) unlock("elo1500");
+}
+function achBrilliant(P){ if(!CH) return; const mine=CH.mode==="hot"||((CH.mode==="bot"||CH.mode==="mp")&&P.color===CH.color); if(!mine) return;
+  const st=cstats(); st.brill++; store.set("chessStats",st); unlock("first_brill"); if(st.brill>=10) unlock("brill10"); }
+window.onPuzDone=(kind,p)=>{
+  if(kind==="pz"||kind==="daily"){ const n=puzCount(); if(n>=10) unlock("puz10"); if(n>=50) unlock("puz50"); if(n>=PZ_N) unlock("puz150"); }
+  if(kind==="daily") dailySolved();
+  if(kind==="retry"&&!p.fail){ const st=cstats(); st.retries++; store.set("chessStats",st); if(st.retries>=5) unlock("retry5"); }
+  if(kind==="course"){ unlock("course1"); const d=courseDone(); if(COURSES.filter(c=>c.g).every(c=>d[c.id])) unlock("gambits"); if(COURSES.every(c=>d[c.id])) unlock("courses"); }
+};
+function achCatchUp(){ // progress made before achievements existed
+  const n=puzCount(); if(n>=10) unlock("puz10"); if(n>=50) unlock("puz50"); if(n>=PZ_N) unlock("puz150");
+  if(eloOff()>=1000) unlock("elo1000"); if(eloOff()>=1500) unlock("elo1500");
+  const d=courseDone(); if(Object.keys(d).length) unlock("course1"); if(COURSES.filter(c=>c.g).every(c=>d[c.id])) unlock("gambits"); if(COURSES.every(c=>d[c.id])) unlock("courses");
+  const A=archList(); if(A.some(g=>(g.mode==="bot"||g.mode==="mp")&&g.o===1)) unlock("first_win"); if(A.some(g=>g.mode==="mp"&&g.o===1)) unlock("online_win");
+  A.forEach(g=>{ if(g.mode==="bot"&&g.o===1){ const L0=LEVELS[g.lvl|0]; if(!L0) return; if(L0.elo>=1600) unlock("beat_1600"); if(L0.elo>=2000) unlock("beat_2000"); if(L0.sf) unlock("beat_gm"); if(L0.brill) unlock("beat_bm"); } if(g.mode==="bvb") unlock("bvb"); });
+}
+setTimeout(()=>{ try{ achCatchUp(); }catch(e){} },2500);
+function renderAch(v){
+  const g=achGot(), n=Object.keys(g).length;
+  v.innerHTML=`<div class="row"><button class="btn small" data-act="chessMenu">${tr("‹ Chess")}</button></div>
+    <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Achievements")}</h2><p class="sub">${GL()?`حصلت على ${AD(n)} من ${AD(ACH.length)}`:`${n} of ${ACH.length} unlocked`}</p></div>
+    <div class="meter"><b style="width:${100*n/ACH.length}%"></b></div>
+    <div class="achgrid">${ACH.map(a=>{ const t=g[a[0]]; return `<div class="ach${t?" got":""}"><span class="achi">${a[1]}</span><b>${esc(GL()?a[4]:a[2])}</b><small>${esc(GL()?a[5]:a[3])}</small>${t?`<em>${new Date(t).toLocaleDateString(GL()?"ar-EG":undefined,{day:"numeric",month:"short",year:"numeric"})}</em>`:""}</div>`; }).join("")}</div>`;
+}
+/* stats */
+function lineChart(pts,o){ // pts: [{x: time, y: value, label}]; one series, thin line, markers, latest value labelled, tap/hover readout
+  if(pts.length<2) return `<p class="sub">${tr("Play a few more games to see the chart.")}</p>`;
+  const W=340,H=150,pl=36,pr=12,pt=14,pb=22, ys=pts.map(p=>p.y); let y0=Math.min(...ys), y1=Math.max(...ys); if(y1-y0<20){ y0-=10; y1+=10; } const pad=(y1-y0)*.1; y0=Math.floor(y0-pad); y1=Math.ceil(y1+pad); if(o.max!==undefined) y1=Math.min(y1,o.max); if(o.min!==undefined) y0=Math.max(y0,o.min);
+  const X=i=>pl+(W-pl-pr)*(pts.length===1?0:i/(pts.length-1)), Y=v=>pt+(H-pt-pb)*(1-(v-y0)/(y1-y0));
+  const path=pts.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(p.y).toFixed(1)).join(" "), last=pts[pts.length-1];
+  const grid=[y0,(y0+y1)/2,y1].map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" class="cgrid"/><text x="${pl-6}" y="${Y(v)+4}" class="ctick" text-anchor="end">${Math.round(v)}</text>`).join("");
+  return `<div class="chart" data-pts='${esc(JSON.stringify(pts.map((p,i)=>[X(i),Y(p.y),p.label])))}'><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title)}">${grid}
+    <path d="${path}" class="cline"/>${pts.length<=40?pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.y)}" r="3.5" class="cdot"/>`).join(""):""}
+    <circle cx="${X(pts.length-1)}" cy="${Y(last.y)}" r="5" class="cdot last"/><text x="${Math.min(X(pts.length-1),W-pr-4)}" y="${Y(last.y)-10}" class="clast" text-anchor="end">${Math.round(last.y)}</text>
+    <line class="cx" x1="0" x2="0" y1="${pt}" y2="${H-pb}" visibility="hidden"/></svg><div class="ctip" hidden></div></div>`;
+}
+function chartHover(e){ const c=e.target.closest(".chart"); if(!c) return; const svg=c.querySelector("svg"), r=svg.getBoundingClientRect(), pts=JSON.parse(c.dataset.pts), vb=svg.viewBox.baseVal;
+  const x=(e.clientX-r.left)/r.width*vb.width; let k=0; pts.forEach((p,i)=>{ if(Math.abs(p[0]-x)<Math.abs(pts[k][0]-x)) k=i; });
+  const ln=c.querySelector(".cx"), tip=c.querySelector(".ctip"); ln.setAttribute("x1",pts[k][0]); ln.setAttribute("x2",pts[k][0]); ln.setAttribute("visibility","visible");
+  tip.hidden=false; tip.textContent=pts[k][2]; tip.style.left=Math.max(0,Math.min(r.width-150,pts[k][0]/vb.width*r.width-75))+"px"; }
+document.addEventListener("pointermove",e=>{ if(e.target.closest&&e.target.closest(".chart")) chartHover(e); });
+document.addEventListener("pointerdown",e=>{ if(e.target.closest&&e.target.closest(".chart")) chartHover(e); });
+function renderStats(v){
+  const A=archList().slice().reverse(), my=A.filter(g=>g.mode==="bot"||g.mode==="mp"), W=my.filter(g=>g.o===1).length, D=my.filter(g=>g.o===0.5).length, L=my.filter(g=>g.o===0).length;
+  const st=cstats(), kind=S.statK||"off", dt=t=>new Date(t).toLocaleDateString(GL()?"ar-EG":undefined,{day:"numeric",month:"short"});
+  const elo=A.filter(g=>g.k===kind&&g.ma!=null), pts=elo.length?[{x:elo[0].t,y:elo[0].mb,label:`${tr("Start")}: ${elo[0].mb}`}].concat(elo.map(g=>({x:g.t,y:g.ma,label:`${dt(g.t)} · ${g.on||""} · ${g.ma}`}))):[];
+  const acc=my.filter(g=>g.acc).slice(-30).map(g=>({x:g.t,y:g.c>0?g.acc[0]:g.acc[1],label:`${dt(g.t)} · ${g.on||""} · ${(g.c>0?g.acc[0]:g.acc[1]).toFixed(1)}%`}));
+  const tile=(n,l)=>`<div class="stile"><b>${n}</b><small>${l}</small></div>`, N0=x=>GL()?AD(x):x;
+  const bots=LEVELS.map((L0,i)=>{ const gs=my.filter(g=>g.mode==="bot"&&(g.lvl|0)===i); if(!gs.length) return ""; const w=gs.filter(g=>g.o===1).length, d=gs.filter(g=>g.o===0.5).length, l=gs.length-w-d;
+    return `<div class="bstat"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bsn"><b>${esc(botName(i))}</b><small>${L0.elo} · ${N0(w)}–${N0(d)}–${N0(l)}</small></span><span class="bsbar"><i style="width:${Math.round(100*w/gs.length)}%"></i></span><em>${N0(Math.round(100*w/gs.length))}%</em></div>`; }).join("");
+  v.innerHTML=`<div class="row"><button class="btn small" data-act="chessMenu">${tr("‹ Chess")}</button></div>
+    <div><div class="eyebrow">${tr("Chess")}</div><h2>${tr("Your stats")}</h2></div>
+    <div class="stiles">${tile(N0(my.length),tr("Games"))}${tile(my.length?N0(Math.round(100*W/my.length))+"%":"–",tr("Win rate"))}${tile(N0(st.brill),tr("Brilliant moves"))}${tile(N0(puzCount()),tr("Puzzles solved"))}${tile("🔥 "+N0(dailyStreak()),tr("Daily streak"))}${tile(N0(Object.keys(courseDone()).length)+"/"+N0(COURSES.length),tr("Lessons"))}</div>
+    <p class="sub">${GL()?`فوز ${AD(W)} · تعادل ${AD(D)} · خسارة ${AD(L)} · أفضل سلسلة يومية ${AD(dailyState().best)}`:`${W} won · ${D} drawn · ${L} lost · best daily streak ${dailyState().best}`}</p>
+    <h3 class="sect">${tr("Elo over time")}</h3>
+    <div class="chips"><button class="chip ${kind==="off"?"on":""}" data-act="statK" data-k="off">${tr("Offline Elo")}</button><button class="chip ${kind==="on"?"on":""}" data-act="statK" data-k="on">${tr("Online Elo")}</button></div>
+    ${lineChart(pts,{title:tr("Elo over time")})}
+    <h3 class="sect">${tr("Accuracy (last 30 reviewed games)")}</h3>${lineChart(acc,{title:tr("Accuracy"),min:0,max:100})}
+    <h3 class="sect">${tr("Against each bot")}</h3>${bots||`<p class="sub">${tr("No bot games yet.")}</p>`}
+    <p class="sub">${tr("Stats come from your last 100 saved games.")}</p>`;
+}
+
 /* ===== GAME REVIEW ===== */
 const BOOK_ICON='<svg viewBox="0 0 24 24"><path d="M4 5.5C6.5 4.3 9.3 4.3 12 6c2.7-1.7 5.5-1.7 8-.5V19c-2.5-1.2-5.3-1.2-8 .5-2.7-1.7-5.5-1.7-8-.5z" fill="currentColor"/></svg>';
 const CLS={
@@ -2682,11 +2830,11 @@ function makePgn(){
 }
 function shareMenu(){ modal(`<h3>${tr("Share this game")}</h3><p class="sub">${tr("PGN opens in chess.com, Lichess and other chess apps.")}</p>
   <button class="btn primary" data-act="sharePgn">${tr("Share PGN")}</button><button class="btn" data-act="shareImg">${tr("Share a picture")}</button><button class="btn ghost" data-act="modalClose">${tr("Cancel")}</button>`); }
-async function sharePgn(){ const pgn=makePgn(); closeModal();
+async function sharePgn(){ const pgn=makePgn(); closeModal(); unlock("share");
   try{ if(navigator.share){ await navigator.share({title:"Outpost chess",text:pgn}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
   try{ await navigator.clipboard.writeText(pgn); toast(tr("PGN copied")); }catch(e){ modal(`<h3>PGN</h3><textarea class="pgnbox" readonly>${esc(pgn)}</textarea><button class="btn primary" data-act="modalClose">${tr("Close")}</button>`); } }
 function loadImg(src){ return new Promise(ok=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=src; }); }
-async function shareImage(){ closeModal(); toast(tr("Making the picture…"));
+async function shareImage(){ closeModal(); toast(tr("Making the picture…")); unlock("share");
   const W=1080, H=1440, c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
   x.fillStyle="#121614"; x.fillRect(0,0,W,H);
   const E=ChessEngine(null); chessReplay(CH.moves,E); const bd=E.board(), S0=120, B=S0*8, ox=(W-B)/2, oy=300, flip=CH.flip;   // always the final position
@@ -2730,7 +2878,7 @@ function showSummary(){
     <button class="btn primary" data-act="reviewMoves">${tr("Review moves")}</button>
     ${myMistakes().length?`<button class="btn retrybtn" data-act="retryStart">↻ ${GL()?`تعلّم من أخطائك (${AD(myMistakes().length)})`:`Learn from your mistakes (${myMistakes().length})`}</button>`:""}
     <button class="btn ghost" data-act="modalClose">${tr("Close")}</button></div>`;
-  $m.hidden=false; coachSay(coachSum());
+  $m.hidden=false; coachSay(coachSum()); if((CH.mode==="bot"||CH.mode==="mp")&&CH.moves.length>=40&&meAcc>=90) unlock("acc90");
   const t0=performance.now(), els=$$("#modal [data-count]");
   (function tick(now){ const k=Math.min(1,(now-t0)/1300), e=1-Math.pow(1-k,3);
     els.forEach(el=>{ const v=+el.dataset.count; el.textContent=el.dataset.dec?(v*e).toFixed(1):Math.round(v*e); });
@@ -3127,6 +3275,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-16T22:23:00Z",en:["Daily puzzle: a new puzzle every day, with a 🔥 streak.","Your stats: Elo over time, accuracy trend, win rate against each bot, brilliant moves, puzzles and lessons.","Achievements: 24 badges to unlock, from your first win to beating the Grandmaster."],
+  ar:["لغز اليوم: لغز جديد كل يوم، مع سلسلة 🔥.","إحصائياتك: التصنيف عبر الوقت، ومسار الدقة، ونسبة الفوز ضد كل بوت، والنقلات الرائعة، والألغاز والدروس.","الإنجازات: ٢٤ شارة لتفتحها، من أول فوز حتى هزيمة الأستاذ الكبير."]},
  {at:"2026-11-16T22:20:00Z",en:["Opening names: see which opening you're playing (Italian Game, Sicilian Najdorf…) during the game, in history and in shared games.","Openings & gambits: 19 interactive lessons. Play the moves yourself with an explanation for every move. 10 openings and 9 gambits, including the Alien Gambit, King's Gambit, Fried Liver, Stafford and Englund traps."],
   ar:["أسماء الافتتاحات: اعرف أي افتتاح تلعبه (الإيطالية، الصقلي نايدورف…) أثناء المباراة وفي السجل وفي المباريات المُشاركة.","الافتتاحات والمناورات: ١٩ درسًا تفاعليًا. العب النقلات بنفسك مع شرح لكل نقلة. ١٠ افتتاحات و٩ مناورات، منها مناورة الفضائي ومناورة الملك والكبد المقلي وفخاخ ستافورد وإنغلوند."]},
  {at:"2026-11-16T22:14:00Z",en:["Evaluation bar in the game review: see who is winning after every move.","Learn from your mistakes: after a review, retry every mistake, miss and blunder you made and find the best move.","Share a game: as PGN (opens in chess.com and Lichess) or as a picture of the final position."],
@@ -3231,6 +3381,10 @@ document.addEventListener("click",e=>{
   if(ga==="retryStart") return startRetry();
   if(ga==="courseList"){ closeModal(); chessReq++; S.game="courseList"; return show("games"); }
   if(ga==="courseGo") return startCourse(gel.dataset.id);
+  if(ga==="dailyGo") return startDaily();
+  if(ga==="statsOpen"){ S.game="stats"; return show("games"); }
+  if(ga==="achOpen"){ S.game="ach"; return show("games"); }
+  if(ga==="statK"){ S.statK=gel.dataset.k; return renderStats($("#v-games")); }
   if(ga==="retryBack") return retryBack();
   if(ga==="retryNext"){ const R=S.retry; if(!R||R.k>=R.list.length-1) return retryBack(); R.k++; return startPz(R.list[R.k],{kind:"retry"}); }
   if(ga==="shareGame") return shareMenu();
