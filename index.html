@@ -2229,6 +2229,11 @@ function maybeBot(){
   const vc=vcode(CH.variant), fen=E.fen();
   const own=()=>{ if(!CH||id!==chessReq) return; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
   const sfOk=(CH.variant==="std"||CH.variant==="nocastle")&&typeof WebAssembly==="object";
+  const normal=()=>{ if(!CH||id!==chessReq) return;
+    if(L.sf&&sfOk) return sfBot(fen,{elo:L.sf,multipv:1,ms:1500}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
+    own(); };
+  /* bot vs bot: the opponent of Brilliant Mover looks for a move that gives it a sacrifice to play */
+  if(bvb&&sfOk&&!L.brill&&LEVELS[bvbLvl(-E.turn())].brill) return feedBrill(fen).then(m=>{ if(!CH||id!==chessReq) return; if(m===null) return normal(); onBotMove({id,move:m}); }).catch(normal);
   if(L.brill){ // look for a brilliant sacrifice first (full-strength Stockfish, top 5 moves; Outpost Chess otherwise), else play like a 1500 player
     const pickOrOwn=list=>{ if(!CH||id!==chessReq) return; const m=brillPick(engine(),list); if(m!==null) return onBotMove({id,move:m,brill:true});
       const g=gamblePick(engine(),list); if(g!==null) return onBotMove({id,move:g});   // a sound-enough sacrifice: the review decides if it is brilliant
@@ -2237,8 +2242,19 @@ function maybeBot(){
     const w=worker(); if(w){ CH.rootsCb={id,f:list=>pickOrOwn(list)}; return w.postMessage({id,type:"roots",fen,opts:{depth:4,ms:900},variant:vc}); }
     return own();
   }
-  if(L.sf&&sfOk) return sfBot(fen,{elo:L.sf,multipv:1,ms:1500}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
-  own();
+  normal();
+}
+/* Brilliant Mover's opponent (bot vs bot): try Stockfish's top 10 moves; play one after which Brilliant Mover has a brilliant sacrifice,
+   or, half the time, one after which it has a sound sacrifice. null = play normally. */
+async function feedBrill(fen){
+  const V=ChessEngine(null); V.setVariant(0); V.setFen(fen); const t0=Date.now();
+  const top=await sfBot(fen,{multipv:10,ms:300}), cands=top.lines.map(x=>V.legal().find(y=>V.moveStr(y)===x.mv)).filter(m=>m!==undefined);
+  let gamble=null;
+  for(const m of cands){ if(Date.now()-t0>4000) break; V.make(m);
+    const r=await sfBot(V.fen(),{multipv:6,ms:250}), list=r.lines.map(x=>({s:x.s,m:V.legal().find(y=>V.moveStr(y)===x.mv)}));
+    const b=brillPick(V,list), g=b===null&&gamble===null?gamblePick(V,list):null; V.unmake();
+    if(b!==null) return m; if(g!==null) gamble=m; }
+  return gamble!==null&&Math.random()<0.5?gamble:null;
 }
 /* the Grandmaster bot: its own Stockfish, separate from the one that reviews games */
 const SFB={w:null,ready:null,on:null};
@@ -2901,6 +2917,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-16T21:53:00Z",en:["Bot vs bot: when a bot plays Brilliant Mover, it now walks into sacrifices, giving Brilliant Mover real chances for !! moves."],
+  ar:["بوت ضد بوت: عندما يلعب بوت ضد صائد الروائع، يترك له الآن فرصًا للتضحية، فتظهر نقلات !! حقيقية."]},
  {at:"2026-11-16T21:31:00Z",en:["Brilliant Mover is now an attacking gambler: it sacrifices whenever a sacrifice is sound, which creates far more chances for brilliant moves. True brilliant moves still get the !! badge and the ding."],
   ar:["صائد الروائع أصبح لاعبًا هجوميًا مغامرًا: يضحّي كلما كانت التضحية سليمة، فتظهر فرص أكثر بكثير للنقلات الرائعة. والنقلات الرائعة الحقيقية تحصل على علامة !! والصوت."]},
  {at:"2026-11-16T21:27:00Z",en:["New: Bot vs bot. Pick any two bots and watch them play; brilliant moves get the !! badge and the ding, and the bot on the receiving end reacts.","Brilliant Mover now explains what it does under its name."],
