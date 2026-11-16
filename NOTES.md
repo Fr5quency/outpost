@@ -56,6 +56,7 @@ Outpost is an offline "pocket kit" web app for iPhone (and Android), installed f
 - How sync works: `store.set` calls `window.__syncHook`, which stamps `syncDirtyAt` and uploads 4 s later. On open / coming online / returning to the app, the newer copy wins (`updatedAt` in the cloud vs `syncAt` / `syncDirtyAt` on the phone); pulling cloud data replaces local keys and reloads the page.
 - First sign-in on a phone (`syncUid` differs): cloud empty → upload; phone has no real data (only lang/theme/name-type settings) → restore silently; both have data → ask "Use my account's data" / "Keep this phone's data".
 - Log out uploads pending changes first and keeps the data on the phone.
+- Every sync step has a 20 s limit (`timeout`, `fsFetch`), and `syncNow` always clears "Syncing…" in a `finally`. If sync fails, the account screen shows the reason in brackets (e.g. `download 403`, `timeout`, `signed-out`). Toasts sit above the account page (`body.acctopen`).
 - `sw.js` ignores requests to other sites (Google sign-in, Firestore, PeerJS) so they always go to the network.
 - Real Google sign-in was not testable from the build sandbox; sync was tested with a fake Firestore + fake auth (first upload, auto-upload, fresh-phone restore, conflict choice, older phone pulls newer data, logout keeps data).
 
@@ -77,6 +78,7 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 ## Known limits / ideas
 
 - iPhone Safari cannot vibrate web pages; haptics use a switch-toggle trick that only works on recent iOS.
+- Before a sync on app start, `syncNow` waits up to 8 s for Firebase to restore the saved sign-in.
 - Online Elo is stored on each phone and in the user's own account document, so it is not tamper-proof.
 - Sign in with Apple needs an Apple Developer account ($99/yr): Services ID + key, then enable Apple in Firebase Authentication.
 - Optional hardening: restrict the Firebase API key to `fr5quency.github.io` in Google Cloud Console → Credentials.
@@ -92,3 +94,4 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 - 2026-11-16: captured-pieces strip always ends flush at the right edge; long names shorten with "…". (sw cache v19)
 - 2026-11-16: added this NOTES.md.
 - 2026-11-16: Sign in with Google + account sync to Firestore (all app data); Apple button shown as "Coming soon". Firebase SDK bundled in `firebase/`; service worker skips other sites. (sw cache v20)
+- 2026-11-16: Fixed sync stuck on "Syncing…" (status never refreshed after a failed first sync, no time limit on requests, error messages hidden behind the account page). Errors now show their reason. (sw cache v21)
