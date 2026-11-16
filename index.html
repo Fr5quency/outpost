@@ -461,6 +461,8 @@ body[data-view="games"].inchess .prefs{display:none}
 .pz.star::after{content:"★";position:absolute;top:2px;right:5px;font-size:11px;color:#eab308}
 .sq.hintsq{box-shadow:inset 0 0 0 calc(var(--bs)/8*.09) #3b82f6}
 .sq.wrongsq{background:#e5584f!important}
+.evchip{font:800 12px/1 var(--display);padding:4px 7px;border-radius:6px;background:var(--sunk);color:var(--ink);border:1px solid var(--line)}.evchip.w{background:#f0f0ea;color:#222}.evchip.b{background:#2b2b2b;color:#fff}
+.mtag{font-style:normal;font-weight:800;color:#ca3431;margin-inline-start:2px}
 .rv-eng{margin:-6px 0 0;font-size:13px;color:var(--muted)}.rv-eng b{color:var(--ink)}
 /* game history */
 .hicon{background:#5b7bd5;color:#fff}.hicon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -879,6 +881,7 @@ const AR={
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
 "Games":"الألعاب",
+"Grandmaster":"أستاذ كبير (Grandmaster)","Grandmaster · Stockfish":"أستاذ كبير · Stockfish","You had checkmate in {n} with {b}! {m} lets it slip.":"كان لديك كش مات في {n} بـ {b}! و{m} تضيّعه.","They had checkmate in {n} with {b} and missed it. Lucky!":"كان لديهم كش مات في {n} بـ {b} وفاتهم. كنت محظوظًا!","{m}! Forced checkmate in {n}.":"{m}! كش مات إجباري في {n}.","{m}. They have a forced checkmate in {n}.":"{m}. لديهم كش مات إجباري في {n}.",
 "Analysed by":"حلّلها",
 "Game review: Stockfish 18 (GPL-3).":"مراجعة المباريات: Stockfish 18 (رخصة GPL-3).",
 "Game history":"سجل المباريات","‹ History":"› السجل","Won":"فوز","Drawn":"تعادل","Lost":"خسارة","All":"الكل","Online":"أونلاين","Bots":"البوتات","Bot":"بوت","1v1":"١ ضد ١",
@@ -1765,11 +1768,14 @@ const LEVELS=[
  {elo:1400,rank:"Strong club player",  o:{depth:3,noise:35,blunder:.02,ms:700}},
  {elo:1600,rank:"Advanced",            o:{depth:4,noise:20,blunder:.01,ms:900}},
  {elo:1800,rank:"Expert",              o:{depth:5,noise:8,ms:1200}},
- {elo:2000,rank:"Candidate master",    o:{depth:10,ms:2500}}
+ {elo:2000,rank:"Candidate master",    o:{depth:10,ms:2500}},
+ {elo:2600,rank:"Grandmaster",         o:{depth:10,ms:3000}, sf:2600}   // Stockfish limited to 2600 Elo (Outpost Chess at full strength when Stockfish cannot run)
 ];
 const NAMES=[["Omar","عمر"],["Lina","لينا"],["Youssef","يوسف"],["Sara","سارة"],["Karim","كريم"],["Nour","نور"],["Adam","آدم"],["Mariam","مريم"],["Hassan","حسن"],["Layla","ليلى"],["Ziad","زياد"],["Hana","هنا"],["Tarek","طارق"],["Salma","سلمى"],["Ali","علي"],["Farida","فريدة"],["Mostafa","مصطفى"],["Jana","جنى"],["Khaled","خالد"],["Malak","ملك"]];
-const AVC=["#e07a5f","#3d8bd4","#81b29a","#c77dff","#f2a541","#4ecdc4","#ef476f","#8d99ae","#b5838d"];
-function botNames(){ let n=store.get("botNames",null); if(!Array.isArray(n)||n.length!==LEVELS.length){ const pool=NAMES.map((_,i)=>i); n=[]; while(n.length<LEVELS.length){ n.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); } store.set("botNames",n); } return n; }
+const AVC=["#e07a5f","#3d8bd4","#81b29a","#c77dff","#f2a541","#4ecdc4","#ef476f","#8d99ae","#b5838d","#c9a227"];
+function botNames(){ let n=store.get("botNames",null);
+  if(Array.isArray(n)&&n.length&&n.length<LEVELS.length){ const pool=NAMES.map((_,i)=>i).filter(i=>!n.includes(i)); while(n.length<LEVELS.length&&pool.length) n.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); store.set("botNames",n); }   // a new bot keeps the old names
+  if(!Array.isArray(n)||n.length!==LEVELS.length){ const pool=NAMES.map((_,i)=>i); n=[]; while(n.length<LEVELS.length){ n.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); } store.set("botNames",n); } return n; }
 const botName=i=>NAMES[botNames()[i]][GL()?1:0];
 const pcFile=p=>(p>0?"w":"b")+"PNBRQK"[Math.abs(p)-1];
 const pcImg=(p,cls)=>`<i class="${cls||"pc"}" style="background-image:url(pieces/${pcFile(p)}.svg)"></i>`;
@@ -1814,7 +1820,7 @@ function ensureAudio(){ try{ if(!AC){ const C=window.AudioContext||window.webkit
 function ding(){ if(!AC) return; try{ const t=AC.currentTime; [[1318.5,0],[1975.5,0.09],[2637,0.19]].forEach(([f,dt])=>{ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine"; o.frequency.value=f;
     g.gain.setValueAtTime(0.0001,t+dt); g.gain.exponentialRampToValueAtTime(0.28,t+dt+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dt+0.95); o.connect(g); g.connect(AC.destination); o.start(t+dt); o.stop(t+dt+1); }); }catch(e){} }
 /* ---- background analysis: every move is analysed while the game is being played ---- */
-const AN_OPTS={depth:6,ms:450};
+const AN_OPTS={depth:8,ms:900};
 function aworker(){ if(AW===null){ try{ AW=new Worker(URL.createObjectURL(new Blob(["("+ChessEngine.toString()+")(self);"],{type:"text/javascript"}))); AW.onmessage=e=>onAnalysis(e.data); AW.onerror=()=>{AW=false;}; }catch(e){ AW=false; } } return AW; }
 function queueAn(i){ // ply i = the position before move i plus the move played there; i === moves.length is the final position
   if(!CH||CH.rows[i]!==undefined||CH.asked[i]||!CH.fens[i]) return; CH.asked[i]=1;
@@ -1851,8 +1857,9 @@ async function sfJob(msg){ // one position: best move and score, the played move
   const bs=A[1]?A[1].s:0, s2=A[2]?A[2].s:null; let best=find(A.best); if(best===undefined) best=find(A[1]&&A[1].mv); if(best===undefined) throw new Error("move");
   let ps=null;
   if(played){ if(played===A.best) ps=bs; else if(A[2]&&A[2].mv===played) ps=s2; else { const B=await sfGo(fen,played,1,"go depth 18 movetime "+(SF_MS>>1)); ps=B[1]?-B[1].s:0; } }
-  const only=L.length>1&&s2!==null&&winPct(bs)<97&&winPct(bs)-winPct(s2)>=15;
-  return {best,bs,ps,only,n:L.length,depth:0,sf:1};
+  const only=L.length>1&&s2!==null&&winPct(bs)-winPct(s2)>=15;
+  const b2=A[2]&&A[2].mv?find(A[2].mv):undefined;
+  return {best,bs,ps,only,n:L.length,depth:0,sf:1,s2,b2:b2===undefined?0:b2};
 }
 function sfQueue(msg){ SF.q.push({msg}); sfStart(); sfNext(); }
 async function sfNext(){
@@ -1942,7 +1949,11 @@ function sanWords(s){ // turn "Nxf7+" into words a voice can read
   if(m[7]) out+=(ar?" ويترقى إلى ":" promotes to ")+PN[m[7]]; if(m[8]==="+") out+=ar?"، كش":", check"; if(m[8]==="#") out+=ar?"، كش مات":", checkmate";
   return out;
 }
-function coachText(P,i,spoken){ const T=COACH[GL()?"ar":"en"][CH.mode!=="hot"&&P.color===CH.color?"me":"opp"][P.c], t=T[i%T.length]; return t.replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan); }
+function coachText(P,i,spoken){
+  const mine=CH.mode!=="hot"&&P.color===CH.color||CH.mode==="hot", fill=t=>tr(t).replace(/\{n\}/g,GL()?AD(Math.abs(P.mate||P.pmate)):Math.abs(P.mate||P.pmate)).replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan);
+  if(P.c==="miss"&&P.mate>0) return fill(mine?"You had checkmate in {n} with {b}! {m} lets it slip.":"They had checkmate in {n} with {b} and missed it. Lucky!");
+  if(P.mate>0&&!P.best&&P.pmate>0) return fill(mine?"{m}! Forced checkmate in {n}.":"{m}. They have a forced checkmate in {n}.");
+  const T=COACH[GL()?"ar":"en"][CH.mode!=="hot"&&P.color===CH.color?"me":"opp"][P.c], t=T[i%T.length]; return t.replace(/\{m\}/g,spoken?sanWords(P.san):P.san).replace(/\{b\}/g,spoken?sanWords(P.bestSan):P.bestSan); }
 const voiceOn=()=>store.get("coachVoice",true)!==false;
 function coachSay(text){ try{ const sy=window.speechSynthesis; if(!sy) return; sy.cancel(); if(!voiceOn()||!text) return; const u=new SpeechSynthesisUtterance(text); u.lang=GL()?"ar-SA":"en-US"; u.rate=1.06; u.pitch=1.08; sy.speak(u); }catch(e){} }
 function coachSayMove(){ if(!CH||!CH.an) return; const k=CH.view===null?CH.moves.length:CH.view, P=CH.an.plies[k-1]; if(P) coachSay(coachText(P,k-1,true)); else coachSay(""); }
@@ -2028,7 +2039,7 @@ function renderChessMenu(v){
     <button class="hotcard puzcard" data-act="puzOpen"><span class="hoticon pzicon">?</span><span class="otxt"><b>${tr("Puzzles")}</b><small>${GL()?`100 لغز: كش مات وتكتيكات · حللت ${puzCount()}`:`100 puzzles: checkmates and tactics · ${puzCount()} solved`}</small></span></button>
     <button class="hotcard" data-act="chessHot"><span class="hoticon">${pcImg(6)}${pcImg(-6)}</span><span class="otxt"><b>${tr("1v1 on this phone")}</b><small>${tr("Two players pass the phone. The board flips after every move. Uses the mode chosen above.")}</small></span></button>
     <div class="seg seg3"><button data-act="chessColor" data-c="w" class="${col==="w"?"on":""}">${tr("White")}</button><button data-act="chessColor" data-c="r" class="${col==="r"?"on":""}">${tr("Random")}</button><button data-act="chessColor" data-c="b" class="${col==="b"?"on":""}">${tr("Black")}</button></div>
-    <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
+    <div class="bots">${LEVELS.map((L,i)=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.sf?"Grandmaster · Stockfish":L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
     <p class="foot">${tr("Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.")} ${tr("Game review: Stockfish 18 (GPL-3).")}</p>`;
 }
 function newCH(o){ return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null,variant:"std",start:STD_FEN,fens:[],rows:[],asked:[],liveC:[],live:null,why:null,arrows:[],arrowFrom:null,gid:++gameSeq},o); }
@@ -2159,11 +2170,32 @@ function playMove(m,remote){
 function maybeBot(){
   const E=engine(); if(!CH||CH.mode!=="bot"||CH.over||E.turn()===CH.color) return;
   CH.thinking=true; drawBoard(); const id=++chessReq, t0=Date.now(), L=LEVELS[CH.lvl];
-  const opts=Object.assign({},L.o); if(CH.moves.length<8&&!opts.noise) opts.noise=12;
-  const w=worker(); CH.pending={id,t0};
-  const vc=vcode(CH.variant);
-  if(w) w.postMessage({id,fen:E.fen(),opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(E.fen()); onBotMove({id,move:T.think(opts)}); },60);
+  const opts=Object.assign({},L.o); if(CH.moves.length<8&&!opts.noise&&!L.sf) opts.noise=12;
+  CH.pending={id,t0};
+  const vc=vcode(CH.variant), fen=E.fen();
+  const own=()=>{ if(!CH||id!==chessReq) return; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
+  if(L.sf&&(CH.variant==="std"||CH.variant==="nocastle")&&typeof WebAssembly==="object")
+    return sfBotMove(fen,L.sf,1500).then(u=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===u); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
+  own();
 }
+/* the Grandmaster bot: its own Stockfish, separate from the one that reviews games */
+const SFB={w:null,ready:null,on:null};
+function sfBotReady(elo){
+  if(SFB.ready) return SFB.ready;
+  return SFB.ready=new Promise((ok,no)=>{ let w; try{ w=new Worker("stockfish/stockfish-18-lite-single.js"); }catch(e){ return no(e); }
+    const t=setTimeout(()=>{ try{w.terminate();}catch(e){} no(new Error("load")); },45000);
+    w.onmessage=e=>{ const l=String(e.data);
+      if(l==="uciok"){ w.postMessage("setoption name UCI_LimitStrength value true"); w.postMessage("setoption name UCI_Elo value "+elo); w.postMessage("isready"); }
+      else if(l==="readyok"&&!SFB.w){ clearTimeout(t); SFB.w=w; ok(w); }
+      else if(SFB.on) SFB.on(l); };
+    w.onerror=()=>{ clearTimeout(t); no(new Error("error")); };
+    w.postMessage("uci");
+  }).catch(e=>{ SFB.ready=null; SFB.w=null; throw e; });
+}
+function sfBotMove(fen,elo,ms){ return sfBotReady(elo).then(w=>new Promise((ok,no)=>{
+  const t=setTimeout(()=>{ SFB.on=null; no(new Error("stuck")); },ms*4+5000);
+  SFB.on=l=>{ if(l.startsWith("bestmove")){ clearTimeout(t); SFB.on=null; ok(l.split(" ")[1]); } };
+  w.postMessage("position fen "+fen); w.postMessage("go movetime "+ms); })); }
 function onBotMove(d){
   if(!CH||d.id!==chessReq) return;
   const wait=CH.pending&&CH.pending.id===d.id?Math.max(0,450-(Date.now()-CH.pending.t0)):0;
@@ -2208,8 +2240,8 @@ function finishChess(res){
 /* ===== GAME HISTORY: every finished game is kept (newest first) with moves, players, Elo, result and analysis; synced with the account ===== */
 const ARCH_MAX=100;
 const archList=()=>{ const a=store.get("chessGames",[]); return Array.isArray(a)?a:[]; };
-const packRow=r=>r?[r.best||0,r.bs,r.ps,r.only?1:0,r.n|0,r.sf?1:0]:0;
-const unpackRow=x=>x?{best:x[0],bs:x[1],ps:x[2],only:!!x[3],n:x[4],sf:x.length>5?x[5]:null}:undefined;   // null: saved before the engine was recorded
+const packRow=r=>r?[r.best||0,r.bs,r.ps,r.only?1:0,r.n|0,r.sf?1:0,r.s2===undefined?null:r.s2,r.b2||0]:0;
+const unpackRow=x=>x?{best:x[0],bs:x[1],ps:x[2],only:!!x[3],n:x[4],sf:x.length>5?x[5]:null,s2:x.length>6?x[6]:null,b2:x[7]||0}:undefined;   // null: saved before the engine was recorded
 function engineName(rows){ // "Stockfish 18", "Built-in engine", both, or "" if unknown
   const r=(rows||[]).filter(x=>x&&x.n>0); if(!r.length||r.some(x=>x.sf===null||x.sf===undefined)) return "";
   const a=r.some(x=>x.sf===1), b=r.some(x=>x.sf===0); return a&&b?"Stockfish 18 + Outpost Chess":a?"Stockfish 18":"Outpost Chess"; }
@@ -2330,29 +2362,47 @@ function isSacrifice(E,m){ // gives up material on the destination square
   const defended=E.attacked(t,me); E.unmake();
   return low<99&&V[moved]-got>=2&&(low<V[moved]||!defended);
 }
-function classifyPly(E,r,mvStr,i,prevC,nxt){ // E = position before the move; it is advanced by the move
+function classifyPly(E,r,mvStr,i,prevC,nxt,fx){ // E = position before the move; it is advanced by the move. nxt = analysis of the position after it
   const mv=E.legal().find(x=>E.moveStr(x)===mvStr); if(mv===undefined||!r) return null;
-  const s=san(E,mv), bestSan=r.best?san(E,r.best):"", sac=isSacrifice(E,mv);
-  const wb=winPct(r.bs), wp=winPct(r.ps===null?r.bs:r.ps), loss=Math.max(0,wb-wp), isBest=E.moveStr(r.best)===mvStr||loss<0.3;
-  E.make(mv); const key=E.fen().split(" ").slice(0,3).join(" ");
+  let bs=r.bs, best=r.best, ps=r.ps===null?r.bs:r.ps;
+  if(fx){ bs=fx.bs; best=fx.best; if(fx.ps!==null) ps=fx.ps; }   // corrected by the backward pass (refineRows)
+  const s=san(E,mv), bestSan=best?san(E,best):"", sac=isSacrifice(E,mv);
+  const wb=winPct(bs), wp=winPct(ps), loss=Math.max(0,wb-wp), isBest=E.moveStr(best)===mvStr||loss<0.3;
+  E.make(mv); const key=E.fen().split(" ").slice(0,3).join(" "), mates=E.inCheck()&&!E.legal().length;
   let c;
   if(i<30&&CH.variant==="std"&&book().has(key)) c="book";
   else if(r.n<=1) c="best";
-  else if(isBest&&sac&&wp>=45&&(wb<97||r.bs>90000)) c="brilliant";   // a sacrifice that forces mate is brilliant even when already winning
-  else if(isBest&&r.only&&wb<97) c="great";
+  else if(isBest&&sac&&wp>=45&&(wb<97||bs>90000)) c="brilliant";                 // a sacrifice that forces mate is brilliant even when already winning
+  else if(isBest&&r.only&&(wb<97||bs>90000)&&!mates) c="great";                  // the only good move (including the only move that mates); the final checkmate itself is "best"
   else if(isBest) c="best";
   else if(loss<=2) c="excellent"; else if(loss<=5) c="good"; else if(loss<=10) c="inaccuracy"; else if(loss<=20) c="mistake"; else c="blunder";
   if((c==="mistake"||c==="blunder"||c==="inaccuracy")&&loss>=8&&["mistake","blunder","miss"].includes(prevC)&&wb>=60) c="miss";
-  if(c!=="book"&&!isBest&&r.ps!==null&&r.ps<-90000&&r.bs>-90000) c="blunder";              // walked into a forced mate that could be avoided
-  if(c!=="book"&&!isBest&&r.bs>90000&&(r.ps===null||r.ps<90000)&&c!=="blunder") c="miss";   // had a forced mate and did not play it
+  if(c!=="book"&&!isBest&&ps<-90000&&bs>-90000) c="blunder";                     // walked into a forced mate that could be avoided
+  if(c!=="book"&&!isBest&&bs>90000&&ps<90000) c=wp>=75?"miss":"blunder";        // had a forced mate and did not play it: still winning = miss, threw the win away = blunder
   const acc=c==="book"?100:Math.max(0,Math.min(100,103.1668*Math.exp(-0.04354*loss)-3.1669));
-  return {c,san:s,best:isBest?0:r.best,bestSan,threat:(["mistake","blunder","miss","inaccuracy"].includes(c)&&nxt&&nxt.best)?nxt.best:0,acc,color:i%2?-1:1};
+  const mateIn=x=>x!==null&&x!==undefined&&Math.abs(x)>90000?Math.sign(x)*Math.ceil((100000-Math.abs(x))/2):0;
+  return {c,san:s,mate:mateIn(bs),pmate:mateIn(ps),best:isBest?0:best,bestSan,threat:(["mistake","blunder","miss","inaccuracy"].includes(c)&&nxt&&nxt.best)?nxt.best:0,acc,color:i%2?-1:1};
+}
+/* Backward pass over the game: what each position is really worth, using what the later (deeper along the played line) analysis found.
+   If the move that looked best turns out to walk into something, its value drops to the second-best move (Stockfish) or to what it really gives. */
+function refineRows(rows,moves){
+  const n=moves.length, V=ChessEngine(null); setupEngine(V); let k=0;
+  for(const m of moves){ const x=V.legal().find(y=>V.moveStr(y)===m); if(x===undefined) break; V.make(x); k++; }
+  const val=[], fix=[]; const last=rows[k]; val[k]=last?(last.n?(last.bs===undefined?null:last.bs):(V.inCheck()?-100000:0)):null;   // checkmated now = mate 0
+  for(let i=k-1;i>=0;i--){ const r=rows[i]; if(!r||r.bs===null||r.bs===undefined){ val[i]=null; continue; }
+    let bs=r.bs, best=r.best; let after=val[i+1]===null||val[i+1]===undefined?null:-val[i+1];
+    if(after!==null&&Math.abs(after)>90000) after-=Math.sign(after);   // a mate one move further away
+    if(after!==null){
+      if(V.moveStr(best)===moves[i]){ if(after<bs-60){ if(r.b2&&r.s2!==null&&r.s2!==undefined&&r.s2>after){ bs=r.s2; best=r.b2; } else bs=after; } else if(after>bs) bs=after; }
+      else if(after>bs) bs=after; }
+    val[i]=bs; fix[i]={bs,best,ps:after}; }
+  return fix;
 }
 function classifyGame(rows,moves){
-  const E=ChessEngine(null); setupEngine(E); const out=[];
-  for(let i=0;i<moves.length;i++){ const P=classifyPly(E,rows[i],moves[i],i,out[i-1]&&out[i-1].c,rows[i+1]); if(!P) break; out.push(P); }
+  const E=ChessEngine(null); setupEngine(E); const out=[], fix=refineRows(rows,moves);
+  for(let i=0;i<moves.length;i++){ const P=classifyPly(E,rows[i],moves[i],i,out[i-1]&&out[i-1].c,rows[i+1],fix[i]); if(!P) break; out.push(P); }
   const avg=col=>{ const a=out.filter(x=>x.color===col); return a.length?a.reduce((t,x)=>t+x.acc,0)/a.length:0; };
-  return {plies:out,acc:{w:avg(1),b:avg(-1)}};
+  return {plies:out,acc:{w:avg(1),b:avg(-1)},fix};
 }
 function startReview(){ // most moves were already analysed during the game, so this normally opens at once
   if(!CH||!CH.moves.length) return; try{ window.speechSynthesis&&window.speechSynthesis.speak(new SpeechSynthesisUtterance("")); }catch(e){}
@@ -2393,6 +2443,14 @@ function arrow(from,to,color){
   const ex=x2-ux*hl, ey=y2-uy*hl, sx=x1+ux*.25, sy=y1+uy*.25, px=-uy, py=ux;
   return `<path d="M${sx} ${sy}L${ex} ${ey}" stroke="${color}" stroke-width="${sw}" stroke-linecap="round"/><path d="M${x2} ${y2}L${ex+px*hw} ${ey+py*hw}L${ex-px*hw} ${ey-py*hw}Z" fill="${color}"/>`;
 }
+function evalAfter(k){ // the position after move k, from White's side: ["+1.4"|"M3"|"1-0", "w"|"b"]
+  const r=CH.rows[k], fen=CH.fens[k]; if(!r||!fen) return null; const stm=fen.split(" ")[1]==="w"?1:-1;
+  if(!r.n){ const E=ChessEngine(null); E.setVariant(vcode(CH.variant)); E.setFen(fen); if(E.inCheck()) return [stm>0?"0-1":"1-0",stm>0?"b":"w"]; return ["½-½",""]; }
+  const f=CH.an&&CH.an.fix&&CH.an.fix[k], bs=f?f.bs:r.bs;   // the corrected value when the review has one
+  if(bs===null||bs===undefined) return null; const v=bs*stm;
+  if(Math.abs(v)>90000){ const n=Math.ceil((100000-Math.abs(v))/2); return [(v>0?"M":"-M")+n,v>0?"w":"b"]; }
+  return [(v>0?"+":v<0?"−":"")+(Math.abs(v)/100).toFixed(1),v>30?"w":v<-30?"b":""];
+}
 function reviewOverlay(){ // badge, arrows and label for the move being shown
   const B=$("#board"), line=$("#revLine"); if(!B) return;
   const old=B.querySelector(".arrows"); if(old) old.remove();
@@ -2407,7 +2465,8 @@ function reviewOverlay(){ // badge, arrows and label for the move being shown
   const s=CH.moves[k-1], to=strSq(s.slice(2)); const cell=B.querySelector(`.sq[data-sq="${to}"]`); if(cell) cell.insertAdjacentHTML("beforeend",badge(P.c));
   let svg=""; if(P.best) svg+=arrow(P.best&127,(P.best>>7)&127,"rgba(129,182,76,.85)"); if(P.threat) svg+=arrow(P.threat&127,(P.threat>>7)&127,"rgba(220,60,50,.8)");
   if(svg) B.insertAdjacentHTML("beforeend",`<svg class="arrows" viewBox="0 0 8 8" preserveAspectRatio="none">${svg}</svg>`);
-  if(line) line.innerHTML=`${badge(P.c,"sbadge")}<bdi dir="ltr"><b>${esc(P.san)}</b></bdi><span style="color:${CLS[P.c].c}">${tr(CLS[P.c].l)}</span>${P.best?`<span class="bestline">${tr("Best")}: <bdi dir="ltr"><b>${esc(P.bestSan)}</b></bdi></span>`:""}`;
+  const ev=evalAfter(k), mt=P.best&&P.mate>0?` <em class="mtag">M${P.mate}</em>`:"";
+  if(line) line.innerHTML=`${badge(P.c,"sbadge")}<bdi dir="ltr"><b>${esc(P.san)}</b></bdi><span style="color:${CLS[P.c].c}">${tr(CLS[P.c].l)}</span>${ev?`<bdi dir="ltr" class="evchip ${ev[1]}">${ev[0]}</bdi>`:""}${P.best?`<span class="bestline">${tr("Best")}: <bdi dir="ltr"><b>${esc(P.bestSan)}</b>${mt}</bdi></span>`:""}`;
 }
 
 /* ===== ONLINE (PeerJS: free public broker, then a direct WebRTC link between the two phones) ===== */

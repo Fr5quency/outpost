@@ -1,5 +1,5 @@
 // Outpost offline cache. Bump the version when you upload a new index.html.
-const CACHE = "outpost-v25";
+const CACHE = "outpost-v26";
 // the chess engine (7 MB) lives in its own cache, kept across app updates; change this name only when the engine files change
 const ENGINE = "outpost-engine-sf18";
 const ENGINE_FILES = ["./stockfish/stockfish-18-lite-single.js", "./stockfish/stockfish-18-lite-single.wasm"];
