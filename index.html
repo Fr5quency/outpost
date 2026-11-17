@@ -1917,14 +1917,14 @@ function queueAn(i){ // ply i = the position before move i plus the move played 
 const SF={w:null,state:0,q:[],busy:null,onLine:null}, SF_MS=700;   /* per position: 0.7 s (+0.35 s for the move played) keeps up with fast games */          // state: 0 not started, 1 loading, 2 ready, -1 unavailable
 const sfUsable=v=>(v==="std"||v==="nocastle"||v==="960")&&typeof WebAssembly==="object"&&SF.state!==-1;   // Stockfish 18 has no King of the Hill / Three-check
 function sfStart(){
-  if(SF.state) return; SF.state=1;
-  try{ SF.w=new Worker("stockfish/stockfish-18-lite-single.js"); }catch(e){ SF.state=0; return void setTimeout(sfStart,2000); }
+  if(SF.state) return; SF.state=1; SF.tries=(SF.tries||0)+1; SF.startAt=Date.now();
+  try{ SF.w=new Worker("stockfish/stockfish-18-lite-single.js"); }catch(e){ SF.lastErr="worker: "+((e&&e.message)||e); SF.state=0; return void setTimeout(sfStart,2000); }
   SF.w.onmessage=e=>{ const l=String(e.data);
-    if(l==="uciok"){ SF.w.postMessage("setoption name Hash value 32"); SF.w.postMessage("isready"); }
+    if(l==="uciok"){ SF.gotUci=true; SF.w.postMessage("setoption name Hash value 16"); SF.w.postMessage("isready"); }   /* 16 MB: easier on phones */
     else if(l==="readyok"&&SF.state===1){ clearTimeout(SF.to); SF.state=2; SF.fails=0; SF.loadedAt=Date.now(); sfNext(); setTimeout(()=>{ try{ engTagDraw(); }catch(e){} },0); }
     else if(SF.onLine) SF.onLine(l); };
-  SF.w.onerror=()=>sfRestart(SF.busy);
-  SF.w.postMessage("uci"); SF.to=setTimeout(()=>{ if(SF.state===1) sfRestart(null); },45000);
+  SF.gotUci=false; SF.w.onerror=e=>{ SF.lastErr=((e&&e.message)||"crashed").slice(0,80); if(e&&e.preventDefault) e.preventDefault(); sfRestart(SF.busy); };
+  SF.w.postMessage("uci"); SF.to=setTimeout(()=>{ if(SF.state===1){ SF.lastErr=SF.gotUci?"no readyok":"did not load"; sfRestart(null); } },20000);
 }
 /* stuck (e.g. the phone paused it while the app was in the background) or crashed: start Stockfish again and keep the work.
    Only after 3 failed starts in a row does Outpost Chess take over. */
@@ -1932,7 +1932,9 @@ function sfRestart(j){
   SF.gen=(SF.gen||0)+1;   /* anything the old Stockfish was still doing is now ignored */
   clearTimeout(SF.to); try{ SF.w&&SF.w.terminate(); }catch(e){} SF.w=null; SF.onLine=null; if(j) SF.q.push(j); SF.busy=null; SF.state=0;
   SF.fails=(SF.fails||0)+1;   /* keep trying Stockfish: analysis is never handed to Outpost Chess */
-  setTimeout(sfStart,300);
+  /* a failed start may mean the saved copy of Stockfish is damaged: delete it so the next start downloads a fresh one */
+  if(SF.state===0&&SF.fails>=1&&!SF.healed&&window.caches){ SF.healed=true; try{ caches.delete("outpost-engine-sf18").catch(()=>{}); }catch(e){} }
+  setTimeout(sfStart,Math.min(30000,250*Math.pow(2,Math.min(SF.fails,7))));   /* wait longer after each failed try: 0.5 s, 1 s, 2 s … 30 s */
 }
 function sfFail(){ return sfRestart(SF.busy); }   /* Stockfish only: a failure means "start it again" */
 function sfFailOld(){ // (no longer used) engine missing or broken: everything waiting went to the built-in engine
@@ -2335,7 +2337,6 @@ function maybeBot(){
   /* emergency limit: a bot whose Stockfish is LOADING waits for it (up to 60 s, never interrupting the load);
      once Stockfish is running, a move that takes more than 4 s means it hung: play anyway and restart it */
   const wd=()=>{ if(!CH||id!==chessReq||!CH.pending||CH.pending.id!==id||CH.pending.taken||CH.over) return;
-    if((L.sf||L.brill||L.alien)&&SF.state!==2&&Date.now()-t0<60000) return void setTimeout(wd,500);   /* Stockfish still loading: wait for it */
     if(Date.now()-Math.max(t0,SF.loadedAt||0)<6000) return void setTimeout(wd,300);
     window.__botLimitHits=(window.__botLimitHits||0)+1; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc";
     const w=worker(); if(w&&(L.brill||L.alien)){ CH.rootsCb={id,f:list=>{ const m=brillPick(engine(),list); if(m!==null) return onBotMove({id,move:m,brill:true}); own(); }};   /* still hunts brilliant moves */
@@ -2344,7 +2345,9 @@ function maybeBot(){
   setTimeout(wd,4000);
   const vc=vcode(CH.variant), fen=E.fen();
   const own=()=>{ if(!CH||id!==chessReq) return; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc"; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
-  const sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object";
+  const sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object"&&SF.state===2;   /* only a running Stockfish; otherwise Outpost Chess at once */
+  if(!sfOk&&(L.sf||L.brill||L.alien)&&typeof WebAssembly==="object") sfStart();
+  if(!sfOk&&L.sf) opts.ms=Math.min(opts.ms||1500,1500);   /* Grandmaster without Stockfish: answer quickly */
   const normal=()=>{ if(!CH||id!==chessReq) return;
     if(L.sf&&sfOk) return sfBot(fen,{elo:L.sf,multipv:1,ms:1000}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
     own(); };
@@ -2452,7 +2455,7 @@ function onBotMove(d){
   { const st=CH.srcTurn; if(st&&st.id===d.id){ CH.engNow=CH.engNow||{}; CH.engNow[st.c]=st.src||"oc"; engTagDraw(); } }   /* the tag shows the engine that chose this move */   /* only the first answer is played */
   const wait=CH.pending&&CH.pending.id===d.id?Math.max(0,(CH.mode==="bvb"?1000:450)-(Date.now()-CH.pending.t0)):0;   // bot vs bot: about a second a move, so you can follow it
   const go=()=>{ if(!CH||d.id!==chessReq) return; const lp=CH.moves.length-1;
-    if(lp>=0&&CH.rows[lp]===undefined&&Date.now()-CH.moveT<10000&&(sfUsable(CH.variant)||AW)) return setTimeout(go,100);   /* your move is analysed first, so a brilliant move dings before the bot answers */
+    if(lp>=0&&CH.rows[lp]===undefined&&Date.now()-CH.moveT<10000&&(SF.state===2||!sfUsable(CH.variant))) return setTimeout(go,100);   /* your move is analysed first, so a brilliant move dings before the bot answers */
     const hold=CH.live&&CH.live.ply===lp?Math.max(0,(CH.mode==="bvb"?3000:1500)-(Date.now()-CH.live.t)):0;
     setTimeout(()=>{ if(!CH||d.id!==chessReq) return; CH.thinking=false; CH.pending=null;
       if(d.move){ const sn=d.brill?san(engine(),d.move):""; playMove(d.move); if(d.brill&&CH){ const i=CH.moves.length-1; if(!CH.liveC[i]){ CH.liveC[i]="brilliant"; CH.live={ply:i,t:Date.now(),san:sn}; ensureAudio(); ding(); try{ navigator.vibrate&&navigator.vibrate([40,60,40]); }catch(e){} drawBoard(); bvbWow(i); } } } else drawBoard(); },hold); };
@@ -2906,7 +2909,8 @@ function startReview(){ // most moves were already analysed during the game, so 
   /* watchdog: no progress for 6 s -> ask again; if Stockfish is not running, Outpost Chess fills the gaps so the review always finishes */
   const g=CH.gid, tWait=Date.now(); let lastK=-1, lastT=Date.now();
   const tick=()=>{ if(!CH||CH.gid!==g||!CH.anWait) return; const k=have(), st=$("#anState"), sfOn=sfUsable(CH.variant);
-    if(st) st.textContent=sfOn&&SF.state!==2?tr(Date.now()-tWait>20000?"Stockfish can't start. Open the app once on Wi-Fi so it can download, then try again.":"Starting Stockfish…"):"";
+    if(st) st.textContent=sfOn&&SF.state!==2?tr(Date.now()-tWait>20000?"Stockfish can't start. Open the app once on Wi-Fi so it can download, then try again.":"Starting Stockfish…")
+      +(GL()?` (محاولة ${AD(SF.tries||1)}، ${AD(Math.round((Date.now()-(SF.startAt||Date.now()))/1000))} ث${SF.lastErr?"، "+SF.lastErr:""})`:` (try ${SF.tries||1}, ${Math.round((Date.now()-(SF.startAt||Date.now()))/1000)} s${SF.lastErr?", "+SF.lastErr:""})`):"";
     if(k!==lastK){ lastK=k; lastT=Date.now(); }
     else if(Date.now()-lastT>1000){ lastT=Date.now();
       const working=new Set(SF.q.map(j=>j.msg.tag.g===g?j.msg.tag.i:-1)); if(SF.busy&&SF.busy.msg.tag.g===g) working.add(SF.busy.msg.tag.i);
@@ -3381,6 +3385,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T19:07:00Z",en:["Bots never wait for Stockfish: if it isn't running yet, every bot moves right away with Outpost Chess, and the Stockfish bots switch to Stockfish as soon as it's ready.","Stockfish repairs itself: if it can't start, its saved copy is deleted and downloaded again. It also uses less memory now."],
+  ar:["البوتات لا تنتظر Stockfish أبدًا: إذا لم يكن يعمل بعد، يلعب كل بوت فورًا بـ Outpost Chess، وتعود بوتات Stockfish إليه فور جاهزيته.","Stockfish يصلح نفسه: إذا تعذّر تشغيله تُحذف نسخته المحفوظة ويُنزَّل من جديد. كما أنه يستخدم ذاكرة أقل الآن."]},
  {at:"2026-11-17T18:57:00Z",en:["One Stockfish for everything: analysis, brilliant moves and every bot now share a single Stockfish that preloads when you open the app. Bots answer in 1-2 seconds, brilliant moves ding right away, and the review is ready when the game ends.","Fixed: on phones the second Stockfish (for the bots) could never finish loading, so the Grandmaster, Witty Alien and Brilliant Mover got stuck or fell back to Outpost Chess."],
   ar:["Stockfish واحد لكل شيء: التحليل والنقلات الرائعة وكل البوتات تتشارك الآن Stockfish واحدًا يُحمَّل مسبقًا عند فتح التطبيق. البوتات ترد خلال ١-٢ ثانية، والنقلات الرائعة تُصدر صوتها فورًا، والمراجعة جاهزة عند انتهاء المباراة.","إصلاح: على الهواتف لم يكن Stockfish الثاني (الخاص بالبوتات) يكتمل تحميله أبدًا، فكان الأستاذ الكبير وويتي ألين وصائد الروائع يعلقون أو يلعبون بـ Outpost Chess."]},
  {at:"2026-11-17T18:33:00Z",en:["Fixed: on phones the Grandmaster, Witty Alien and Brilliant Mover could end up playing with Outpost Chess, because a time limit kept interrupting their Stockfish while it was loading. They now wait for Stockfish to load and play every move with it, like before."],
