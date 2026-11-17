@@ -2317,6 +2317,9 @@ function maybeBot(){
   CH.thinking=true; drawBoard(); const id=++chessReq, t0=Date.now(), L=LEVELS[bvb?bvbLvl(E.turn()):CH.lvl];
   const opts=Object.assign({},L.o); if(CH.moves.length<8&&!opts.noise&&!L.sf) opts.noise=12;
   CH.pending={id,t0};
+  setTimeout(()=>{ if(!CH||id!==chessReq||!CH.pending||CH.pending.id!==id||CH.pending.taken||CH.over) return;   /* hard limit: never think longer than 10 s */
+    try{ SFB.w&&SFB.w.terminate(); }catch(e){} SFB.w=null; SFB.ready=null; SFB.on=null;   /* its Stockfish starts fresh next time */
+    const T=ChessEngine(null); T.setVariant(vcode(CH.variant)); T.setFen(engine().fen()); onBotMove({id,move:T.think({depth:3,ms:400})}); },10000);
   const vc=vcode(CH.variant), fen=E.fen();
   const own=()=>{ if(!CH||id!==chessReq) return; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
   const sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object";
@@ -2419,7 +2422,7 @@ function gamblePick(E,list){
 }
 function onRoots(d){ if(!CH||!CH.rootsCb||CH.rootsCb.id!==d.id) return; const f=CH.rootsCb.f; CH.rootsCb=null; f(d.roots.map(([s,m])=>({s,m}))); }
 function onBotMove(d){
-  if(!CH||d.id!==chessReq) return;
+  if(!CH||d.id!==chessReq) return; if(CH.pending&&CH.pending.id===d.id){ if(CH.pending.taken) return; CH.pending.taken=true; }   /* only the first answer is played */
   const wait=CH.pending&&CH.pending.id===d.id?Math.max(0,(CH.mode==="bvb"?1000:450)-(Date.now()-CH.pending.t0)):0;   // bot vs bot: about a second a move, so you can follow it
   const go=()=>{ if(!CH||d.id!==chessReq) return; const lp=CH.moves.length-1;
     if(lp>=0&&CH.rows[lp]===undefined&&Date.now()-CH.moveT<10000&&(sfUsable(CH.variant)||AW)) return setTimeout(go,100);   /* your move is analysed first, so a brilliant move dings before the bot answers */
@@ -3351,6 +3354,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T17:42:00Z",en:["Fixed: a bot could get stuck on \"Thinking…\". No bot thinks longer than 10 seconds now; if its Stockfish doesn't answer, it moves anyway and its Stockfish starts fresh."],
+  ar:["إصلاح: كان البوت قد يعلق على «يفكّر…». لا يفكّر أي بوت أكثر من ١٠ ثوانٍ الآن؛ إذا لم يرد Stockfish الخاص به فإنه يلعب على أي حال ويبدأ Stockfish من جديد."]},
  {at:"2026-11-17T17:35:00Z",en:["Brilliant moves during the game: the bot now waits until your move has been analysed before answering, so the !! badge and ding always come first, even against the Stockfish bots.","Analysis is Stockfish only. If it has a problem it starts again instead of switching to Outpost Chess. The review is ready the moment the game ends."],
   ar:["النقلات الرائعة أثناء المباراة: البوت ينتظر الآن تحليل نقلتك قبل أن يرد، فتظهر علامة !! والصوت أولًا دائمًا، حتى ضد بوتات Stockfish.","التحليل بـ Stockfish فقط. إذا واجه مشكلة يبدأ من جديد بدل التحويل إلى Outpost Chess. والمراجعة جاهزة لحظة انتهاء المباراة."]},
  {at:"2026-11-17T17:20:00Z",en:["The game review is ready right after the game: Stockfish starts with the game, analyses every move a third faster while you play, and checks the final position the moment the game ends."],
