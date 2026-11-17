@@ -1921,10 +1921,17 @@ function sfStart(){
   try{ SF.w=new Worker("stockfish/stockfish-18-lite-single.js"); }catch(e){ return sfFail(); }
   SF.w.onmessage=e=>{ const l=String(e.data);
     if(l==="uciok"){ SF.w.postMessage("setoption name Hash value 32"); SF.w.postMessage("isready"); }
-    else if(l==="readyok"&&SF.state===1){ clearTimeout(SF.to); SF.state=2; sfNext(); }
+    else if(l==="readyok"&&SF.state===1){ clearTimeout(SF.to); SF.state=2; SF.fails=0; sfNext(); }
     else if(SF.onLine) SF.onLine(l); };
-  SF.w.onerror=()=>sfFail();
-  SF.w.postMessage("uci"); SF.to=setTimeout(()=>{ if(SF.state===1) sfFail(); },45000);
+  SF.w.onerror=()=>sfRestart(SF.busy);
+  SF.w.postMessage("uci"); SF.to=setTimeout(()=>{ if(SF.state===1) sfRestart(null); },90000);   // slow phones get more time
+}
+/* stuck (e.g. the phone paused it while the app was in the background) or crashed: start Stockfish again and keep the work.
+   Only after 3 failed starts in a row does Outpost Chess take over. */
+function sfRestart(j){
+  clearTimeout(SF.to); try{ SF.w&&SF.w.terminate(); }catch(e){} SF.w=null; SF.onLine=null; if(j) SF.q.push(j); SF.busy=null; SF.state=0;
+  SF.fails=(SF.fails||0)+1; if(SF.fails>=3) return sfFail();
+  setTimeout(sfStart,300);
 }
 function sfFail(){ // engine missing or broken: everything waiting goes to the built-in engine
   SF.state=-1; clearTimeout(SF.to); try{ SF.w&&SF.w.terminate(); }catch(e){} const q=SF.q.concat(SF.busy?[SF.busy]:[]); SF.q=[]; SF.busy=null; SF.onLine=null; q.forEach(j=>anLocal(j.msg)); }
@@ -1950,7 +1957,7 @@ async function sfNext(){
   if(SF.state!==2||SF.busy) return;
   SF.q=SF.q.filter(j=>CH&&j.msg.tag.g===CH.gid);   // moves of a game that is no longer open are dropped
   const j=SF.q.pop(); if(!j) return;                // newest move first
-  SF.busy=j; let row=null; try{ row=await sfJob(j.msg); }catch(e){ if(e&&e.message==="stuck") return sfFail(); }
+  SF.busy=j; let row=null; try{ row=await sfJob(j.msg); }catch(e){ if(e&&e.message==="stuck") return sfRestart(j); }
   if(SF.busy!==j) return; SF.busy=null;
   if(row) onAnalysis({type:"analysis",rows:[row],tag:j.msg.tag}); else anLocal(j.msg);
   sfNext();
@@ -1961,7 +1968,8 @@ function anLocal(msg){ // the built-in engine
 }
 function onAnalysis(d){
   if(!CH||!d||d.type!=="analysis"||!d.tag||d.tag.g!==CH.gid) return;
-  const i=d.tag.i; CH.rows[i]=d.rows[0]; if(CH.rows[i]&&CH.rows[i].sf===undefined) CH.rows[i].sf=0;
+  const i=d.tag.i; if(CH.rows[i]&&CH.rows[i].sf===1&&d.rows[0]&&!d.rows[0].sf){ if(CH.anWait) CH.anWait(); return; }
+  CH.rows[i]=d.rows[0]; if(CH.rows[i]&&CH.rows[i].sf===undefined) CH.rows[i].sf=0;
   if(i<CH.moves.length) liveClass(i);
   if(CH.anWait) CH.anWait();
   if(CH.over&&CH.archId) archRows();
@@ -2849,6 +2857,7 @@ function classifyGame(rows,moves){
   return {plies:out,acc:{w:avg(1),b:avg(-1)},fix};
 }
 function startReview(){ // most moves were already analysed during the game, so this normally opens at once
+  if(CH&&sfUsable(CH.variant)){ let redo=false; CH.rows.forEach((r,i)=>{ if(r&&r.sf===0){ CH.rows[i]=undefined; CH.asked[i]=0; redo=true; } }); if(redo){ CH.an=null; CH.live=null; } }   /* Stockfish for every move */
   if(!CH||!CH.moves.length) return; try{ window.speechSynthesis&&window.speechSynthesis.speak(new SpeechSynthesisUtterance("")); }catch(e){}
   if(CH.an) return showSummary();
   const n=CH.moves.length; for(let i=0;i<=n;i++) queueAn(i);
@@ -3324,6 +3333,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T14:24:00Z",en:["Stockfish now analyses every normal chess game. If it gets paused (for example when you switch apps), it restarts instead of handing the game to Outpost Chess, and the review re-checks any move Outpost Chess had analysed."],
+  ar:["Stockfish يحلّل الآن كل مباريات الشطرنج العادية. إذا توقف مؤقتًا (مثلًا عند التبديل بين التطبيقات) فإنه يعيد التشغيل بدل تسليم المباراة لـ Outpost Chess، والمراجعة تعيد فحص أي نقلة حلّلها Outpost Chess."]},
  {at:"2026-11-17T14:09:00Z",en:["Bot games now show which engine you're playing against, next to the opening name: Stockfish 18, Outpost Chess, or both. While Stockfish is starting it says \"Loading Stockfish…\"."],
   ar:["مباريات البوتات تعرض الآن المحرك الذي تلعب ضده بجانب اسم الافتتاح: Stockfish 18 أو Outpost Chess أو كلاهما. وأثناء بدء Stockfish تظهر عبارة «جارٍ تحميل Stockfish…»."]},
  {at:"2026-11-17T13:59:00Z",en:["The chess engines no longer start in the background when you open the app. They start when you play, as before: the review stays instant with brilliant badges and dings, and Brilliant Mover and the Grandmaster take a moment for Stockfish to start."],
