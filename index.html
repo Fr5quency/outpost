@@ -2416,20 +2416,21 @@ function sfBot(fen,o){ // o: {elo (0 = full strength), multipv, ms} -> {best, li
 }
 /* a move the review would call brilliant: a sacrifice that is as good as the best move, and not losing */
 /* opening repertoires (SAN lines, from the start position); the bot follows any line that matches the game so far */
-const BOOKS={
- alien:["e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 h6 Nxf7 Kxf7 Bc4+ e6 Nf3","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 e6 Nxf7","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 Bf5 Nxf7","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 g6 Nxf7",
-  "e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 Bg4 Nxf7","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 Nbd7 Nxf7","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5 Ng3 Bg6 h4 h6 Nf3",
-  "e4 e6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5","e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7","e4 e5 Nf3 Nc6 Bc4 Bc5 b4","e4 c5 d4 cxd4 c3","e4 d5 exd5 Qxd5 Nc3",
-  "d4 d5 c4","d4 Nf6 c4 e5","e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5","e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3"],
- caro:["e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5 Ng3 Bg6 h4 h6 Nf3 Nd7","e4 c6 d4 d5 e5 Bf5 Nf3 e6 Be2 c5","e4 c6 d4 d5 exd5 cxd5 Bd3 Nc6 c3 Nf6","e4 c6 d4 d5 Nd2 dxe4 Nxe4 Bf5",
-  "e4 c6 Nc3 d5 Nf3 Bg4","e4 c6 Nf3 d5 Nc3 Bg4","e4 c6 d3 d5 Nd2 e5","e4 c6 c4 d5 exd5 cxd5","e4 c6 d4 d5 f3 e6",
-  "d4 d5 c4 c6 Nf3 Nf6 Nc3 dxc4","d4 d5 Nf3 Nf6 c4 c6","d4 d5 Bf4 c6","c4 c6","Nf3 d5","e4","e4 e5 Nf3 Nc6 Bc4"]
+const BOOKS={   // "w:" = lines the bot plays as White, "b:" = as Black
+ alien:["w:e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 h6 Nxf7 Kxf7 Bc4+ e6 Nf3","w:e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 e6 Nxf7","w:e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 Bf5 Nxf7","w:e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 g6 Nxf7",
+  "w:e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 Bg4 Nxf7","w:e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 Nbd7 Nxf7","w:e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5 Ng3 Bg6 h4 h6 Nf3",
+  "w:e4 e6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5","w:e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7","w:e4 e5 Nf3 Nc6 Bc4 Bc5 b4","w:e4 c5 d4 cxd4 c3","w:e4 d5 exd5 Qxd5 Nc3",
+  "b:e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3","b:e4 e5 Nf3 Nc6 Bc4 Nf6","b:d4 d5 c4 e5","b:d4 Nf6 c4 e5","b:c4 e5","b:Nf3 d5"],
+ caro:["b:e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5 Ng3 Bg6 h4 h6 Nf3 Nd7","b:e4 c6 d4 d5 e5 Bf5 Nf3 e6 Be2 c5","b:e4 c6 d4 d5 exd5 cxd5 Bd3 Nc6 c3 Nf6","b:e4 c6 d4 d5 Nd2 dxe4 Nxe4 Bf5",
+  "b:e4 c6 Nc3 d5 Nf3 Bg4","b:e4 c6 Nf3 d5 Nc3 Bg4","b:e4 c6 d3 d5 Nd2 e5","b:e4 c6 c4 d5 exd5 cxd5","b:e4 c6 d4 d5 f3 e6",
+  "b:d4 d5 c4 c6 Nf3 Nf6 Nc3 dxc4","b:d4 d5 Nf3 Nf6 c4 c6","b:d4 d5 Bf4 c6","b:c4 c6","b:Nf3 d5","w:e4"]
 };
 function bookMove(key){
   if(!CH||CH.variant!=="std"||(CH.start&&CH.start!==STD_FEN)||!BOOKS[key]) return null;
   const E=ChessEngine(null), clean=x=>x.replace(/[+#!?]/g,""), played=[]; E.reset();
   for(const s0 of CH.moves){ const m=E.legal().find(x=>E.moveStr(x)===s0); if(m===undefined) return null; played.push(clean(san(E,m))); E.make(m); }
-  const n=played.length, opts=[]; for(const line of BOOKS[key]){ const t=line.split(" ").map(clean); if(t.length>n&&t.slice(0,n).every((x,i)=>x===played[i])) opts.push(t[n]); }
+  const n=played.length, side=E.turn()>0?"w":"b", opts=[];   /* only lines for the colour the bot is playing */
+  for(const line0 of BOOKS[key]){ if(line0[1]===":"&&line0[0]!==side) continue; const t=line0.replace(/^[wb]:/,"").split(" ").map(clean); if(t.length>n&&t.slice(0,n).every((x,i)=>x===played[i])) opts.push(t[n]); }
   if(!opts.length) return null; const pick=opts[Math.floor(Math.random()*opts.length)], m=E.legal().find(x=>clean(san(E,x))===pick); return m===undefined?null:m;
 }
 function brillPick(E,list){
@@ -3379,6 +3380,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T18:23:00Z",en:["Fixed: the Caro-Kann Defender could answer 1.e4 with 1...e5. Bots now only use the opening lines for the colour they play."],
+  ar:["إصلاح: كان مدافع كارو-كان قد يرد على 1.e4 بـ 1...e5. البوتات تستخدم الآن فقط خطوط الافتتاح الخاصة باللون الذي تلعب به."]},
  {at:"2026-11-17T18:20:00Z",en:["Stockfish bots (Grandmaster, Witty Alien, Brilliant Mover) load their Stockfish as soon as the game starts, so it's ready for their first move.","Brilliant Mover and Witty Alien keep hunting brilliant moves even if their Stockfish is slow.","If Stockfish can't start, the review now tells you to open the app once on Wi-Fi."],
   ar:["بوتات Stockfish (الأستاذ الكبير وويتي ألين وصائد الروائع) تحمّل Stockfish فور بدء المباراة، فيكون جاهزًا لنقلتها الأولى.","صائد الروائع وويتي ألين يواصلان البحث عن النقلات الرائعة حتى لو كان Stockfish بطيئًا.","إذا تعذّر تشغيل Stockfish، تطلب منك المراجعة الآن فتح التطبيق مرة واحدة على Wi-Fi."]},
  {at:"2026-11-17T18:01:00Z",en:["The engine tag is now live: it shows the engine actually choosing the bot's moves (Stockfish 18, Outpost Chess or the opening book), changes when that changes, and stays visible in full screen and in bot vs bot."],
