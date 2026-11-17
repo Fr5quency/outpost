@@ -481,6 +481,8 @@ body[data-view="games"].inchess .prefs{display:none}
 /* openings */
 .lesson{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;text-align:start}
 .lesson p{flex:1;margin:0;font-size:14px;line-height:1.45}
+.gtags{flex:1;min-width:0;display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.engtag{white-space:nowrap;color:var(--muted);font-size:11px}
 .optag{max-width:52vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}.optag[hidden]{display:none}
 .coursecard.done{border-color:color-mix(in srgb,#81b64c 60%,var(--line))}
 .cicon{background:#739552}.cicon.sideb{background:#3a3a3a}.cicon2{background:#a88764;font-size:28px}
@@ -939,7 +941,7 @@ const AR={
 "Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.":"الأرقام تختلف حسب الدولة. تأكد من رقم بلدك واكتبه في الملاحظات. قل مكانك أولًا، ثم ما حدث.",
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
-"Games":"الألعاب","Witty Alien":"ويتي ألين","Caro-Kann Defender":"مدافع كارو-كان","Alien Gambit, wild sacrifices, brilliant 70% of the time":"مناورة الفضائي وتضحيات جنونية، ونقلة رائعة ٧٠٪ من الوقت","Always defends with the Caro-Kann":"يدافع دائمًا بدفاع كارو-كان",
+"Games":"الألعاب","Loading Stockfish…":"جارٍ تحميل Stockfish…","Witty Alien":"ويتي ألين","Caro-Kann Defender":"مدافع كارو-كان","Alien Gambit, wild sacrifices, brilliant 70% of the time":"مناورة الفضائي وتضحيات جنونية، ونقلة رائعة ٧٠٪ من الوقت","Always defends with the Caro-Kann":"يدافع دائمًا بدفاع كارو-كان",
 "Play a friend":"العب مع صديق","Share a code and play each other online. 15 minutes each.":"شارك رمزًا والعبا معًا أونلاين. ١٥ دقيقة لكل لاعب.","One of you creates a code, the other joins with it. Both need internet.":"أحدكما ينشئ رمزًا والآخر ينضم به. كلاكما يحتاج إنترنت.",
 "Create a code":"أنشئ رمزًا","5-digit code":"رمز من ٥ أرقام","Join":"انضم","Enter the 5-digit code":"أدخل الرمز المكوّن من ٥ أرقام","Waiting for your friend":"بانتظار صديقك","Tell your friend to tap Play a friend → Join, and enter this code.":"اطلب من صديقك أن يضغط العب مع صديق ← انضم، ويكتب هذا الرمز.","Send the code":"أرسل الرمز","Copied":"تم النسخ",
 "Solved today. Come back tomorrow!":"حللته اليوم. عد غدًا!","A new puzzle every day. Keep your streak going.":"لغز جديد كل يوم. حافظ على سلسلتك.","Your stats":"إحصائياتك","Achievements":"الإنجازات","Achievement unlocked":"إنجاز جديد",
@@ -2176,7 +2178,7 @@ function renderChess(v){
   if(!CH){ S.game=null; return renderGames(); }
   const AR_=CH.arch, mp=CH.mode==="mp", mpl=mp&&!AR_, puz=CH.mode==="puz", hot=CH.mode==="hot"||puz, bvb=CH.mode==="bvb", on=oppName();
   v.innerHTML=`<div class="gwrap${puz?" puzmode":""}" id="gameRoot">
-    <div class="gtop"><button class="btn small gback" data-act="${AR_?"chessHist":puz?puzBack()[0]:"chessMenu"}">${tr(AR_?"‹ History":puz?puzBack()[1]:mp?"‹ Leave":bvb?"‹ Chess":"‹ Opponents")}</button>${AR_?`<span class="vtag">${archDate(AR_.t)}</span>`:CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:puz?"":`<span class="vtag optag" id="openTag" hidden></span>`}${fsButton()}</div>
+    <div class="gtop"><button class="btn small gback" data-act="${AR_?"chessHist":puz?puzBack()[0]:"chessMenu"}">${tr(AR_?"‹ History":puz?puzBack()[1]:mp?"‹ Leave":bvb?"‹ Chess":"‹ Opponents")}</button><span class="gtags">${AR_?`<span class="vtag">${archDate(AR_.t)}</span>`:CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:puz?"":`<span class="vtag optag" id="openTag" hidden></span>`}${CH.mode==="bot"&&!AR_?`<span class="vtag engtag" id="engTag">${esc(botEngineLabel())}</span>`:""}</span>${fsButton()}</div>
     <div class="pbar"><span class="ava${hot?(CH.color>0?" sideb":" sidew"):""}" style="${hot?"":`background:${mp?"#5b7bd5":AVC[CH.lvl]}`}">${hot?pcImg(-6*CH.color,"cp"):esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:puz?`<em>${puzSub()}</em>`:hot?"":`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mpl?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
     <div class="pbar"><span class="ava ${hot?(CH.color>0?"sidew":"sideb"):bvb?"":"you"}" style="${bvb?`background:${AVC[bvbLvl(CH.color)]}`:""}">${hot?pcImg(6*CH.color,"cp"):esc(bvb?youLabel():meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(youLabel())} ${bvb?`<em>${LEVELS[bvbLvl(CH.color)].elo}</em>`:AR_?(AR_.mb!=null?`<em>${AR_.mb}</em>`:""):mp?`<em>${eloOn()}</em>`:(!hot&&CH.variant==="std")?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mpl?`<span class="clock" id="clkYou"></span>`:""}</div>
@@ -2243,6 +2245,7 @@ function drawBoard(){
   moveList();
   const lb=$("#lessonBox"); if(lb&&CH.puz) lb.innerHTML=`<i class="coachava" style="background-image:url(pieces/wN.svg)"></i><p>${esc(courseNote())}</p>`;
   const ot=$("#openTag"); if(ot){ const nm=openingName(live?CH.moves.length:CH.view); ot.textContent=nm; ot.hidden=!nm; }
+  engTagDraw();
 }
 /* your own arrows: double-tap a square to start one, double-tap another to finish it; a single tap on the board clears them */
 const DOUBLE_TAP_MS=380;
@@ -2342,17 +2345,25 @@ async function feedBrill(fen){
 }
 /* the Grandmaster bot: its own Stockfish, separate from the one that reviews games */
 const SFB={w:null,ready:null,on:null};
+/* which engine the bot you play against uses (shown next to the opening name) */
+function botEngineLabel(){
+  if(!CH||CH.mode!=="bot"||!LEVELS[CH.lvl]) return ""; const L=LEVELS[CH.lvl], sfOk=(CH.variant==="std"||CH.variant==="nocastle")&&typeof WebAssembly==="object";
+  if(!(L.sf||L.brill||L.alien)||!sfOk||SFB.failed) return "⚙️ Outpost Chess";
+  if(!SFB.w&&SFB.ready) return "⏳ "+tr("Loading Stockfish…");
+  return "⚙️ "+(L.brill?"Stockfish 18 + Outpost Chess":"Stockfish 18");
+}
+function engTagDraw(){ const et=$("#engTag"); if(et) et.textContent=botEngineLabel(); }
 function sfBotReady(){
-  if(SFB.ready) return SFB.ready;
+  if(SFB.ready) return SFB.ready; setTimeout(engTagDraw,0);   /* the tag switches to "Loading Stockfish…" */
   return SFB.ready=new Promise((ok,no)=>{ let w; try{ w=new Worker("stockfish/stockfish-18-lite-single.js"); }catch(e){ return no(e); }
     const t=setTimeout(()=>{ try{w.terminate();}catch(e){} no(new Error("load")); },45000);
     w.onmessage=e=>{ const l=String(e.data);
       if(l==="uciok") w.postMessage("isready");
-      else if(l==="readyok"&&!SFB.w){ clearTimeout(t); SFB.w=w; ok(w); }
+      else if(l==="readyok"&&!SFB.w){ clearTimeout(t); SFB.w=w; ok(w); setTimeout(engTagDraw,0); }
       else if(SFB.on) SFB.on(l); };
     w.onerror=()=>{ clearTimeout(t); no(new Error("error")); };
     w.postMessage("uci");
-  }).catch(e=>{ SFB.ready=null; SFB.w=null; throw e; });
+  }).catch(e=>{ SFB.ready=null; SFB.w=null; SFB.failed=true; setTimeout(engTagDraw,0); throw e; });
 }
 function sfBot(fen,o){ // o: {elo (0 = full strength), multipv, ms} -> {best, lines:[{s, mv}]} (side to move's view)
   return sfBotReady().then(w=>new Promise((ok,no)=>{ const lines=[];
@@ -3312,6 +3323,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T14:09:00Z",en:["Bot games now show which engine you're playing against, next to the opening name: Stockfish 18, Outpost Chess, or both. While Stockfish is starting it says \"Loading Stockfish…\"."],
+  ar:["مباريات البوتات تعرض الآن المحرك الذي تلعب ضده بجانب اسم الافتتاح: Stockfish 18 أو Outpost Chess أو كلاهما. وأثناء بدء Stockfish تظهر عبارة «جارٍ تحميل Stockfish…»."]},
  {at:"2026-11-17T13:59:00Z",en:["The chess engines no longer start in the background when you open the app. They start when you play, as before: the review stays instant with brilliant badges and dings, and Brilliant Mover and the Grandmaster take a moment for Stockfish to start."],
   ar:["لم يعد محركا الشطرنج يبدآن في الخلفية عند فتح التطبيق. يبدآن عند اللعب كما كان سابقًا: المراجعة فورية مع علامات وأصوات النقلات الرائعة، وصائد الروائع والأستاذ الكبير يحتاجان لحظة حتى يبدأ Stockfish."]},
  {at:"2026-11-17T12:46:00Z",en:["Faster games: both chess engines now warm up as soon as you open the app, so every bot answers quickly and brilliant moves get their !! and ding from the first move.","New bot: Witty Alien (2600). Plays the Alien Gambit and attacks like the streamer, finding a brilliant move 70% of the time one exists.","New bot: Caro-Kann Defender (1800). Always answers 1.e4 with the Caro-Kann."],
