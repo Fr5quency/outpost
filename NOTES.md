@@ -142,4 +142,3 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 - 2026-11-16: Stage C: daily puzzle + streak, stats page, 24 achievements. (sw cache v36)
 - 2026-11-16: Stage D: play a friend with a 5-digit code. (sw cache v37)
 - 2026-11-17: The games now also live in their own app, Outpost Games (repo offline-games-with-online-multiplayer-). Service worker only deletes Outpost's own caches. (sw cache v38)
-- 2026-11-17: Bots using Stockfish (Grandmaster, Brilliant Mover) start loading it when the game starts and never wait for it: until `SFB.w` is ready they play with Outpost Chess (Grandmaster capped at 1.5 s). The bot also skips waiting for the review's analysis while the review engine is still loading. First move 15 s+ → 0.5 s (Brilliant Mover) / 1.6 s (Grandmaster) with a 12 s Stockfish load in testing. (cache 39)
