@@ -2400,7 +2400,7 @@ function sideEngine(c){
 }
 function botEngineLabel(){
   if(!CH) return ""; if(CH.mode==="bot") return LEVELS[CH.lvl]?sideEngine(-CH.color):"";
-  if(CH.mode==="bvb"){ const sh=x=>x.replace(/^⚙️ /,""); return "♔ "+sh(sideEngine(1))+" · ♚ "+sh(sideEngine(-1)); }
+  if(CH.mode==="bvb"){ const sh=x=>x.replace(/^⚙️ /,""); return "⚪ "+sh(sideEngine(1))+" · ⚫ "+sh(sideEngine(-1));   /* white dot = White, black dot = Black (the king symbols looked swapped on a dark screen) */ }
   return "";
 }
 function engTagDraw(){ const et=$("#engTag"); if(et) et.textContent=botEngineLabel(); }
@@ -3385,6 +3385,7 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T19:31:00Z",en:["Bot vs bot engine label: a white dot ⚪ marks White's engine and a black dot ⚫ marks Black's, so it is clear which side uses which."],ar:["شارة المحرك في مباراة البوتات: النقطة البيضاء ⚪ لمحرك الأبيض والسوداء ⚫ لمحرك الأسود، ليتضح أي جانب يستخدم أي محرك."]},
  {at:"2026-11-17T19:07:00Z",en:["Bots never wait for Stockfish: if it isn't running yet, every bot moves right away with Outpost Chess, and the Stockfish bots switch to Stockfish as soon as it's ready.","Stockfish repairs itself: if it can't start, its saved copy is deleted and downloaded again. It also uses less memory now."],
   ar:["البوتات لا تنتظر Stockfish أبدًا: إذا لم يكن يعمل بعد، يلعب كل بوت فورًا بـ Outpost Chess، وتعود بوتات Stockfish إليه فور جاهزيته.","Stockfish يصلح نفسه: إذا تعذّر تشغيله تُحذف نسخته المحفوظة ويُنزَّل من جديد. كما أنه يستخدم ذاكرة أقل الآن."]},
  {at:"2026-11-17T18:57:00Z",en:["One Stockfish for everything: analysis, brilliant moves and every bot now share a single Stockfish that preloads when you open the app. Bots answer in 1-2 seconds, brilliant moves ding right away, and the review is ready when the game ends.","Fixed: on phones the second Stockfish (for the bots) could never finish loading, so the Grandmaster, Witty Alien and Brilliant Mover got stuck or fell back to Outpost Chess."],
