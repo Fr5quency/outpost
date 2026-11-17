@@ -274,7 +274,9 @@ body[data-view="quran"] .foot{display:none}
 .fsbtn{flex:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;color:var(--ink)}
 .fsbtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .gwrap.fs{position:fixed;inset:0;z-index:40;background:var(--ground);padding:calc(env(safe-area-inset-top) + 8px) 12px calc(env(safe-area-inset-bottom) + 12px);justify-content:center;align-items:center;overflow:auto}
-.gwrap.fs>*{width:100%;max-width:min(560px,100%)}
+.gwrap.fs>*{width:100%;max-width:min(560px,100%);flex-shrink:0}   /* never squash the board */
+.gwrap.fs{justify-content:safe center}
+.gwrap.fs>.board{width:var(--bs);max-width:none}   /* the board is always square: width = height */
 .gwrap.fs{padding-top:calc(env(safe-area-inset-top) + 64px)}
 .gwrap.fs .gtop{position:absolute;top:calc(env(safe-area-inset-top) + 8px);inset-inline-end:12px;width:auto;min-height:0}
 .gwrap.fs .gback{display:none}
@@ -2230,8 +2232,10 @@ function renderChess(v){
 }
 function sizeBoard(){
   const root=$("#gameRoot"), bd=$("#board"); if(!root||!bd) return;
-  let w=root.clientWidth; const other=[...root.children].filter(c=>c!==bd&&c.id!=="mlist"&&c.id!=="coachBox"&&c.id!=="revLine"&&c.id!=="lessonBox"&&(!S.gfs||!c.classList.contains("gtop"))).reduce((t,c)=>t+c.offsetHeight+10,0);
-  if(S.gfs) w=Math.min(w,window.innerHeight-other-40);
+  let w=root.clientWidth-(S.gfs?24:0); const other=[...root.children].filter(c=>c!==bd&&c.id!=="mlist"&&c.id!=="coachBox"&&c.id!=="revLine"&&c.id!=="lessonBox"&&(!S.gfs||!c.classList.contains("gtop"))).reduce((t,c)=>t+c.offsetHeight+10,0);
+  if(S.gfs){ /* full screen review: keep room for the move line and the coach, so the board stays square and the same size on every move */
+    const rl=$("#revLine"), cb=$("#coachBox"), rev=CH&&CH.an?Math.max(120,(rl?rl.offsetHeight+10:0)+(cb&&!cb.hidden?cb.offsetHeight+10:0)):0;
+    w=Math.min(w,window.innerHeight-other-rev-40); }
   else w=Math.min(w,window.innerHeight-(root.getBoundingClientRect().top+window.scrollY)-other-$(".tabs").offsetHeight-12);
   bd.style.setProperty("--bs",Math.max(240,Math.floor(w/8)*8)+"px");
 }
@@ -3014,6 +3018,7 @@ function evalAfter(k){ // the position after move k, from White's side: ["+1.4"|
   return [(v>0?"+":v<0?"−":"")+(Math.abs(v)/100).toFixed(1),v>30?"w":v<-30?"b":""];
 }
 function reviewOverlay(){ // badge, arrows and label for the move being shown
+  if(S.gfs&&CH&&CH.an&&!CH.fsRev){ CH.fsRev=1; sizeBoard(); }   /* full screen: make room for the review once */
   const B=$("#board"), line=$("#revLine"); if(!B) return;
   const old=B.querySelector(".arrows"); if(old) old.remove();
   const cb=$("#coachBox"); if(cb) cb.hidden=true;
@@ -3024,7 +3029,7 @@ function reviewOverlay(){ // badge, arrows and label for the move being shown
   const k=CH.view===null?CH.moves.length:CH.view, P=CH.an.plies[k-1];
   const wv=whiteWin(k), bar=wv===null?"":`<div class="evbar" title="${tr("Evaluation")}"><i style="width:${wv.toFixed(1)}%"></i></div>`;
   if(!P){ if(line) line.innerHTML=bar+(k===0?`<span class="sub">${tr("Starting position")}</span>`:""); return; }
-  if(cb){ cb.hidden=false; cb.innerHTML=`<i class="coachava" style="background-image:url(pieces/wN.svg)"></i><p>${esc(coachText(P,k-1,false))}</p><button class="btn small ghost" data-act="coachMute" aria-label="${tr("Coach voice")}">${voiceOn()?"🔊":"🔇"}</button>`; }
+  if(cb){ const was=cb.hidden; cb.hidden=false; cb.innerHTML=`<i class="coachava" style="background-image:url(pieces/wN.svg)"></i><p>${esc(coachText(P,k-1,false))}</p><button class="btn small ghost" data-act="coachMute" aria-label="${tr("Coach voice")}">${voiceOn()?"🔊":"🔇"}</button>`; if(S.gfs&&was) sizeBoard(); }
   const s=CH.moves[k-1], to=strSq(s.slice(2)); const cell=B.querySelector(`.sq[data-sq="${to}"]`); if(cell) cell.insertAdjacentHTML("beforeend",badge(P.c));
   let svg=""; if(P.best) svg+=arrow(P.best&127,(P.best>>7)&127,"rgba(129,182,76,.85)"); if(P.threat) svg+=arrow(P.threat&127,(P.threat>>7)&127,"rgba(220,60,50,.8)");
   if(svg) B.insertAdjacentHTML("beforeend",`<svg class="arrows" viewBox="0 0 8 8" preserveAspectRatio="none">${svg}</svg>`);
@@ -3385,6 +3390,7 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T20:27:00Z",en:["Full screen review: the board no longer gets squashed when the coach appears. It stays square and the same size on every move."],ar:["المراجعة بملء الشاشة: لم تعد الرقعة تنضغط عند ظهور المدرب، وتبقى مربعة وبنفس الحجم في كل نقلة."]},
  {at:"2026-11-17T19:31:00Z",en:["Bot vs bot engine label: a white dot ⚪ marks White's engine and a black dot ⚫ marks Black's, so it is clear which side uses which."],ar:["شارة المحرك في مباراة البوتات: النقطة البيضاء ⚪ لمحرك الأبيض والسوداء ⚫ لمحرك الأسود، ليتضح أي جانب يستخدم أي محرك."]},
  {at:"2026-11-17T19:07:00Z",en:["Bots never wait for Stockfish: if it isn't running yet, every bot moves right away with Outpost Chess, and the Stockfish bots switch to Stockfish as soon as it's ready.","Stockfish repairs itself: if it can't start, its saved copy is deleted and downloaded again. It also uses less memory now."],
   ar:["البوتات لا تنتظر Stockfish أبدًا: إذا لم يكن يعمل بعد، يلعب كل بوت فورًا بـ Outpost Chess، وتعود بوتات Stockfish إليه فور جاهزيته.","Stockfish يصلح نفسه: إذا تعذّر تشغيله تُحذف نسخته المحفوظة ويُنزَّل من جديد. كما أنه يستخدم ذاكرة أقل الآن."]},
