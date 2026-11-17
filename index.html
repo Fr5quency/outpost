@@ -942,7 +942,7 @@ const AR={
 "Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.":"الأرقام تختلف حسب الدولة. تأكد من رقم بلدك واكتبه في الملاحظات. قل مكانك أولًا، ثم ما حدث.",
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
-"Games":"الألعاب","Loading Stockfish…":"جارٍ تحميل Stockfish…","Witty Alien":"ويتي ألين","Caro-Kann Defender":"مدافع كارو-كان","Alien Gambit, wild sacrifices, brilliant 70% of the time":"مناورة الفضائي وتضحيات جنونية، ونقلة رائعة ٧٠٪ من الوقت","Always defends with the Caro-Kann":"يدافع دائمًا بدفاع كارو-كان",
+"Games":"الألعاب","Starting Stockfish…":"جارٍ تشغيل Stockfish…","Loading Stockfish…":"جارٍ تحميل Stockfish…","Witty Alien":"ويتي ألين","Caro-Kann Defender":"مدافع كارو-كان","Alien Gambit, wild sacrifices, brilliant 70% of the time":"مناورة الفضائي وتضحيات جنونية، ونقلة رائعة ٧٠٪ من الوقت","Always defends with the Caro-Kann":"يدافع دائمًا بدفاع كارو-كان",
 "Play a friend":"العب مع صديق","Share a code and play each other online. 15 minutes each.":"شارك رمزًا والعبا معًا أونلاين. ١٥ دقيقة لكل لاعب.","One of you creates a code, the other joins with it. Both need internet.":"أحدكما ينشئ رمزًا والآخر ينضم به. كلاكما يحتاج إنترنت.",
 "Create a code":"أنشئ رمزًا","5-digit code":"رمز من ٥ أرقام","Join":"انضم","Enter the 5-digit code":"أدخل الرمز المكوّن من ٥ أرقام","Waiting for your friend":"بانتظار صديقك","Tell your friend to tap Play a friend → Join, and enter this code.":"اطلب من صديقك أن يضغط العب مع صديق ← انضم، ويكتب هذا الرمز.","Send the code":"أرسل الرمز","Copied":"تم النسخ",
 "Solved today. Come back tomorrow!":"حللته اليوم. عد غدًا!","A new puzzle every day. Keep your streak going.":"لغز جديد كل يوم. حافظ على سلسلتك.","Your stats":"إحصائياتك","Achievements":"الإنجازات","Achievement unlocked":"إنجاز جديد",
@@ -1924,11 +1924,12 @@ function sfStart(){
     else if(l==="readyok"&&SF.state===1){ clearTimeout(SF.to); SF.state=2; SF.fails=0; sfNext(); }
     else if(SF.onLine) SF.onLine(l); };
   SF.w.onerror=()=>sfRestart(SF.busy);
-  SF.w.postMessage("uci"); SF.to=setTimeout(()=>{ if(SF.state===1) sfRestart(null); },90000);   // slow phones get more time
+  SF.w.postMessage("uci"); SF.to=setTimeout(()=>{ if(SF.state===1) sfRestart(null); },45000);
 }
 /* stuck (e.g. the phone paused it while the app was in the background) or crashed: start Stockfish again and keep the work.
    Only after 3 failed starts in a row does Outpost Chess take over. */
 function sfRestart(j){
+  SF.gen=(SF.gen||0)+1;   /* anything the old Stockfish was still doing is now ignored */
   clearTimeout(SF.to); try{ SF.w&&SF.w.terminate(); }catch(e){} SF.w=null; SF.onLine=null; if(j) SF.q.push(j); SF.busy=null; SF.state=0;
   SF.fails=(SF.fails||0)+1; if(SF.fails>=3) return sfFail();
   setTimeout(sfStart,300);
@@ -1958,7 +1959,8 @@ async function sfNext(){
   if(SF.state!==2||SF.busy) return;
   SF.q=SF.q.filter(j=>CH&&j.msg.tag.g===CH.gid);   // moves of a game that is no longer open are dropped
   const j=SF.q.pop(); if(!j) return;                // newest move first
-  SF.busy=j; let row=null; try{ row=await sfJob(j.msg); }catch(e){ if(e&&e.message==="stuck") return sfRestart(j); }
+  SF.busy=j; const gen=SF.gen||0; let row=null; try{ row=await sfJob(j.msg); }catch(e){ if((SF.gen||0)!==gen) return; if(e&&e.message==="stuck") return sfRestart(j); }
+  if((SF.gen||0)!==gen){ if(row) onAnalysis({type:"analysis",rows:[row],tag:j.msg.tag}); return; }   /* finished by a Stockfish that was restarted meanwhile */
   if(SF.busy!==j) return; SF.busy=null;
   if(row) onAnalysis({type:"analysis",rows:[row],tag:j.msg.tag}); else anLocal(j.msg);
   sfNext();
@@ -2862,13 +2864,24 @@ function startReview(){ // most moves were already analysed during the game, so 
   if(CH&&sfUsable(CH.variant)){ let redo=false; CH.rows.forEach((r,i)=>{ if(r&&r.sf===0){ CH.rows[i]=undefined; CH.asked[i]=0; redo=true; } }); if(redo){ CH.an=null; CH.live=null; } }   /* Stockfish for every move */
   if(!CH||!CH.moves.length) return; try{ window.speechSynthesis&&window.speechSynthesis.speak(new SpeechSynthesisUtterance("")); }catch(e){}
   if(CH.an) return showSummary();
-  const n=CH.moves.length; for(let i=0;i<=n;i++) queueAn(i);
+  const n=CH.moves.length; for(let i=0;i<=n;i++){ if(CH.rows[i]===undefined) CH.asked[i]=0; queueAn(i); }   /* ask again for anything without an answer */
   const have=()=>{ let k=0; for(let i=0;i<=n;i++) if(CH.rows[i]!==undefined) k++; return k; };
   const finish=()=>{ CH.anWait=null; CH.an=classifyGame(CH.rows,CH.moves); CH.live=null; if(CH.archId) archRows(); drawBoard(); showSummary(); };
   if(have()===n+1) return finish();
-  modal(`<div class="anwrap"><div class="anspin">${pcImg(3)}</div><h3>${tr("Analyzing your game…")}</h3><div class="meter"><b id="anBar" style="width:0%"></b></div><p class="sub" id="anTxt">0%</p></div>`);
+  modal(`<div class="anwrap"><div class="anspin">${pcImg(3)}</div><h3>${tr("Analyzing your game…")}</h3><div class="meter"><b id="anBar" style="width:0%"></b></div><p class="sub" id="anTxt">0%</p><p class="sub" id="anState"></p></div>`);
   CH.anWait=()=>{ const k=have(), bar=$("#anBar"), t=$("#anTxt"); if(bar){ bar.style.width=(100*k/(n+1))+"%"; t.textContent=Math.round(100*k/(n+1))+"%"; } if(k===n+1) finish(); };
   CH.anWait();
+  /* watchdog: no progress for 6 s -> ask again; if Stockfish is not running, Outpost Chess fills the gaps so the review always finishes */
+  const g=CH.gid; let lastK=-1, lastT=Date.now();
+  const tick=()=>{ if(!CH||CH.gid!==g||!CH.anWait) return; const k=have(), st=$("#anState"), sfOn=sfUsable(CH.variant);
+    if(st) st.textContent=sfOn&&SF.state!==2?tr("Starting Stockfish…"):"";
+    if(k!==lastK){ lastK=k; lastT=Date.now(); }
+    else if(Date.now()-lastT>6000){ lastT=Date.now();
+      for(let i=0;i<=n;i++) if(CH.rows[i]===undefined&&CH.fens[i]){ CH.asked[i]=0;
+        if(sfOn&&SF.state===2) queueAn(i);
+        else { CH.asked[i]=1; anLocal({id:0,type:"analyze",fens:[CH.fens[i]],played:[CH.moves[i]||null],opts:AN_OPTS,variant:vcode(CH.variant),c960:CH.variant==="960",tag:{g:CH.gid,i}}); if(sfOn&&!SF.state) sfStart(); } } }
+    setTimeout(tick,500); };
+  setTimeout(tick,500);
 }
 /* ---- share a game: PGN (opens in chess.com / Lichess) or a picture of the final position ---- */
 function gameWinner(){ // 1 White, -1 Black, 0 draw/unfinished
@@ -3335,6 +3348,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T17:11:00Z",en:["Fixed: the game review could get stuck at 0%. It now re-asks for any missing analysis, never waits more than a few seconds without progress, and shows \"Starting Stockfish…\" while the engine starts."],
+  ar:["إصلاح: كانت مراجعة المباراة قد تتوقف عند ٠٪. الآن تعيد طلب أي تحليل ناقص، ولا تنتظر أكثر من بضع ثوانٍ دون تقدّم، وتعرض «جارٍ تشغيل Stockfish…» أثناء بدء المحرك."]},
  {at:"2026-11-17T14:42:00Z",en:["Stockfish now handles Chess960 too: live analysis, brilliant moves, the review and the Grandmaster, Brilliant Mover and Witty Alien.","All 150 puzzles were re-checked by Stockfish. 14 old puzzles that had a second solution were replaced with new Stockfish-verified ones.","Fixed: Chess960 castling is now written O-O or O-O-O correctly."],
   ar:["Stockfish يتولى الآن الشطرنج 960 أيضًا: التحليل المباشر والنقلات الرائعة والمراجعة والأستاذ الكبير وصائد الروائع وويتي ألين.","أعاد Stockfish فحص كل الألغاز الـ ١٥٠. استُبدل ١٤ لغزًا قديمًا كان لها حل ثانٍ بألغاز جديدة تحقق منها Stockfish.","إصلاح: التبييت في الشطرنج 960 يُكتب الآن O-O أو O-O-O بشكل صحيح."]},
  {at:"2026-11-17T14:24:00Z",en:["Stockfish now analyses every normal chess game. If it gets paused (for example when you switch apps), it restarts instead of handing the game to Outpost Chess, and the review re-checks any move Outpost Chess had analysed."],
