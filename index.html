@@ -424,7 +424,7 @@ h3.sect{margin-top:6px}
 @media (prefers-reduced-motion:reduce){.srow2{opacity:1;animation:none}.anspin,.mbadge,.rv-star{animation:none}}
 /* chess modes, brilliant flash, coach */
 .vtag{font:700 12px/1 var(--display);padding:6px 9px;border-radius:99px;background:var(--sunk);border:1px solid var(--line);color:var(--signal)}
-.gwrap.fs .vtag{display:none}
+.gwrap.fs .vtag:not(.optag):not(.engtag){display:none}   /* the opening and engine tags stay in full screen */
 .chkc{font-style:normal;font-size:12px;color:#e0312a;font-weight:700}
 .sq.hill::before{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 3px rgba(255,200,40,.75);pointer-events:none}
 .coach{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px;text-align:start}
@@ -942,7 +942,7 @@ const AR={
 "Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.":"الأرقام تختلف حسب الدولة. تأكد من رقم بلدك واكتبه في الملاحظات. قل مكانك أولًا، ثم ما حدث.",
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
-"Games":"الألعاب","Starting Stockfish…":"جارٍ تشغيل Stockfish…","Loading Stockfish…":"جارٍ تحميل Stockfish…","Witty Alien":"ويتي ألين","Caro-Kann Defender":"مدافع كارو-كان","Alien Gambit, wild sacrifices, brilliant 70% of the time":"مناورة الفضائي وتضحيات جنونية، ونقلة رائعة ٧٠٪ من الوقت","Always defends with the Caro-Kann":"يدافع دائمًا بدفاع كارو-كان",
+"Games":"الألعاب","Opening book":"كتاب الافتتاحات","Starting Stockfish…":"جارٍ تشغيل Stockfish…","Loading Stockfish…":"جارٍ تحميل Stockfish…","Witty Alien":"ويتي ألين","Caro-Kann Defender":"مدافع كارو-كان","Alien Gambit, wild sacrifices, brilliant 70% of the time":"مناورة الفضائي وتضحيات جنونية، ونقلة رائعة ٧٠٪ من الوقت","Always defends with the Caro-Kann":"يدافع دائمًا بدفاع كارو-كان",
 "Play a friend":"العب مع صديق","Share a code and play each other online. 15 minutes each.":"شارك رمزًا والعبا معًا أونلاين. ١٥ دقيقة لكل لاعب.","One of you creates a code, the other joins with it. Both need internet.":"أحدكما ينشئ رمزًا والآخر ينضم به. كلاكما يحتاج إنترنت.",
 "Create a code":"أنشئ رمزًا","5-digit code":"رمز من ٥ أرقام","Join":"انضم","Enter the 5-digit code":"أدخل الرمز المكوّن من ٥ أرقام","Waiting for your friend":"بانتظار صديقك","Tell your friend to tap Play a friend → Join, and enter this code.":"اطلب من صديقك أن يضغط العب مع صديق ← انضم، ويكتب هذا الرمز.","Send the code":"أرسل الرمز","Copied":"تم النسخ",
 "Solved today. Come back tomorrow!":"حللته اليوم. عد غدًا!","A new puzzle every day. Keep your streak going.":"لغز جديد كل يوم. حافظ على سلسلتك.","Your stats":"إحصائياتك","Achievements":"الإنجازات","Achievement unlocked":"إنجاز جديد",
@@ -2192,7 +2192,7 @@ function renderChess(v){
   if(!CH){ S.game=null; return renderGames(); }
   const AR_=CH.arch, mp=CH.mode==="mp", mpl=mp&&!AR_, puz=CH.mode==="puz", hot=CH.mode==="hot"||puz, bvb=CH.mode==="bvb", on=oppName();
   v.innerHTML=`<div class="gwrap${puz?" puzmode":""}" id="gameRoot">
-    <div class="gtop"><button class="btn small gback" data-act="${AR_?"chessHist":puz?puzBack()[0]:"chessMenu"}">${tr(AR_?"‹ History":puz?puzBack()[1]:mp?"‹ Leave":bvb?"‹ Chess":"‹ Opponents")}</button><span class="gtags">${AR_?`<span class="vtag">${archDate(AR_.t)}</span>`:CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:puz?"":`<span class="vtag optag" id="openTag" hidden></span>`}${CH.mode==="bot"&&!AR_?`<span class="vtag engtag" id="engTag">${esc(botEngineLabel())}</span>`:""}</span>${fsButton()}</div>
+    <div class="gtop"><button class="btn small gback" data-act="${AR_?"chessHist":puz?puzBack()[0]:"chessMenu"}">${tr(AR_?"‹ History":puz?puzBack()[1]:mp?"‹ Leave":bvb?"‹ Chess":"‹ Opponents")}</button><span class="gtags">${AR_?`<span class="vtag">${archDate(AR_.t)}</span>`:CH.variant!=="std"?`<span class="vtag">${tr(vName(CH.variant))}</span>`:puz?"":`<span class="vtag optag" id="openTag" hidden></span>`}${(CH.mode==="bot"||CH.mode==="bvb")&&!AR_?`<span class="vtag engtag" id="engTag">${esc(botEngineLabel())}</span>`:""}</span>${fsButton()}</div>
     <div class="pbar"><span class="ava${hot?(CH.color>0?" sideb":" sidew"):""}" style="${hot?"":`background:${mp?"#5b7bd5":AVC[CH.lvl]}`}">${hot?pcImg(-6*CH.color,"cp"):esc(on).slice(0,1)}</span><span class="pinfo"><b>${esc(on)} ${mp?`<em>${CH.oppElo}</em>`:puz?`<em>${puzSub()}</em>`:hot?"":`<em>${LEVELS[CH.lvl].elo}</em>`} <em class="chkc" id="chkBot"></em></b><small id="botStatus"></small></span><span class="caps" id="capsBot"></span>${mpl?`<span class="clock" id="clkOpp"></span>`:""}</div>
     <div class="board" id="board" dir="ltr"></div>
     <div class="pbar"><span class="ava ${hot?(CH.color>0?"sidew":"sideb"):bvb?"":"you"}" style="${bvb?`background:${AVC[bvbLvl(CH.color)]}`:""}">${hot?pcImg(6*CH.color,"cp"):esc(bvb?youLabel():meName()).slice(0,1)}</span><span class="pinfo"><b>${esc(youLabel())} ${bvb?`<em>${LEVELS[bvbLvl(CH.color)].elo}</em>`:AR_?(AR_.mb!=null?`<em>${AR_.mb}</em>`:""):mp?`<em>${eloOn()}</em>`:(!hot&&CH.variant==="std")?`<em>${eloOff()}</em>`:""} <em class="chkc" id="chkYou"></em></b><small id="youStatus"></small></span><span class="caps" id="capsYou"></span>${mpl?`<span class="clock" id="clkYou"></span>`:""}</div>
@@ -2316,28 +2316,28 @@ function maybeBot(){
   const E=engine(); if(!CH||CH.over) return; const bvb=CH.mode==="bvb"; if(!bvb&&(CH.mode!=="bot"||E.turn()===CH.color)) return;
   CH.thinking=true; drawBoard(); const id=++chessReq, t0=Date.now(), L=LEVELS[bvb?bvbLvl(E.turn()):CH.lvl];
   const opts=Object.assign({},L.o); if(CH.moves.length<8&&!opts.noise&&!L.sf) opts.noise=12;
-  CH.pending={id,t0};
-  setTimeout(()=>{ if(!CH||id!==chessReq||!CH.pending||CH.pending.id!==id||CH.pending.taken||CH.over) return;   /* hard limit: never think longer than 10 s */
-    try{ SFB.w&&SFB.w.terminate(); }catch(e){} SFB.w=null; SFB.ready=null; SFB.on=null;   /* its Stockfish starts fresh next time */
-    const T=ChessEngine(null); T.setVariant(vcode(CH.variant)); T.setFen(engine().fen()); onBotMove({id,move:T.think({depth:3,ms:400})}); },10000);
+  CH.pending={id,t0}; CH.srcTurn={id,c:E.turn(),src:null};
+  setTimeout(()=>{ if(!CH||id!==chessReq||!CH.pending||CH.pending.id!==id||CH.pending.taken||CH.over) return;   /* hard limit: never think longer than 4 s */
+    try{ SFB.w&&SFB.w.terminate(); }catch(e){} SFB.w=null; SFB.ready=null; SFB.on=null; SFB.chain=Promise.resolve();   /* its Stockfish starts fresh next time, with an empty queue */
+    const T=ChessEngine(null); T.setVariant(vcode(CH.variant)); T.setFen(engine().fen()); window.__botLimitHits=(window.__botLimitHits||0)+1; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc"; onBotMove({id,move:T.think({depth:3,ms:300})}); },4000);   /* emergency only: normal moves take 1-2 s */
   const vc=vcode(CH.variant), fen=E.fen();
-  const own=()=>{ if(!CH||id!==chessReq) return; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
+  const own=()=>{ if(!CH||id!==chessReq) return; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc"; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
   const sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object";
   const normal=()=>{ if(!CH||id!==chessReq) return;
-    if(L.sf&&sfOk) return sfBot(fen,{elo:L.sf,multipv:1,ms:1500}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
+    if(L.sf&&sfOk) return sfBot(fen,{elo:L.sf,multipv:1,ms:1000}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
     own(); };
-  if(L.book){ const bm=bookMove(L.book); if(bm!==null) return setTimeout(()=>onBotMove({id,move:bm}),250); }   /* its opening repertoire first */
+  if(L.book){ const bm=bookMove(L.book); if(bm!==null){ CH.srcTurn.src="book"; return setTimeout(()=>onBotMove({id,move:bm}),250); } }   /* its opening repertoire first */
   if(L.alien){ // Witty Alien: a brilliant move 70 % of the time one exists, sound-enough sacrifices half the time, otherwise strong (2600) chess
     const play=list=>{ if(!CH||id!==chessReq) return; const E2=engine(), b=brillPick(E2,list); if(b!==null&&Math.random()<0.7) return onBotMove({id,move:b,brill:true});
       const g=gamblePick(E2,list); if(g!==null&&Math.random()<0.5) return onBotMove({id,move:g});
-      if(sfOk) return sfBot(fen,{elo:L.elo,multipv:1,ms:700}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
+      if(sfOk) return sfBot(fen,{elo:L.elo,multipv:1,ms:500}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
       own(); };
-    if(sfOk) return sfBot(fen,{multipv:8,ms:900}).then(r=>{ const E2=engine(); play(r.lines.map(x=>({s:x.s,m:E2.legal().find(y=>E2.moveStr(y)===x.mv)}))); }).catch(own);
+    if(sfOk) return sfBot(fen,{multipv:8,ms:700}).then(r=>{ const E2=engine(); play(r.lines.map(x=>({s:x.s,m:E2.legal().find(y=>E2.moveStr(y)===x.mv)}))); }).catch(own);
     const w=worker(); if(w){ CH.rootsCb={id,f:list=>play(list)}; return w.postMessage({id,type:"roots",fen,opts:{depth:4,ms:900},variant:vc}); }
     return own();
   }
   /* bot vs bot: the opponent of Brilliant Mover (or Witty Alien) looks for a move that gives it a sacrifice to play */
-  if(bvb&&sfOk&&!L.brill&&!L.alien&&(LEVELS[bvbLvl(-E.turn())].brill||LEVELS[bvbLvl(-E.turn())].alien)) return feedBrill(fen).then(m=>{ if(!CH||id!==chessReq) return; if(m===null) return normal(); onBotMove({id,move:m}); }).catch(normal);
+  if(bvb&&sfOk&&!L.brill&&!L.alien&&(LEVELS[bvbLvl(-E.turn())].brill||LEVELS[bvbLvl(-E.turn())].alien)) return feedBrill(fen,id).then(m=>{ if(!CH||id!==chessReq) return; if(m===null) return normal(); onBotMove({id,move:m}); }).catch(normal);
   if(L.brill){ // look for a brilliant sacrifice first (full-strength Stockfish, top 5 moves; Outpost Chess otherwise), else play like a 1500 player
     const pickOrOwn=list=>{ if(!CH||id!==chessReq) return; const m=brillPick(engine(),list); if(m!==null) return onBotMove({id,move:m,brill:true});
       const g=gamblePick(engine(),list); if(g!==null) return onBotMove({id,move:g});   // a sound-enough sacrifice: the review decides if it is brilliant
@@ -2350,12 +2350,12 @@ function maybeBot(){
 }
 /* Brilliant Mover's opponent (bot vs bot): try Stockfish's top 10 moves; play one after which Brilliant Mover has a brilliant sacrifice,
    or, half the time, one after which it has a sound sacrifice. null = play normally. */
-async function feedBrill(fen){
+async function feedBrill(fen,id){
   const V=ChessEngine(null); V.setVariant(0); V.setFen(fen); const t0=Date.now();
-  const top=await sfBot(fen,{multipv:10,ms:300}), cands=top.lines.map(x=>V.legal().find(y=>V.moveStr(y)===x.mv)).filter(m=>m!==undefined);
+  const top=await sfBot(fen,{multipv:8,ms:250}), cands=top.lines.map(x=>V.legal().find(y=>V.moveStr(y)===x.mv)).filter(m=>m!==undefined);
   let gamble=null;
-  for(const m of cands){ if(Date.now()-t0>4000) break; V.make(m);
-    const r=await sfBot(V.fen(),{multipv:6,ms:250}), list=r.lines.map(x=>({s:x.s,m:V.legal().find(y=>V.moveStr(y)===x.mv)}));
+  for(const m of cands){ if(Date.now()-t0>1500||!CH||id!==chessReq) break; V.make(m);   /* stop when the move is no longer wanted */
+    const r=await sfBot(V.fen(),{multipv:6,ms:180}), list=r.lines.map(x=>({s:x.s,m:V.legal().find(y=>V.moveStr(y)===x.mv)}));
     const b=brillPick(V,list), g=b===null&&gamble===null?gamblePick(V,list):null; V.unmake();
     if(b!==null) return m; if(g!==null) gamble=m; }
   return gamble!==null&&Math.random()<0.5?gamble:null;
@@ -2363,11 +2363,20 @@ async function feedBrill(fen){
 /* the Grandmaster bot: its own Stockfish, separate from the one that reviews games */
 const SFB={w:null,ready:null,on:null};
 /* which engine the bot you play against uses (shown next to the opening name) */
+/* which engine is playing for each bot right now: the one that chose its last move ("sf" / "oc" / "book"),
+   "Loading Stockfish…" while its Stockfish starts, otherwise what it will use */
+const ENGL={sf:"⚙️ Stockfish 18",oc:"⚙️ Outpost Chess",book:"📖 Opening book"};
+function sideEngine(c){
+  const L=LEVELS[CH.mode==="bvb"?bvbLvl(c):CH.lvl]; if(!L) return "";
+  const sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object", usesSF=(L.sf||L.brill||L.alien)&&sfOk&&!SFB.failed;
+  if(usesSF&&!SFB.w&&SFB.ready) return "⏳ "+tr("Loading Stockfish…");
+  const k=CH.engNow&&CH.engNow[c]; if(k) return k==="book"?"📖 "+tr("Opening book"):ENGL[k];
+  return usesSF?(L.brill?"⚙️ Stockfish 18 + Outpost Chess":ENGL.sf):(L.book&&CH.moves.length<16?"📖 "+tr("Opening book"):ENGL.oc);
+}
 function botEngineLabel(){
-  if(!CH||CH.mode!=="bot"||!LEVELS[CH.lvl]) return ""; const L=LEVELS[CH.lvl], sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object";
-  if(!(L.sf||L.brill||L.alien)||!sfOk||SFB.failed) return "⚙️ Outpost Chess";
-  if(!SFB.w&&SFB.ready) return "⏳ "+tr("Loading Stockfish…");
-  return "⚙️ "+(L.brill?"Stockfish 18 + Outpost Chess":"Stockfish 18");
+  if(!CH) return ""; if(CH.mode==="bot") return LEVELS[CH.lvl]?sideEngine(-CH.color):"";
+  if(CH.mode==="bvb"){ const sh=x=>x.replace(/^⚙️ /,""); return "♔ "+sh(sideEngine(1))+" · ♚ "+sh(sideEngine(-1)); }
+  return "";
 }
 function engTagDraw(){ const et=$("#engTag"); if(et) et.textContent=botEngineLabel(); }
 function sfBotReady(){
@@ -2383,13 +2392,19 @@ function sfBotReady(){
   }).catch(e=>{ SFB.ready=null; SFB.w=null; SFB.failed=true; setTimeout(engTagDraw,0); throw e; });
 }
 function sfBot(fen,o){ // o: {elo (0 = full strength), multipv, ms} -> {best, lines:[{s, mv}]} (side to move's view)
-  return sfBotReady().then(w=>new Promise((ok,no)=>{ const lines=[];
-    const t=setTimeout(()=>{ SFB.on=null; no(new Error("stuck")); },o.ms*4+5000);
-    SFB.on=l=>{ if(l.startsWith("info ")&&l.includes(" score ")){ const m=l.match(/ multipv (\d+) score (cp|mate) (-?\d+).* pv (\S+)/); if(m) lines[+m[1]-1]={s:sfScore(m[2],+m[3]),mv:m[4]}; }
-      else if(l.startsWith("bestmove")){ clearTimeout(t); SFB.on=null; ok({best:l.split(" ")[1],lines:lines.filter(Boolean)}); } };
+  /* one search at a time: Stockfish crashes if it is sent a new search while one is running */
+  const run=()=>sfBotReady().then(w=>new Promise((ok,no)=>{ const lines=[];
+    const h=l=>{ if(l.startsWith("info ")&&l.includes(" score ")){ const m=l.match(/ multipv (\d+) score (cp|mate) (-?\d+).* pv (\S+)/); if(m) lines[+m[1]-1]={s:sfScore(m[2],+m[3]),mv:m[4]}; }
+      else if(l.startsWith("bestmove")){ clearTimeout(t); if(SFB.on===h) SFB.on=null; ok({best:l.split(" ")[1],lines:lines.filter(Boolean)}); } };
+    const t=setTimeout(()=>{ if(SFB.on===h) SFB.on=null; if(SFB.w===w){ try{ w.terminate(); }catch(e){} SFB.w=null; SFB.ready=null; } no(new Error("stuck")); },o.ms*4+3000);   // only ever shuts down its own copy
+    SFB.on=h;
     w.postMessage("setoption name UCI_LimitStrength value "+(o.elo?"true":"false")); if(o.elo) w.postMessage("setoption name UCI_Elo value "+o.elo);
     w.postMessage("setoption name UCI_Chess960 value "+(CH&&CH.variant==="960"?"true":"false"));
-    w.postMessage("setoption name MultiPV value "+(o.multipv||1)); w.postMessage("position fen "+fen); w.postMessage("go movetime "+o.ms); })); }
+    w.postMessage("setoption name MultiPV value "+(o.multipv||1)); w.postMessage("position fen "+fen); w.postMessage("go movetime "+o.ms); }));
+  const st=CH&&CH.srcTurn, p=(SFB.chain||Promise.resolve()).then(run,run); SFB.chain=p.catch(()=>{});
+  p.then(()=>{ if(st&&CH&&CH.srcTurn===st&&!st.src) st.src="sf"; },()=>{});   /* Stockfish answered for this move */
+  return p;
+}
 /* a move the review would call brilliant: a sacrifice that is as good as the best move, and not losing */
 /* opening repertoires (SAN lines, from the start position); the bot follows any line that matches the game so far */
 const BOOKS={
@@ -2422,7 +2437,8 @@ function gamblePick(E,list){
 }
 function onRoots(d){ if(!CH||!CH.rootsCb||CH.rootsCb.id!==d.id) return; const f=CH.rootsCb.f; CH.rootsCb=null; f(d.roots.map(([s,m])=>({s,m}))); }
 function onBotMove(d){
-  if(!CH||d.id!==chessReq) return; if(CH.pending&&CH.pending.id===d.id){ if(CH.pending.taken) return; CH.pending.taken=true; }   /* only the first answer is played */
+  if(!CH||d.id!==chessReq) return; if(CH.pending&&CH.pending.id===d.id){ if(CH.pending.taken) return; CH.pending.taken=true; }
+  { const st=CH.srcTurn; if(st&&st.id===d.id){ CH.engNow=CH.engNow||{}; CH.engNow[st.c]=st.src||"oc"; engTagDraw(); } }   /* the tag shows the engine that chose this move */   /* only the first answer is played */
   const wait=CH.pending&&CH.pending.id===d.id?Math.max(0,(CH.mode==="bvb"?1000:450)-(Date.now()-CH.pending.t0)):0;   // bot vs bot: about a second a move, so you can follow it
   const go=()=>{ if(!CH||d.id!==chessReq) return; const lp=CH.moves.length-1;
     if(lp>=0&&CH.rows[lp]===undefined&&Date.now()-CH.moveT<10000&&(sfUsable(CH.variant)||AW)) return setTimeout(go,100);   /* your move is analysed first, so a brilliant move dings before the bot answers */
@@ -3354,6 +3370,10 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T18:01:00Z",en:["The engine tag is now live: it shows the engine actually choosing the bot's moves (Stockfish 18, Outpost Chess or the opening book), changes when that changes, and stays visible in full screen and in bot vs bot."],
+  ar:["علامة المحرك أصبحت مباشرة: تعرض المحرك الذي يختار نقلات البوت فعلًا (Stockfish 18 أو Outpost Chess أو كتاب الافتتاحات)، وتتغير عند تغيّره، وتبقى ظاهرة في وضع ملء الشاشة وفي بوت ضد بوت."]},
+ {at:"2026-11-17T17:54:00Z",en:["Faster bots: the Grandmaster thinks 1 second, Witty Alien about 1, and bot vs bot matches no longer slow down around Brilliant Mover and Witty Alien. Most replies take 1-2 seconds.","Fixed a Stockfish crash that could leave a bot stuck on \"Thinking…\": the bots' Stockfish now handles one request at a time."],
+  ar:["بوتات أسرع: الأستاذ الكبير يفكّر ثانية واحدة، وويتي ألين نحو ثانية، ومباريات بوت ضد بوت لم تعد تتباطأ حول صائد الروائع وويتي ألين. معظم الردود تستغرق ١-٢ ثانية.","إصلاح انهيار في Stockfish كان قد يترك البوت عالقًا على «يفكّر…»: Stockfish الخاص بالبوتات يعالج الآن طلبًا واحدًا في كل مرة."]},
  {at:"2026-11-17T17:42:00Z",en:["Fixed: a bot could get stuck on \"Thinking…\". No bot thinks longer than 10 seconds now; if its Stockfish doesn't answer, it moves anyway and its Stockfish starts fresh."],
   ar:["إصلاح: كان البوت قد يعلق على «يفكّر…». لا يفكّر أي بوت أكثر من ١٠ ثوانٍ الآن؛ إذا لم يرد Stockfish الخاص به فإنه يلعب على أي حال ويبدأ Stockfish من جديد."]},
  {at:"2026-11-17T17:35:00Z",en:["Brilliant moves during the game: the bot now waits until your move has been analysed before answering, so the !! badge and ding always come first, even against the Stockfish bots.","Analysis is Stockfish only. If it has a problem it starts again instead of switching to Outpost Chess. The review is ready the moment the game ends."],
