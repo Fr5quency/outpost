@@ -1942,9 +1942,7 @@ async function sfJob(msg){ // one position: best move and score, the played move
   const b2=A[2]&&A[2].mv?find(A[2].mv):undefined;
   return {best,bs,ps,only,n:L.length,depth:0,sf:1,s2,b2:b2===undefined?0:b2};
 }
-function sfQueue(msg){ SF.q.push({msg}); sfStart();
-  if(SF.busy&&SF.busy.msg.tag.g!==msg.tag.g&&SF.w){ try{ SF.w.postMessage("stop"); }catch(e){} }   /* leftover work from an older game: stop it, your new move comes first */
-  sfNext(); }
+function sfQueue(msg){ SF.q.push({msg}); sfStart(); sfNext(); }
 async function sfNext(){
   if(SF.state!==2||SF.busy) return;
   SF.q=SF.q.filter(j=>CH&&j.msg.tag.g===CH.gid);   // moves of a game that is no longer open are dropped
@@ -2381,12 +2379,6 @@ function bookMove(key){
   const n=played.length, opts=[]; for(const line of BOOKS[key]){ const t=line.split(" ").map(clean); if(t.length>n&&t.slice(0,n).every((x,i)=>x===played[i])) opts.push(t[n]); }
   if(!opts.length) return null; const pick=opts[Math.floor(Math.random()*opts.length)], m=E.legal().find(x=>clean(san(E,x))===pick); return m===undefined?null:m;
 }
-/* both chess engines start when the app opens, even before you play: first the review's (analysis, brilliant badges and dings), then the bots'.
-   Games against every bot start fast and brilliant moves are spotted from the first move. */
-function warmEngines(){ if(typeof WebAssembly!=="object") return; try{ sfStart(); }catch(e){}
-  const t0=Date.now(), step=()=>{ if(SFB.w||SFB.ready) return; if(SF.state===2||SF.state===-1||Date.now()-t0>25000) return void sfBotReady().catch(()=>{}); setTimeout(step,400); };
-  step(); }
-setTimeout(warmEngines,1200);
 function brillPick(E,list){
   list=list.filter(x=>x&&x.m!==undefined&&x.s!==null&&x.s!==undefined); if(!list.length) return null; const wb=winPct(list[0].s);
   for(const x of list){ const wp=winPct(x.s); if(wb-wp<0.3&&wp>=45&&(wb<97||x.s>90000)&&isSacrifice(E,x.m)) return x.m; }
@@ -3320,6 +3312,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T13:59:00Z",en:["The chess engines no longer start in the background when you open the app. They start when you play, as before: the review stays instant with brilliant badges and dings, and Brilliant Mover and the Grandmaster take a moment for Stockfish to start."],
+  ar:["لم يعد محركا الشطرنج يبدآن في الخلفية عند فتح التطبيق. يبدآن عند اللعب كما كان سابقًا: المراجعة فورية مع علامات وأصوات النقلات الرائعة، وصائد الروائع والأستاذ الكبير يحتاجان لحظة حتى يبدأ Stockfish."]},
  {at:"2026-11-17T12:46:00Z",en:["Faster games: both chess engines now warm up as soon as you open the app, so every bot answers quickly and brilliant moves get their !! and ding from the first move.","New bot: Witty Alien (2600). Plays the Alien Gambit and attacks like the streamer, finding a brilliant move 70% of the time one exists.","New bot: Caro-Kann Defender (1800). Always answers 1.e4 with the Caro-Kann."],
   ar:["مباريات أسرع: محركا الشطرنج يستعدان فور فتح التطبيق، فيرد كل بوت بسرعة وتحصل النقلات الرائعة على !! والصوت من أول نقلة.","بوت جديد: ويتي ألين (٢٦٠٠). يلعب مناورة الفضائي ويهاجم بأسلوب صانع المحتوى، ويجد نقلة رائعة ٧٠٪ من الوقت عند وجودها.","بوت جديد: مدافع كارو-كان (١٨٠٠). يرد دائمًا على 1.e4 بدفاع كارو-كان."]},
  {at:"2026-11-16T22:23:00Z",en:["Play a friend: create a 5-digit code, send it, and play each other online."],
