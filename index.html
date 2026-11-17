@@ -481,8 +481,9 @@ body[data-view="games"].inchess .prefs{display:none}
 /* openings */
 .lesson{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;text-align:start}
 .lesson p{flex:1;margin:0;font-size:14px;line-height:1.45}
-.gtags{flex:1;min-width:0;display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
-.engtag{white-space:nowrap;color:var(--muted);font-size:11px}
+.gtags{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;max-height:44px;overflow:hidden}   /* stacked and compact: the top row stays 44px, so the board never shrinks */
+.gtags .vtag{padding:3px 9px;font-size:11px;line-height:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.engtag{color:var(--muted);font-size:10px!important}
 .optag{max-width:52vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}.optag[hidden]{display:none}
 .coursecard.done{border-color:color-mix(in srgb,#81b64c 60%,var(--line))}
 .cicon{background:#739552}.cicon.sideb{background:#3a3a3a}.cicon2{background:#a88764;font-size:28px}
