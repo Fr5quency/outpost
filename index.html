@@ -2323,12 +2323,17 @@ function maybeBot(){
   CH.thinking=true; drawBoard(); const id=++chessReq, t0=Date.now(), L=LEVELS[bvb?bvbLvl(E.turn()):CH.lvl];
   const opts=Object.assign({},L.o); if(CH.moves.length<8&&!opts.noise&&!L.sf) opts.noise=12;
   CH.pending={id,t0}; CH.srcTurn={id,c:E.turn(),src:null};
-  setTimeout(()=>{ if(!CH||id!==chessReq||!CH.pending||CH.pending.id!==id||CH.pending.taken||CH.over) return;   /* hard limit: never think longer than 4 s */
-    try{ SFB.w&&SFB.w.terminate(); }catch(e){} SFB.w=null; SFB.ready=null; SFB.on=null; SFB.chain=Promise.resolve();   /* its Stockfish starts fresh next time, with an empty queue */
+  /* emergency limit: a bot whose Stockfish is LOADING waits for it (up to 60 s, never interrupting the load);
+     once Stockfish is running, a move that takes more than 4 s means it hung: play anyway and restart it */
+  const wd=()=>{ if(!CH||id!==chessReq||!CH.pending||CH.pending.id!==id||CH.pending.taken||CH.over) return;
+    if(!SFB.w&&SFB.ready&&Date.now()-t0<60000) return void setTimeout(wd,500);
+    if(SFB.w&&Date.now()-Math.max(t0,SFB.loadedAt||0)<4000) return void setTimeout(wd,300);
+    if(SFB.w){ try{ SFB.w.terminate(); }catch(e){} SFB.w=null; SFB.ready=null; SFB.on=null; SFB.chain=Promise.resolve(); }   /* only a running, hung Stockfish is restarted */
     window.__botLimitHits=(window.__botLimitHits||0)+1; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc";
     const w=worker(); if(w&&(L.brill||L.alien)){ CH.rootsCb={id,f:list=>{ const m=brillPick(engine(),list); if(m!==null) return onBotMove({id,move:m,brill:true}); own(); }};   /* still hunts brilliant moves */
       return w.postMessage({id,type:"roots",fen,opts:{depth:4,ms:500},variant:vc}); }
-    own(); },4000);   /* emergency only: normal moves take 1-2 s */
+    own(); };
+  setTimeout(wd,4000);
   const vc=vcode(CH.variant), fen=E.fen();
   const own=()=>{ if(!CH||id!==chessReq) return; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc"; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
   const sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object";
@@ -2394,7 +2399,7 @@ function sfBotReady(){
     const t=setTimeout(()=>{ try{w.terminate();}catch(e){} no(new Error("load")); },45000);
     w.onmessage=e=>{ const l=String(e.data);
       if(l==="uciok") w.postMessage("isready");
-      else if(l==="readyok"&&!SFB.w){ clearTimeout(t); SFB.w=w; ok(w); setTimeout(engTagDraw,0); }
+      else if(l==="readyok"&&!SFB.w){ clearTimeout(t); SFB.w=w; SFB.loadedAt=Date.now(); SFB.failed=false; ok(w); setTimeout(engTagDraw,0); }
       else if(SFB.on) SFB.on(l); };
     w.onerror=()=>{ clearTimeout(t); no(new Error("error")); };
     w.postMessage("uci");
@@ -3380,6 +3385,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T18:33:00Z",en:["Fixed: on phones the Grandmaster, Witty Alien and Brilliant Mover could end up playing with Outpost Chess, because a time limit kept interrupting their Stockfish while it was loading. They now wait for Stockfish to load and play every move with it, like before."],
+  ar:["إصلاح: على الهواتف كان الأستاذ الكبير وويتي ألين وصائد الروائع قد يلعبون بـ Outpost Chess، لأن حدًّا زمنيًا كان يقاطع Stockfish أثناء تحميله. الآن ينتظرون تحميل Stockfish ويلعبون كل نقلة به كما كان سابقًا."]},
  {at:"2026-11-17T18:23:00Z",en:["Fixed: the Caro-Kann Defender could answer 1.e4 with 1...e5. Bots now only use the opening lines for the colour they play."],
   ar:["إصلاح: كان مدافع كارو-كان قد يرد على 1.e4 بـ 1...e5. البوتات تستخدم الآن فقط خطوط الافتتاح الخاصة باللون الذي تلعب به."]},
  {at:"2026-11-17T18:20:00Z",en:["Stockfish bots (Grandmaster, Witty Alien, Brilliant Mover) load their Stockfish as soon as the game starts, so it's ready for their first move.","Brilliant Mover and Witty Alien keep hunting brilliant moves even if their Stockfish is slow.","If Stockfish can't start, the review now tells you to open the app once on Wi-Fi."],
