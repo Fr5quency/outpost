@@ -939,7 +939,7 @@ const AR={
 "Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.":"الأرقام تختلف حسب الدولة. تأكد من رقم بلدك واكتبه في الملاحظات. قل مكانك أولًا، ثم ما حدث.",
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
-"Games":"الألعاب",
+"Games":"الألعاب","Witty Alien":"ويتي ألين","Caro-Kann Defender":"مدافع كارو-كان","Alien Gambit, wild sacrifices, brilliant 70% of the time":"مناورة الفضائي وتضحيات جنونية، ونقلة رائعة ٧٠٪ من الوقت","Always defends with the Caro-Kann":"يدافع دائمًا بدفاع كارو-كان",
 "Play a friend":"العب مع صديق","Share a code and play each other online. 15 minutes each.":"شارك رمزًا والعبا معًا أونلاين. ١٥ دقيقة لكل لاعب.","One of you creates a code, the other joins with it. Both need internet.":"أحدكما ينشئ رمزًا والآخر ينضم به. كلاكما يحتاج إنترنت.",
 "Create a code":"أنشئ رمزًا","5-digit code":"رمز من ٥ أرقام","Join":"انضم","Enter the 5-digit code":"أدخل الرمز المكوّن من ٥ أرقام","Waiting for your friend":"بانتظار صديقك","Tell your friend to tap Play a friend → Join, and enter this code.":"اطلب من صديقك أن يضغط العب مع صديق ← انضم، ويكتب هذا الرمز.","Send the code":"أرسل الرمز","Copied":"تم النسخ",
 "Solved today. Come back tomorrow!":"حللته اليوم. عد غدًا!","A new puzzle every day. Keep your streak going.":"لغز جديد كل يوم. حافظ على سلسلتك.","Your stats":"إحصائياتك","Achievements":"الإنجازات","Achievement unlocked":"إنجاز جديد",
@@ -1848,10 +1848,12 @@ const LEVELS=[
  {elo:1800,rank:"Expert",              o:{depth:5,noise:8,ms:1200}},
  {elo:2000,rank:"Candidate master",    o:{depth:10,ms:2500}},
  {elo:2600,rank:"Grandmaster",         o:{depth:10,ms:3000}, sf:2600},  // Stockfish limited to 2600 Elo (Outpost Chess at full strength when Stockfish cannot run)
- {elo:1500,rank:"An attacking gambler: sacrifices often and never misses a brilliant move", o:{depth:3,noise:45,blunder:.04,ms:600}, brill:1, name:"Brilliant Mover"}   // plays like a 1500 player, but always plays a brilliant sacrifice when one exists
+ {elo:1500,rank:"An attacking gambler: sacrifices often and never misses a brilliant move", o:{depth:3,noise:45,blunder:.04,ms:600}, brill:1, name:"Brilliant Mover"},  // plays like a 1500 player, but always plays a brilliant sacrifice when one exists
+ {elo:2600,rank:"Alien Gambit, wild sacrifices, brilliant 70% of the time", o:{depth:10,ms:2000}, alien:1, book:"alien", name:"Witty Alien"},   // the streamer's style: Alien Gambit, then attack; plays a brilliant move 70 % of the time one exists
+ {elo:1800,rank:"Always defends with the Caro-Kann", o:{depth:5,noise:8,ms:1200}, book:"caro", name:"Caro-Kann Defender"}
 ];
 const NAMES=[["Omar","عمر"],["Lina","لينا"],["Youssef","يوسف"],["Sara","سارة"],["Karim","كريم"],["Nour","نور"],["Adam","آدم"],["Mariam","مريم"],["Hassan","حسن"],["Layla","ليلى"],["Ziad","زياد"],["Hana","هنا"],["Tarek","طارق"],["Salma","سلمى"],["Ali","علي"],["Farida","فريدة"],["Mostafa","مصطفى"],["Jana","جنى"],["Khaled","خالد"],["Malak","ملك"]];
-const AVC=["#e07a5f","#3d8bd4","#81b29a","#c77dff","#f2a541","#4ecdc4","#ef476f","#8d99ae","#b5838d","#c9a227","#1baaa6"];
+const AVC=["#e07a5f","#3d8bd4","#81b29a","#c77dff","#f2a541","#4ecdc4","#ef476f","#8d99ae","#b5838d","#c9a227","#1baaa6","#7c3aed","#0e7490"];
 function botNames(){ let n=store.get("botNames",null);
   if(Array.isArray(n)&&n.length&&n.length<LEVELS.length){ const pool=NAMES.map((_,i)=>i).filter(i=>!n.includes(i)); while(n.length<LEVELS.length&&pool.length) n.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); store.set("botNames",n); }   // a new bot keeps the old names
   if(!Array.isArray(n)||n.length!==LEVELS.length){ const pool=NAMES.map((_,i)=>i); n=[]; while(n.length<LEVELS.length){ n.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); } store.set("botNames",n); } return n; }
@@ -1940,7 +1942,9 @@ async function sfJob(msg){ // one position: best move and score, the played move
   const b2=A[2]&&A[2].mv?find(A[2].mv):undefined;
   return {best,bs,ps,only,n:L.length,depth:0,sf:1,s2,b2:b2===undefined?0:b2};
 }
-function sfQueue(msg){ SF.q.push({msg}); sfStart(); sfNext(); }
+function sfQueue(msg){ SF.q.push({msg}); sfStart();
+  if(SF.busy&&SF.busy.msg.tag.g!==msg.tag.g&&SF.w){ try{ SF.w.postMessage("stop"); }catch(e){} }   /* leftover work from an older game: stop it, your new move comes first */
+  sfNext(); }
 async function sfNext(){
   if(SF.state!==2||SF.busy) return;
   SF.q=SF.q.filter(j=>CH&&j.msg.tag.g===CH.gid);   // moves of a game that is no longer open are dropped
@@ -2304,8 +2308,18 @@ function maybeBot(){
   const normal=()=>{ if(!CH||id!==chessReq) return;
     if(L.sf&&sfOk) return sfBot(fen,{elo:L.sf,multipv:1,ms:1500}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
     own(); };
-  /* bot vs bot: the opponent of Brilliant Mover looks for a move that gives it a sacrifice to play */
-  if(bvb&&sfOk&&!L.brill&&LEVELS[bvbLvl(-E.turn())].brill) return feedBrill(fen).then(m=>{ if(!CH||id!==chessReq) return; if(m===null) return normal(); onBotMove({id,move:m}); }).catch(normal);
+  if(L.book){ const bm=bookMove(L.book); if(bm!==null) return setTimeout(()=>onBotMove({id,move:bm}),250); }   /* its opening repertoire first */
+  if(L.alien){ // Witty Alien: a brilliant move 70 % of the time one exists, sound-enough sacrifices half the time, otherwise strong (2600) chess
+    const play=list=>{ if(!CH||id!==chessReq) return; const E2=engine(), b=brillPick(E2,list); if(b!==null&&Math.random()<0.7) return onBotMove({id,move:b,brill:true});
+      const g=gamblePick(E2,list); if(g!==null&&Math.random()<0.5) return onBotMove({id,move:g});
+      if(sfOk) return sfBot(fen,{elo:L.elo,multipv:1,ms:700}).then(r=>{ if(!CH||id!==chessReq) return; const m=engine().legal().find(x=>engine().moveStr(x)===r.best); if(m===undefined) return own(); onBotMove({id,move:m}); }).catch(own);
+      own(); };
+    if(sfOk) return sfBot(fen,{multipv:8,ms:900}).then(r=>{ const E2=engine(); play(r.lines.map(x=>({s:x.s,m:E2.legal().find(y=>E2.moveStr(y)===x.mv)}))); }).catch(own);
+    const w=worker(); if(w){ CH.rootsCb={id,f:list=>play(list)}; return w.postMessage({id,type:"roots",fen,opts:{depth:4,ms:900},variant:vc}); }
+    return own();
+  }
+  /* bot vs bot: the opponent of Brilliant Mover (or Witty Alien) looks for a move that gives it a sacrifice to play */
+  if(bvb&&sfOk&&!L.brill&&!L.alien&&(LEVELS[bvbLvl(-E.turn())].brill||LEVELS[bvbLvl(-E.turn())].alien)) return feedBrill(fen).then(m=>{ if(!CH||id!==chessReq) return; if(m===null) return normal(); onBotMove({id,move:m}); }).catch(normal);
   if(L.brill){ // look for a brilliant sacrifice first (full-strength Stockfish, top 5 moves; Outpost Chess otherwise), else play like a 1500 player
     const pickOrOwn=list=>{ if(!CH||id!==chessReq) return; const m=brillPick(engine(),list); if(m!==null) return onBotMove({id,move:m,brill:true});
       const g=gamblePick(engine(),list); if(g!==null) return onBotMove({id,move:g});   // a sound-enough sacrifice: the review decides if it is brilliant
@@ -2350,6 +2364,29 @@ function sfBot(fen,o){ // o: {elo (0 = full strength), multipv, ms} -> {best, li
     w.postMessage("setoption name UCI_LimitStrength value "+(o.elo?"true":"false")); if(o.elo) w.postMessage("setoption name UCI_Elo value "+o.elo);
     w.postMessage("setoption name MultiPV value "+(o.multipv||1)); w.postMessage("position fen "+fen); w.postMessage("go movetime "+o.ms); })); }
 /* a move the review would call brilliant: a sacrifice that is as good as the best move, and not losing */
+/* opening repertoires (SAN lines, from the start position); the bot follows any line that matches the game so far */
+const BOOKS={
+ alien:["e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 h6 Nxf7 Kxf7 Bc4+ e6 Nf3","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 e6 Nxf7","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 Bf5 Nxf7","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 g6 Nxf7",
+  "e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 Bg4 Nxf7","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5 Nbd7 Nxf7","e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5 Ng3 Bg6 h4 h6 Nf3",
+  "e4 e6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Ng5","e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7","e4 e5 Nf3 Nc6 Bc4 Bc5 b4","e4 c5 d4 cxd4 c3","e4 d5 exd5 Qxd5 Nc3",
+  "d4 d5 c4","d4 Nf6 c4 e5","e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5","e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3"],
+ caro:["e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5 Ng3 Bg6 h4 h6 Nf3 Nd7","e4 c6 d4 d5 e5 Bf5 Nf3 e6 Be2 c5","e4 c6 d4 d5 exd5 cxd5 Bd3 Nc6 c3 Nf6","e4 c6 d4 d5 Nd2 dxe4 Nxe4 Bf5",
+  "e4 c6 Nc3 d5 Nf3 Bg4","e4 c6 Nf3 d5 Nc3 Bg4","e4 c6 d3 d5 Nd2 e5","e4 c6 c4 d5 exd5 cxd5","e4 c6 d4 d5 f3 e6",
+  "d4 d5 c4 c6 Nf3 Nf6 Nc3 dxc4","d4 d5 Nf3 Nf6 c4 c6","d4 d5 Bf4 c6","c4 c6","Nf3 d5","e4","e4 e5 Nf3 Nc6 Bc4"]
+};
+function bookMove(key){
+  if(!CH||CH.variant!=="std"||(CH.start&&CH.start!==STD_FEN)||!BOOKS[key]) return null;
+  const E=ChessEngine(null), clean=x=>x.replace(/[+#!?]/g,""), played=[]; E.reset();
+  for(const s0 of CH.moves){ const m=E.legal().find(x=>E.moveStr(x)===s0); if(m===undefined) return null; played.push(clean(san(E,m))); E.make(m); }
+  const n=played.length, opts=[]; for(const line of BOOKS[key]){ const t=line.split(" ").map(clean); if(t.length>n&&t.slice(0,n).every((x,i)=>x===played[i])) opts.push(t[n]); }
+  if(!opts.length) return null; const pick=opts[Math.floor(Math.random()*opts.length)], m=E.legal().find(x=>clean(san(E,x))===pick); return m===undefined?null:m;
+}
+/* both chess engines start when the app opens, even before you play: first the review's (analysis, brilliant badges and dings), then the bots'.
+   Games against every bot start fast and brilliant moves are spotted from the first move. */
+function warmEngines(){ if(typeof WebAssembly!=="object") return; try{ sfStart(); }catch(e){}
+  const t0=Date.now(), step=()=>{ if(SFB.w||SFB.ready) return; if(SF.state===2||SF.state===-1||Date.now()-t0>25000) return void sfBotReady().catch(()=>{}); setTimeout(step,400); };
+  step(); }
+setTimeout(warmEngines,1200);
 function brillPick(E,list){
   list=list.filter(x=>x&&x.m!==undefined&&x.s!==null&&x.s!==undefined); if(!list.length) return null; const wb=winPct(list[0].s);
   for(const x of list){ const wp=winPct(x.s); if(wb-wp<0.3&&wp>=45&&(wb<97||x.s>90000)&&isSacrifice(E,x.m)) return x.m; }
@@ -3283,6 +3320,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T12:46:00Z",en:["Faster games: both chess engines now warm up as soon as you open the app, so every bot answers quickly and brilliant moves get their !! and ding from the first move.","New bot: Witty Alien (2600). Plays the Alien Gambit and attacks like the streamer, finding a brilliant move 70% of the time one exists.","New bot: Caro-Kann Defender (1800). Always answers 1.e4 with the Caro-Kann."],
+  ar:["مباريات أسرع: محركا الشطرنج يستعدان فور فتح التطبيق، فيرد كل بوت بسرعة وتحصل النقلات الرائعة على !! والصوت من أول نقلة.","بوت جديد: ويتي ألين (٢٦٠٠). يلعب مناورة الفضائي ويهاجم بأسلوب صانع المحتوى، ويجد نقلة رائعة ٧٠٪ من الوقت عند وجودها.","بوت جديد: مدافع كارو-كان (١٨٠٠). يرد دائمًا على 1.e4 بدفاع كارو-كان."]},
  {at:"2026-11-16T22:23:00Z",en:["Play a friend: create a 5-digit code, send it, and play each other online."],
   ar:["العب مع صديق: أنشئ رمزًا من ٥ أرقام، أرسله، والعبا معًا أونلاين."]},
  {at:"2026-11-16T22:23:00Z",en:["Daily puzzle: a new puzzle every day, with a 🔥 streak.","Your stats: Elo over time, accuracy trend, win rate against each bot, brilliant moves, puzzles and lessons.","Achievements: 24 badges to unlock, from your first win to beating the Grandmaster."],
