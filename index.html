@@ -1914,7 +1914,7 @@ function queueAn(i){ // ply i = the position before move i plus the move played 
 }
 /* ---- Stockfish 18 for the game review (lite single-threaded WebAssembly, GPL-3: see stockfish/README.txt).
    Used for standard and no-castling games; the built-in engine is the fallback and handles the other modes. ---- */
-const SF={w:null,state:0,q:[],busy:null,onLine:null}, SF_MS=1000;          // state: 0 not started, 1 loading, 2 ready, -1 unavailable
+const SF={w:null,state:0,q:[],busy:null,onLine:null}, SF_MS=700;   /* per position: 0.7 s (+0.35 s for the move played) keeps up with fast games */          // state: 0 not started, 1 loading, 2 ready, -1 unavailable
 const sfUsable=v=>(v==="std"||v==="nocastle"||v==="960")&&typeof WebAssembly==="object"&&SF.state!==-1;   // Stockfish 18 has no King of the Hill / Three-check
 function sfStart(){
   if(SF.state) return; SF.state=1;
@@ -2177,7 +2177,8 @@ function renderChessMenu(v){
     <div class="bots">${LEVELS.map((L,i)=>[L,i]).sort((a,b)=>a[0].elo-b[0].elo||a[1]-b[1]).map(([L,i])=>`<button class="botrow" data-act="chessStart" data-l="${i}"><span class="ava" style="background:${AVC[i]}">${esc(botName(i)).slice(0,1)}</span><span class="bname"><b>${esc(botName(i))}</b><small>${tr(L.sf?"Grandmaster · Stockfish":L.rank)}</small></span><span class="elo">${L.elo}</span></button>`).join("")}</div>
     <p class="foot">${tr("Chess pieces: Papercut by Nikolay Anzarov, CC BY 4.0.")} ${tr("Game review: Stockfish 18 (GPL-3).")}</p>`;
 }
-function newCH(o){ return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null,variant:"std",start:STD_FEN,fens:[],rows:[],asked:[],liveC:[],live:null,why:null,arrows:[],arrowFrom:null,gid:++gameSeq},o); }
+function newCH(o){ setTimeout(()=>{ if(CH&&CH.mode!=="puz"&&!CH.arch&&sfUsable(CH.variant)) sfStart(); },0);   /* the review engine starts with the game */
+  return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null,variant:"std",start:STD_FEN,fens:[],rows:[],asked:[],liveC:[],live:null,why:null,arrows:[],arrowFrom:null,gid:++gameSeq},o); }
 function rebuildFens(){ const V=ChessEngine(null); setupEngine(V); const out=[V.fen()]; for(const s of CH.moves){ const m=V.legal().find(x=>V.moveStr(x)===s); if(m===undefined) break; V.make(m); out.push(V.fen()); } CH.fens=out; }
 function startChess(lvl,colorPref){
   chessReq++; const color=colorPref==="b"?-1:colorPref==="r"?(Math.random()<.5?1:-1):1;
@@ -2439,7 +2440,7 @@ function chessEnd(){
 }
 function finishChess(res){
   if(!CH||CH.over) return;
-  CH.over=res; CH.thinking=false; chessReq++; saveChess(); drawBoard(); tickClock();
+  CH.over=res; CH.thinking=false; chessReq++; saveChess(); drawBoard(); tickClock(); queueAn(CH.moves.length);   /* the final position, straight away */
   const mp=CH.mode==="mp", bvb=CH.mode==="bvb", hot=CH.mode==="hot"||bvb; let hotWin=0;
   if(hot){ hotWin=res==="win"?CH.color:(res==="lose"||res==="resign")?-CH.color:0; if(!bvb){ CH.color=1; CH.flip=false; } if(S.view==="games"&&S.game==="chess") renderChess($("#v-games")); }
   const name=esc(oppName());
@@ -2876,8 +2877,9 @@ function startReview(){ // most moves were already analysed during the game, so 
   const tick=()=>{ if(!CH||CH.gid!==g||!CH.anWait) return; const k=have(), st=$("#anState"), sfOn=sfUsable(CH.variant);
     if(st) st.textContent=sfOn&&SF.state!==2?tr("Starting Stockfish…"):"";
     if(k!==lastK){ lastK=k; lastT=Date.now(); }
-    else if(Date.now()-lastT>6000){ lastT=Date.now();
-      for(let i=0;i<=n;i++) if(CH.rows[i]===undefined&&CH.fens[i]){ CH.asked[i]=0;
+    else if(Date.now()-lastT>1000){ lastT=Date.now();
+      const working=new Set(SF.q.map(j=>j.msg.tag.g===g?j.msg.tag.i:-1)); if(SF.busy&&SF.busy.msg.tag.g===g) working.add(SF.busy.msg.tag.i);
+      for(let i=0;i<=n;i++) if(CH.rows[i]===undefined&&CH.fens[i]&&!(SF.state===2&&working.has(i))){ CH.asked[i]=0;
         if(sfOn&&SF.state===2) queueAn(i);
         else { CH.asked[i]=1; anLocal({id:0,type:"analyze",fens:[CH.fens[i]],played:[CH.moves[i]||null],opts:AN_OPTS,variant:vcode(CH.variant),c960:CH.variant==="960",tag:{g:CH.gid,i}}); if(sfOn&&!SF.state) sfStart(); } } }
     setTimeout(tick,500); };
@@ -3348,6 +3350,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T17:20:00Z",en:["The game review is ready right after the game: Stockfish starts with the game, analyses every move a third faster while you play, and checks the final position the moment the game ends."],
+  ar:["مراجعة المباراة جاهزة فور انتهائها: Stockfish يبدأ مع المباراة، ويحلّل كل نقلة أسرع بالثلث أثناء اللعب، ويفحص الوضع الأخير لحظة انتهاء المباراة."]},
  {at:"2026-11-17T17:11:00Z",en:["Fixed: the game review could get stuck at 0%. It now re-asks for any missing analysis, never waits more than a few seconds without progress, and shows \"Starting Stockfish…\" while the engine starts."],
   ar:["إصلاح: كانت مراجعة المباراة قد تتوقف عند ٠٪. الآن تعيد طلب أي تحليل ناقص، ولا تنتظر أكثر من بضع ثوانٍ دون تقدّم، وتعرض «جارٍ تشغيل Stockfish…» أثناء بدء المحرك."]},
  {at:"2026-11-17T14:42:00Z",en:["Stockfish now handles Chess960 too: live analysis, brilliant moves, the review and the Grandmaster, Brilliant Mover and Witty Alien.","All 150 puzzles were re-checked by Stockfish. 14 old puzzles that had a second solution were replaced with new Stockfish-verified ones.","Fixed: Chess960 castling is now written O-O or O-O-O correctly."],
