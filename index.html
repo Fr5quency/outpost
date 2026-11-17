@@ -942,7 +942,7 @@ const AR={
 "Numbers differ by country. Confirm yours and write it in Notes. Say where you are first, then what happened.":"الأرقام تختلف حسب الدولة. تأكد من رقم بلدك واكتبه في الملاحظات. قل مكانك أولًا، ثم ما حدث.",
 "Pack once, check twice a year":"جهّزها مرة وراجعها مرتين في السنة","Careful.":"انتبه.",
 /* games */
-"Games":"الألعاب","Opening book":"كتاب الافتتاحات","Starting Stockfish…":"جارٍ تشغيل Stockfish…","Loading Stockfish…":"جارٍ تحميل Stockfish…","Witty Alien":"ويتي ألين","Caro-Kann Defender":"مدافع كارو-كان","Alien Gambit, wild sacrifices, brilliant 70% of the time":"مناورة الفضائي وتضحيات جنونية، ونقلة رائعة ٧٠٪ من الوقت","Always defends with the Caro-Kann":"يدافع دائمًا بدفاع كارو-كان",
+"Games":"الألعاب","Stockfish can't start. Open the app once on Wi-Fi so it can download, then try again.":"تعذّر تشغيل Stockfish. افتح التطبيق مرة واحدة على شبكة Wi-Fi ليتم تنزيله، ثم حاول مرة أخرى.","Opening book":"كتاب الافتتاحات","Starting Stockfish…":"جارٍ تشغيل Stockfish…","Loading Stockfish…":"جارٍ تحميل Stockfish…","Witty Alien":"ويتي ألين","Caro-Kann Defender":"مدافع كارو-كان","Alien Gambit, wild sacrifices, brilliant 70% of the time":"مناورة الفضائي وتضحيات جنونية، ونقلة رائعة ٧٠٪ من الوقت","Always defends with the Caro-Kann":"يدافع دائمًا بدفاع كارو-كان",
 "Play a friend":"العب مع صديق","Share a code and play each other online. 15 minutes each.":"شارك رمزًا والعبا معًا أونلاين. ١٥ دقيقة لكل لاعب.","One of you creates a code, the other joins with it. Both need internet.":"أحدكما ينشئ رمزًا والآخر ينضم به. كلاكما يحتاج إنترنت.",
 "Create a code":"أنشئ رمزًا","5-digit code":"رمز من ٥ أرقام","Join":"انضم","Enter the 5-digit code":"أدخل الرمز المكوّن من ٥ أرقام","Waiting for your friend":"بانتظار صديقك","Tell your friend to tap Play a friend → Join, and enter this code.":"اطلب من صديقك أن يضغط العب مع صديق ← انضم، ويكتب هذا الرمز.","Send the code":"أرسل الرمز","Copied":"تم النسخ",
 "Solved today. Come back tomorrow!":"حللته اليوم. عد غدًا!","A new puzzle every day. Keep your streak going.":"لغز جديد كل يوم. حافظ على سلسلتك.","Your stats":"إحصائياتك","Achievements":"الإنجازات","Achievement unlocked":"إنجاز جديد",
@@ -2136,7 +2136,12 @@ function renderBvb(v){
     <button class="btn primary" data-act="bvbStart">${GL()?`ابدأ: ${esc(botName(w))} ضد ${esc(botName(b))}`:`Start: ${esc(botName(w))} vs ${esc(botName(b))}`}</button>
     <div class="bvbgrid">${pick(1,w)}${pick(-1,b)}</div>`;
 }
+/* bots that use Stockfish: load their Stockfish as soon as the game starts */
+function warmBotEngine(){ if(typeof WebAssembly!=="object"||SFB.w||SFB.ready) return; const t0=Date.now();
+  const step=()=>{ if(SFB.w||SFB.ready||!CH) return; return void sfBotReady().catch(()=>{}); }; step(); }   /* loads alongside the review engine; the bot still waits for your move's analysis before answering */
+const usesSFBot=l=>!!(LEVELS[l]&&(LEVELS[l].sf||LEVELS[l].brill||LEVELS[l].alien));
 function startBvb(w,b){
+  if(usesSFBot(w)||usesSFBot(b)) setTimeout(warmBotEngine,0);
   chessReq++; const variant=S.chessVariant||"std"; S.bvbW=w; S.bvbB=b;
   CH=newCH({mode:"bvb",lvlW:w,lvlB:b,lvl:b,color:1,flip:false,variant,start:variantFen(variant)});
   CH.keys=chessReplay([]); CH.fens=[engine().fen()]; closeModal(); S.game="chess"; show("games"); maybeBot();
@@ -2182,6 +2187,7 @@ function newCH(o){ setTimeout(()=>{ if(CH&&CH.mode!=="puz"&&!CH.arch&&sfUsable(C
   return Object.assign({mode:"bot",moves:[],keys:[],over:null,sel:-1,thinking:false,view:null,last:null,variant:"std",start:STD_FEN,fens:[],rows:[],asked:[],liveC:[],live:null,why:null,arrows:[],arrowFrom:null,gid:++gameSeq},o); }
 function rebuildFens(){ const V=ChessEngine(null); setupEngine(V); const out=[V.fen()]; for(const s of CH.moves){ const m=V.legal().find(x=>V.moveStr(x)===s); if(m===undefined) break; V.make(m); out.push(V.fen()); } CH.fens=out; }
 function startChess(lvl,colorPref){
+  if(usesSFBot(lvl)) setTimeout(warmBotEngine,0);
   chessReq++; const color=colorPref==="b"?-1:colorPref==="r"?(Math.random()<.5?1:-1):1;
   const variant=S.chessVariant||"std"; CH=newCH({lvl,color,flip:color<0,variant,start:variantFen(variant)}); CH.keys=chessReplay([]); CH.fens=[engine().fen()]; saveChess(); S.game="chess"; show("games");
   maybeBot();
@@ -2319,7 +2325,10 @@ function maybeBot(){
   CH.pending={id,t0}; CH.srcTurn={id,c:E.turn(),src:null};
   setTimeout(()=>{ if(!CH||id!==chessReq||!CH.pending||CH.pending.id!==id||CH.pending.taken||CH.over) return;   /* hard limit: never think longer than 4 s */
     try{ SFB.w&&SFB.w.terminate(); }catch(e){} SFB.w=null; SFB.ready=null; SFB.on=null; SFB.chain=Promise.resolve();   /* its Stockfish starts fresh next time, with an empty queue */
-    const T=ChessEngine(null); T.setVariant(vcode(CH.variant)); T.setFen(engine().fen()); window.__botLimitHits=(window.__botLimitHits||0)+1; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc"; onBotMove({id,move:T.think({depth:3,ms:300})}); },4000);   /* emergency only: normal moves take 1-2 s */
+    window.__botLimitHits=(window.__botLimitHits||0)+1; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc";
+    const w=worker(); if(w&&(L.brill||L.alien)){ CH.rootsCb={id,f:list=>{ const m=brillPick(engine(),list); if(m!==null) return onBotMove({id,move:m,brill:true}); own(); }};   /* still hunts brilliant moves */
+      return w.postMessage({id,type:"roots",fen,opts:{depth:4,ms:500},variant:vc}); }
+    own(); },4000);   /* emergency only: normal moves take 1-2 s */
   const vc=vcode(CH.variant), fen=E.fen();
   const own=()=>{ if(!CH||id!==chessReq) return; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc"; const w=worker(); if(w) w.postMessage({id,fen,opts,variant:vc}); else setTimeout(()=>{ const T=ChessEngine(null); T.setVariant(vc); T.setFen(fen); onBotMove({id,move:T.think(opts)}); },60); };
   const sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object";
@@ -2893,9 +2902,9 @@ function startReview(){ // most moves were already analysed during the game, so 
   CH.anWait=()=>{ const k=have(), bar=$("#anBar"), t=$("#anTxt"); if(bar){ bar.style.width=(100*k/(n+1))+"%"; t.textContent=Math.round(100*k/(n+1))+"%"; } if(k===n+1) finish(); };
   CH.anWait();
   /* watchdog: no progress for 6 s -> ask again; if Stockfish is not running, Outpost Chess fills the gaps so the review always finishes */
-  const g=CH.gid; let lastK=-1, lastT=Date.now();
+  const g=CH.gid, tWait=Date.now(); let lastK=-1, lastT=Date.now();
   const tick=()=>{ if(!CH||CH.gid!==g||!CH.anWait) return; const k=have(), st=$("#anState"), sfOn=sfUsable(CH.variant);
-    if(st) st.textContent=sfOn&&SF.state!==2?tr("Starting Stockfish…"):"";
+    if(st) st.textContent=sfOn&&SF.state!==2?tr(Date.now()-tWait>20000?"Stockfish can't start. Open the app once on Wi-Fi so it can download, then try again.":"Starting Stockfish…"):"";
     if(k!==lastK){ lastK=k; lastT=Date.now(); }
     else if(Date.now()-lastT>1000){ lastT=Date.now();
       const working=new Set(SF.q.map(j=>j.msg.tag.g===g?j.msg.tag.i:-1)); if(SF.busy&&SF.busy.msg.tag.g===g) working.add(SF.busy.msg.tag.i);
@@ -3370,6 +3379,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T18:20:00Z",en:["Stockfish bots (Grandmaster, Witty Alien, Brilliant Mover) load their Stockfish as soon as the game starts, so it's ready for their first move.","Brilliant Mover and Witty Alien keep hunting brilliant moves even if their Stockfish is slow.","If Stockfish can't start, the review now tells you to open the app once on Wi-Fi."],
+  ar:["بوتات Stockfish (الأستاذ الكبير وويتي ألين وصائد الروائع) تحمّل Stockfish فور بدء المباراة، فيكون جاهزًا لنقلتها الأولى.","صائد الروائع وويتي ألين يواصلان البحث عن النقلات الرائعة حتى لو كان Stockfish بطيئًا.","إذا تعذّر تشغيل Stockfish، تطلب منك المراجعة الآن فتح التطبيق مرة واحدة على Wi-Fi."]},
  {at:"2026-11-17T18:01:00Z",en:["The engine tag is now live: it shows the engine actually choosing the bot's moves (Stockfish 18, Outpost Chess or the opening book), changes when that changes, and stays visible in full screen and in bot vs bot."],
   ar:["علامة المحرك أصبحت مباشرة: تعرض المحرك الذي يختار نقلات البوت فعلًا (Stockfish 18 أو Outpost Chess أو كتاب الافتتاحات)، وتتغير عند تغيّره، وتبقى ظاهرة في وضع ملء الشاشة وفي بوت ضد بوت."]},
  {at:"2026-11-17T17:54:00Z",en:["Faster bots: the Grandmaster thinks 1 second, Witty Alien about 1, and bot vs bot matches no longer slow down around Brilliant Mover and Witty Alien. Most replies take 1-2 seconds.","Fixed a Stockfish crash that could leave a bot stuck on \"Thinking…\": the bots' Stockfish now handles one request at a time."],
