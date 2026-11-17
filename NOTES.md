@@ -16,7 +16,7 @@ Outpost is an offline "pocket kit" web app for iPhone (and Android), installed f
 |---|---|
 | `index.html` | The whole app except the extra games: CSS, the Arabic dictionary (`AR`), all screens, the chess engine (`function ChessEngine`), chess, block puzzle, Quran, azkar, online play. ~2600 lines. |
 | `games-more.js` | Sudoku, Minesweeper, Four in a Row (+ online), Merge, Solitaire, Dominoes, Backgammon. Loaded after `index.html`'s script; registers into `window.OUTPOST_GAMES` and `window.OUTPOST_ACT`. Injects its own CSS. |
-| `sw.js` | Service worker (offline cache). **Bump `CACHE = "outpost-vN"` on every release**, or phones keep the old version. Lists every file to pre-cache. The Stockfish files live in a separate cache `ENGINE = "outpost-engine-sf18"` that survives releases (rename it only if the engine files change). |
+| `sw.js` | Service worker (offline cache). Deletes only its own old caches (`outpost-vN`), because **Outpost Games** (repo `offline-games-with-online-multiplayer-`, same website) shares the cache store and localStorage; `seenUpdateGames` is that app's What's-new marker (not synced). **Bump `CACHE = "outpost-vN"` on every release**, or phones keep the old version. Lists every file to pre-cache. The Stockfish files live in a separate cache `ENGINE = "outpost-engine-sf18"` that survives releases (rename it only if the engine files change). |
 | `manifest.json`, `icon-180.png`, `icon-512.png` | Home-screen app metadata and icons. |
 | `quran.json` | Full Quran (King Fahd Complex Uthmani text via npm `quran-json` 3.1.2) + 604 page starts + 30 juz starts (npm `quran-meta` 7.0.0). Verified: 6236 ayat, counts and Meccan/Medinan agree across both sources. |
 | `duas.json` | 345 adhkar from Hisn al-Muslim (github.com/osamayy/azkar-db), grouped into 12 sections. |
@@ -141,3 +141,4 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 - 2026-11-16: Stage B: opening names; 19 opening and gambit lessons. (sw cache v35)
 - 2026-11-16: Stage C: daily puzzle + streak, stats page, 24 achievements. (sw cache v36)
 - 2026-11-16: Stage D: play a friend with a 5-digit code. (sw cache v37)
+- 2026-11-17: The games now also live in their own app, Outpost Games (repo offline-games-with-online-multiplayer-). Service worker only deletes Outpost's own caches. (sw cache v38)

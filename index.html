@@ -3179,7 +3179,7 @@ document.addEventListener("pointerup",bPointerUp); document.addEventListener("po
 /* ===== ACCOUNT: sign in with Google (Firebase Auth); your data is saved as one document per person in Firestore,
    through Firestore's REST API (no database SDK needed). Security rules allow each person to read/write only users/{their id}. ===== */
 const FB_CFG={apiKey:"AIzaSyDHquGPLCgu7izwzVTGrp5N73QZvKiZmEY",authDomain:"outpost-f3a72.firebaseapp.com",projectId:"outpost-f3a72",storageBucket:"outpost-f3a72.firebasestorage.app",messagingSenderId:"545267681659",appId:"1:545267681659:web:7b96f6baf3093d25a915de"};
-const SYNC_META=new Set(["probe","eloPending","acct","syncAt","syncDirtyAt","syncUid","seenUpdate"]);   // never uploaded
+const SYNC_META=new Set(["probe","eloPending","acct","syncAt","syncDirtyAt","syncUid","seenUpdate","seenUpdateGames"]);   // never uploaded
 let FBA=null, FBp=null, ACC=store.get("acct",null), syncT=null, syncBusy=false, syncErr="";
 /* every network step gets a time limit, so a stalled request can never leave sync stuck */
 const SYNC_MS=20000, timeout=(p,ms=SYNC_MS)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error("timeout")),ms))]);
