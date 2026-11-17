@@ -1,6 +1,6 @@
 // Outpost offline cache. Bump the version when you upload a new index.html.
 // Outpost Games (fr5quency.github.io/offline-games-with-online-multiplayer-) shares this website's cache store, so only Outpost's own old caches are deleted.
-const CACHE = "outpost-v53";
+const CACHE = "outpost-v54";
 // the chess engine (7 MB) lives in its own cache, kept across app updates; change this name only when the engine files change
 const ENGINE = "outpost-engine-sf18";
 const ENGINE_FILES = ["./stockfish/stockfish-18-lite-single.js", "./stockfish/stockfish-18-lite-single.wasm"];

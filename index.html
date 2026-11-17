@@ -1921,7 +1921,7 @@ function sfStart(){
   try{ SF.w=new Worker("stockfish/stockfish-18-lite-single.js"); }catch(e){ SF.state=0; return void setTimeout(sfStart,2000); }
   SF.w.onmessage=e=>{ const l=String(e.data);
     if(l==="uciok"){ SF.w.postMessage("setoption name Hash value 32"); SF.w.postMessage("isready"); }
-    else if(l==="readyok"&&SF.state===1){ clearTimeout(SF.to); SF.state=2; SF.fails=0; sfNext(); }
+    else if(l==="readyok"&&SF.state===1){ clearTimeout(SF.to); SF.state=2; SF.fails=0; SF.loadedAt=Date.now(); sfNext(); setTimeout(()=>{ try{ engTagDraw(); }catch(e){} },0); }
     else if(SF.onLine) SF.onLine(l); };
   SF.w.onerror=()=>sfRestart(SF.busy);
   SF.w.postMessage("uci"); SF.to=setTimeout(()=>{ if(SF.state===1) sfRestart(null); },45000);
@@ -1945,7 +1945,7 @@ function sfGo(fen,moves,multipv,go){ return new Promise((ok,no)=>{ const res={},
   SF.w.postMessage("setoption name MultiPV value "+multipv); SF.w.postMessage("position fen "+fen+(moves?" moves "+moves:"")); SF.w.postMessage(go); }); }
 async function sfJob(msg){ // one position: best move and score, the played move's score, and whether the best move was the only good one
   const fen=msg.fens[0], played=msg.played[0], V=ChessEngine(null); V.setVariant(0); V.setFen(fen); const L=V.legal();
-  SF.w.postMessage("setoption name UCI_Chess960 value "+(msg.c960?"true":"false"));   /* Chess960 castling = king takes rook, as the app writes it */
+  SF.w.postMessage("setoption name UCI_LimitStrength value false"); SF.w.postMessage("setoption name UCI_Chess960 value "+(msg.c960?"true":"false"));   /* full strength; Chess960 castling = king takes rook */
   if(!L.length) return {best:0,bs:null,ps:null,only:false,n:0};
   const A=await sfGo(fen,"",Math.min(2,L.length),"go depth 20 movetime "+SF_MS), find=u=>L.find(x=>V.moveStr(x)===u);
   const bs=A[1]?A[1].s:0, s2=A[2]?A[2].s:null; let best=find(A.best); if(best===undefined) best=find(A[1]&&A[1].mv); if(best===undefined) throw new Error("move");
@@ -1958,8 +1958,16 @@ async function sfJob(msg){ // one position: best move and score, the played move
 function sfQueue(msg){ SF.q.push({msg}); sfStart(); sfNext(); }
 async function sfNext(){
   if(SF.state!==2||SF.busy) return;
-  SF.q=SF.q.filter(j=>CH&&j.msg.tag.g===CH.gid);   // moves of a game that is no longer open are dropped
-  const j=SF.q.pop(); if(!j) return;                // newest move first
+  const bi=SF.q.findIndex(x=>x.bot); let j;
+  if(bi>=0) j=SF.q.splice(bi,1)[0];   /* a bot waiting for its move goes first */
+  else { SF.q=SF.q.filter(x=>x.bot||(CH&&x.msg.tag.g===CH.gid)); j=SF.q.pop(); }   // analysis: moves of a closed game are dropped, newest move first
+  if(!j) return;
+  if(j.bot){ SF.busy=j; const gen=SF.gen||0; let r=null, err=null; try{ r=await sfBotRun(j.fen,j.o); }catch(e){ err=e; }
+    if((SF.gen||0)!==gen){ if(r) j.ok(r); return; }
+    if(SF.busy===j) SF.busy=null;
+    if(r) j.ok(r); else j.no(err||new Error("bot search"));
+    if(err&&err.message==="stuck") return sfRestart(null);
+    return sfNext(); }
   SF.busy=j; const gen=SF.gen||0; let row=null; try{ row=await sfJob(j.msg); }catch(e){ if((SF.gen||0)!==gen) return; if(e&&e.message==="stuck") return sfRestart(j); }
   if((SF.gen||0)!==gen){ if(row) onAnalysis({type:"analysis",rows:[row],tag:j.msg.tag}); return; }   /* finished by a Stockfish that was restarted meanwhile */
   if(SF.busy!==j) return; SF.busy=null;
@@ -2137,8 +2145,9 @@ function renderBvb(v){
     <div class="bvbgrid">${pick(1,w)}${pick(-1,b)}</div>`;
 }
 /* bots that use Stockfish: load their Stockfish as soon as the game starts */
-function warmBotEngine(){ if(typeof WebAssembly!=="object"||SFB.w||SFB.ready) return; const t0=Date.now();
-  const step=()=>{ if(SFB.w||SFB.ready||!CH) return; return void sfBotReady().catch(()=>{}); }; step(); }   /* loads alongside the review engine; the bot still waits for your move's analysis before answering */
+/* preload: the shared Stockfish starts as soon as the app opens, so games start fast and every move is analysed from move one */
+setTimeout(()=>{ try{ if(typeof WebAssembly==="object") sfStart(); }catch(e){} },800);
+function warmBotEngine(){ if(typeof WebAssembly==="object") sfStart(); }   /* one shared Stockfish for analysis and bots */
 const usesSFBot=l=>!!(LEVELS[l]&&(LEVELS[l].sf||LEVELS[l].brill||LEVELS[l].alien));
 function startBvb(w,b){
   if(usesSFBot(w)||usesSFBot(b)) setTimeout(warmBotEngine,0);
@@ -2326,9 +2335,8 @@ function maybeBot(){
   /* emergency limit: a bot whose Stockfish is LOADING waits for it (up to 60 s, never interrupting the load);
      once Stockfish is running, a move that takes more than 4 s means it hung: play anyway and restart it */
   const wd=()=>{ if(!CH||id!==chessReq||!CH.pending||CH.pending.id!==id||CH.pending.taken||CH.over) return;
-    if(!SFB.w&&SFB.ready&&Date.now()-t0<60000) return void setTimeout(wd,500);
-    if(SFB.w&&Date.now()-Math.max(t0,SFB.loadedAt||0)<4000) return void setTimeout(wd,300);
-    if(SFB.w){ try{ SFB.w.terminate(); }catch(e){} SFB.w=null; SFB.ready=null; SFB.on=null; SFB.chain=Promise.resolve(); }   /* only a running, hung Stockfish is restarted */
+    if((L.sf||L.brill||L.alien)&&SF.state!==2&&Date.now()-t0<60000) return void setTimeout(wd,500);   /* Stockfish still loading: wait for it */
+    if(Date.now()-Math.max(t0,SF.loadedAt||0)<6000) return void setTimeout(wd,300);
     window.__botLimitHits=(window.__botLimitHits||0)+1; if(CH.srcTurn&&CH.srcTurn.id===id) CH.srcTurn.src="oc";
     const w=worker(); if(w&&(L.brill||L.alien)){ CH.rootsCb={id,f:list=>{ const m=brillPick(engine(),list); if(m!==null) return onBotMove({id,move:m,brill:true}); own(); }};   /* still hunts brilliant moves */
       return w.postMessage({id,type:"roots",fen,opts:{depth:4,ms:500},variant:vc}); }
@@ -2382,8 +2390,8 @@ const SFB={w:null,ready:null,on:null};
 const ENGL={sf:"⚙️ Stockfish 18",oc:"⚙️ Outpost Chess",book:"📖 Opening book"};
 function sideEngine(c){
   const L=LEVELS[CH.mode==="bvb"?bvbLvl(c):CH.lvl]; if(!L) return "";
-  const sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object", usesSF=(L.sf||L.brill||L.alien)&&sfOk&&!SFB.failed;
-  if(usesSF&&!SFB.w&&SFB.ready) return "⏳ "+tr("Loading Stockfish…");
+  const sfOk=(CH.variant==="std"||CH.variant==="nocastle"||CH.variant==="960")&&typeof WebAssembly==="object", usesSF=(L.sf||L.brill||L.alien)&&sfOk;
+  if(usesSF&&SF.state!==2) return "⏳ "+tr("Loading Stockfish…");
   const k=CH.engNow&&CH.engNow[c]; if(k) return k==="book"?"📖 "+tr("Opening book"):ENGL[k];
   return usesSF?(L.brill?"⚙️ Stockfish 18 + Outpost Chess":ENGL.sf):(L.book&&CH.moves.length<16?"📖 "+tr("Opening book"):ENGL.oc);
 }
@@ -2393,29 +2401,17 @@ function botEngineLabel(){
   return "";
 }
 function engTagDraw(){ const et=$("#engTag"); if(et) et.textContent=botEngineLabel(); }
-function sfBotReady(){
-  if(SFB.ready) return SFB.ready; setTimeout(engTagDraw,0);   /* the tag switches to "Loading Stockfish…" */
-  return SFB.ready=new Promise((ok,no)=>{ let w; try{ w=new Worker("stockfish/stockfish-18-lite-single.js"); }catch(e){ return no(e); }
-    const t=setTimeout(()=>{ try{w.terminate();}catch(e){} no(new Error("load")); },45000);
-    w.onmessage=e=>{ const l=String(e.data);
-      if(l==="uciok") w.postMessage("isready");
-      else if(l==="readyok"&&!SFB.w){ clearTimeout(t); SFB.w=w; SFB.loadedAt=Date.now(); SFB.failed=false; ok(w); setTimeout(engTagDraw,0); }
-      else if(SFB.on) SFB.on(l); };
-    w.onerror=()=>{ clearTimeout(t); no(new Error("error")); };
-    w.postMessage("uci");
-  }).catch(e=>{ SFB.ready=null; SFB.w=null; SFB.failed=true; setTimeout(engTagDraw,0); throw e; });
+function sfBotReady(){ // the shared Stockfish is ready (it starts if needed)
+  sfStart(); return new Promise((ok,no)=>{ const t0=Date.now(), c=()=>{ if(SF.state===2) return ok(SF.w); if(Date.now()-t0>60000) return no(new Error("load")); setTimeout(c,200); }; c(); });
 }
-function sfBot(fen,o){ // o: {elo (0 = full strength), multipv, ms} -> {best, lines:[{s, mv}]} (side to move's view)
-  /* one search at a time: Stockfish crashes if it is sent a new search while one is running */
-  const run=()=>sfBotReady().then(w=>new Promise((ok,no)=>{ const lines=[];
-    const h=l=>{ if(l.startsWith("info ")&&l.includes(" score ")){ const m=l.match(/ multipv (\d+) score (cp|mate) (-?\d+).* pv (\S+)/); if(m) lines[+m[1]-1]={s:sfScore(m[2],+m[3]),mv:m[4]}; }
-      else if(l.startsWith("bestmove")){ clearTimeout(t); if(SFB.on===h) SFB.on=null; ok({best:l.split(" ")[1],lines:lines.filter(Boolean)}); } };
-    const t=setTimeout(()=>{ if(SFB.on===h) SFB.on=null; if(SFB.w===w){ try{ w.terminate(); }catch(e){} SFB.w=null; SFB.ready=null; } no(new Error("stuck")); },o.ms*4+3000);   // only ever shuts down its own copy
-    SFB.on=h;
-    w.postMessage("setoption name UCI_LimitStrength value "+(o.elo?"true":"false")); if(o.elo) w.postMessage("setoption name UCI_Elo value "+o.elo);
-    w.postMessage("setoption name UCI_Chess960 value "+(CH&&CH.variant==="960"?"true":"false"));
-    w.postMessage("setoption name MultiPV value "+(o.multipv||1)); w.postMessage("position fen "+fen); w.postMessage("go movetime "+o.ms); }));
-  const st=CH&&CH.srcTurn, p=(SFB.chain||Promise.resolve()).then(run,run); SFB.chain=p.catch(()=>{});
+async function sfBotRun(fen,o){ // one bot search on the shared Stockfish
+  SF.w.postMessage("setoption name UCI_LimitStrength value "+(o.elo?"true":"false")); if(o.elo) SF.w.postMessage("setoption name UCI_Elo value "+o.elo);
+  SF.w.postMessage("setoption name UCI_Chess960 value "+(CH&&CH.variant==="960"?"true":"false"));
+  const n=o.multipv||1, A=await sfGo(fen,"",n,"go movetime "+o.ms), lines=[]; for(let k=1;k<=n;k++) if(A[k]) lines.push({s:A[k].s,mv:A[k].mv});
+  return {best:A.best,lines};
+}
+function sfBot(fen,o){ // o: {elo (0 = full strength), multipv, ms} -> {best, lines:[{s, mv}]} (side to move's view). Queued on the shared Stockfish.
+  const st=CH&&CH.srcTurn, p=new Promise((ok,no)=>{ SF.q.push({bot:true,fen,o,ok,no}); sfStart(); sfNext(); });
   p.then(()=>{ if(st&&CH&&CH.srcTurn===st&&!st.src) st.src="sf"; },()=>{});   /* Stockfish answered for this move */
   return p;
 }
@@ -3385,6 +3381,8 @@ try{ const m=sessionStorage.getItem("outpost.toast"); if(m){ sessionStorage.remo
 
 /* ---------- update notices: newest first. Add an entry at the top with every release (time in UTC). ---------- */
 const UPDATES=[
+ {at:"2026-11-17T18:57:00Z",en:["One Stockfish for everything: analysis, brilliant moves and every bot now share a single Stockfish that preloads when you open the app. Bots answer in 1-2 seconds, brilliant moves ding right away, and the review is ready when the game ends.","Fixed: on phones the second Stockfish (for the bots) could never finish loading, so the Grandmaster, Witty Alien and Brilliant Mover got stuck or fell back to Outpost Chess."],
+  ar:["Stockfish واحد لكل شيء: التحليل والنقلات الرائعة وكل البوتات تتشارك الآن Stockfish واحدًا يُحمَّل مسبقًا عند فتح التطبيق. البوتات ترد خلال ١-٢ ثانية، والنقلات الرائعة تُصدر صوتها فورًا، والمراجعة جاهزة عند انتهاء المباراة.","إصلاح: على الهواتف لم يكن Stockfish الثاني (الخاص بالبوتات) يكتمل تحميله أبدًا، فكان الأستاذ الكبير وويتي ألين وصائد الروائع يعلقون أو يلعبون بـ Outpost Chess."]},
  {at:"2026-11-17T18:33:00Z",en:["Fixed: on phones the Grandmaster, Witty Alien and Brilliant Mover could end up playing with Outpost Chess, because a time limit kept interrupting their Stockfish while it was loading. They now wait for Stockfish to load and play every move with it, like before."],
   ar:["إصلاح: على الهواتف كان الأستاذ الكبير وويتي ألين وصائد الروائع قد يلعبون بـ Outpost Chess، لأن حدًّا زمنيًا كان يقاطع Stockfish أثناء تحميله. الآن ينتظرون تحميل Stockfish ويلعبون كل نقلة به كما كان سابقًا."]},
  {at:"2026-11-17T18:23:00Z",en:["Fixed: the Caro-Kann Defender could answer 1.e4 with 1...e5. Bots now only use the opening lines for the colour they play."],
