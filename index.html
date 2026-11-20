@@ -660,7 +660,7 @@ const AR={
 "→":"←",
 /* stack data */
 "Library":"المكتبة","Free, from Wikimedia CH":"مجاني، من Wikimedia CH",
-"Stores Wikipedia and other reference sites on the phone. NOMAD uses Kiwix for its library too, so this is the same content.":"يخزّن ويكيبيديا ومواقع مرجعية أخرى على الهاتف. يستخدم NOMAD برنامج Kiwix لمكتبته أيضًا، فالمحتوى نفسه.",
+"Stores Wikipedia and other reference sites on the phone, readable without internet.":"يخزّن ويكيبيديا ومواقع مرجعية أخرى على الهاتف لتقرأها دون إنترنت.",
 "Install Kiwix from the App Store":"ثبّت Kiwix من App Store",
 "On Wi-Fi, open the library inside Kiwix and pick your language":"على شبكة Wi-Fi، افتح المكتبة داخل Kiwix واختر لغتك",
 "Download WikiMed (medical encyclopedia) first. It is small and the most useful in an emergency":"نزّل WikiMed (الموسوعة الطبية) أولًا. حجمها صغير وهي الأكثر فائدة في الطوارئ",
@@ -875,8 +875,8 @@ const AR={
 "SOS beacon":"منارة SOS","Flash and beep SOS in Morse":"وميض وصفير SOS بشفرة مورس","Emergency numbers":"أرقام الطوارئ",
 "112, 911, 123 and more":"112 و911 و123 وغيرها","CPR, bleeding, burns, choking":"الإنعاش، النزيف، الحروق، الاختناق",
 "Safe water":"ماء آمن","Boil times and bleach doses":"مدة الغلي وجرعات الكلور","Text vault":"خزنة النصوص",
-"Lock a message with a passphrase":"اقفل رسالة بعبارة مرور","What replaces what":"ما البديل لكل جزء",
-"NOMAD server":"خادم NOMAD","On your iPhone":"على جهاز iPhone","Offline library":"مكتبة بلا إنترنت","Offline maps":"خرائط بلا إنترنت",
+"Lock a message with a passphrase":"اقفل رسالة بعبارة مرور","What to use for what":"ماذا تستخدم لكل شيء",
+"What you need":"ما تحتاجه","On your iPhone":"على جهاز iPhone","Offline library":"مكتبة بلا إنترنت","Offline maps":"خرائط بلا إنترنت",
 "Local AI":"ذكاء اصطناعي محلي","Khan Academy courses":"دورات Khan Academy","Kiwix packs":"حزم Kiwix","Data tools":"أدوات البيانات",
 "Tools tab":"تبويب الأدوات","Notes tab":"تبويب الملاحظات","Set up the three apps":"جهّز التطبيقات الثلاثة",
 "Use this kit with no signal":"استخدم هذه الحقيبة بدون إشارة","Installed. It opens with no connection.":"مثبّتة. تفتح بدون اتصال.",
@@ -1038,7 +1038,7 @@ function setTheme(t){ S.theme=t; store.set("theme",t); document.documentElement.
 /* ---------- data: the app stack ---------- */
 const STACK=[
  {id:"kiwix",name:"Kiwix",role:"Library",by:"Free, from Wikimedia CH",url:"https://apps.apple.com/app/id997079563",play:"https://play.google.com/store/apps/details?id=org.kiwix.kiwixmobile",
-  what:"Stores Wikipedia and other reference sites on the phone. NOMAD uses Kiwix for its library too, so this is the same content.",
+  what:"Stores Wikipedia and other reference sites on the phone, readable without internet.",
   steps:["Install Kiwix from the App Store","On Wi-Fi, open the library inside Kiwix and pick your language","Download WikiMed (medical encyclopedia) first. It is small and the most useful in an emergency","Download a Wikipedia edition that fits your storage. Start with a mini or no-pictures edition","Add Wikivoyage, and Khan Academy or iFixit packs if you have room","Turn on Airplane Mode and open an article to prove it works"],
   tip:"Big packs take a while. Keep the phone plugged in, on Wi-Fi, with Kiwix open until they finish."},
  {id:"maps",name:"Organic Maps",role:"Maps",by:"Free, open source, no ads",url:"https://apps.apple.com/app/id1567437057",play:"https://play.google.com/store/apps/details?id=app.organicmaps",
@@ -1168,9 +1168,9 @@ function renderHome(){
     <button class="tile" data-go="notes"><b>${tr("Notes")}</b><span>${isAr()?S.notes.length+" محفوظة على هذا الهاتف":S.notes.length+" saved on this phone"}</span></button>
   </div>
   <div class="card">
-    <div class="eyebrow">${tr("What replaces what")}</div>
+    <div class="eyebrow">${tr("What to use for what")}</div>
     <div class="map">
-      <div class="h">${tr("NOMAD server")}</div><div></div><div class="h">${tr("On your iPhone")}</div>
+      <div class="h">${tr("What you need")}</div><div></div><div class="h">${tr("On your iPhone")}</div>
       <div class="n">${tr("Offline library")}</div>${arrow}<div><b>Kiwix</b></div>
       <div class="n">${tr("Offline maps")}</div>${arrow}<div><b>Organic Maps</b></div>
       <div class="n">${tr("Local AI")}</div>${arrow}<div><b>PocketPal AI</b></div>
