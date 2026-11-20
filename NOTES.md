@@ -164,3 +164,4 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
 - 2026-11-17: Bot vs bot engine tag uses ⚪/⚫ instead of ♔/♚ (on the dark theme the outline ♔ looked black and the solid ♚ looked white). (cache v56)
 - 2026-11-17: Full screen review squashed the board (squares 45x38) because the fs flex column shrank it when the coach/review line appeared. Now `.gwrap.fs>*{flex-shrink:0}` and `sizeBoard` reserves >=120px for revLine+coachBox while reviewing in full screen (resized once when the review starts and when the coach first shows). (cache v57)
   Root cause: `.gwrap.fs>*{width:100%}` overrode the board's `width:var(--bs)`, so its width filled the screen while its height followed `--bs`. Now `.gwrap.fs>.board{width:var(--bs)}` and full-screen width subtracts the 24px padding.
+- 2026-11-20: Removed the "Inspired by Project N.O.M.A.D." footer line (and its Arabic translation). (cache v58)
