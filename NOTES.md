@@ -166,3 +166,5 @@ Tests are Playwright scripts run against `python3 -m http.server 8765` in the re
   Root cause: `.gwrap.fs>*{width:100%}` overrode the board's `width:var(--bs)`, so its width filled the screen while its height followed `--bs`. Now `.gwrap.fs>.board{width:var(--bs)}` and full-screen width subtracts the 24px padding.
 - 2026-11-20: Removed the "Inspired by Project N.O.M.A.D." footer line (and its Arabic translation). (cache v58)
 - 2026-11-20: Removed the remaining NOMAD mentions: the card is now "What to use for what" with a "What you need" column, and the Kiwix description no longer mentions NOMAD (English and Arabic). (cache v59)
+- 2026-11-23: Witty Alien never sacrificed vs the Caro-Kann Defender because its book answered 4...Bf5 with the quiet 5.Ng3. Replaced with the Martian Gambit (4...Bf5 5.Ng5 then 6.Nxf7) and added 4...Nd7 5.Ng5 then 6.Nxf7. (cache v60)
+  Caro-Kann Defender: when its book has no line (any White first moves), it still plays ...c6 then ...d5 in its first two moves.
